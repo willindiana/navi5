@@ -24,8 +24,13 @@ export JELLY5_AV1_PREFIX="$ROOT/build/ci-ffmpeg/av1-prefix"
 # Strip debug sections only on private delivery copy; retain symbols for relinking.
 mkdir -p build/ci-sdk
 cp -R toolchain/ps5-payload-sdk/. build/ci-sdk/
+# Use actual linker inputs, not unrelated SDK archives (including LLVM bitcode).
 # Keep audited curl bytes intact: app build verifies pin before symbol rewrite.
-find build/ci-sdk/target -name '*.a' ! -name libcurl.a -type f -exec llvm-strip --strip-debug {} +
+PS5_SYSROOT="$ROOT/build/ci-sdk/target" HB="$ROOT/build/ci-sdk/target/user/homebrew"
+source app/scripts/sdk-link-inputs.sh
+for archive in "${SDK_HOMEBREW_ARCHIVES[@]}" "${CXX_RUNTIME[@]}" "$LIBC_ARCHIVE"; do
+    [[ "${archive##*/}" == libcurl.a ]] || llvm-strip --strip-debug "$archive"
+done
 export PS5_PAYLOAD_SDK="$ROOT/build/ci-sdk"
 export PATH="$PS5_PAYLOAD_SDK/bin:$PATH"
 python3 -B scripts/test-ci-staging.py "$PS5_PAYLOAD_SDK"

@@ -227,12 +227,10 @@ for a in libavformat libavcodec libswresample libavutil libswscale; do
     ARCHIVES+=("${FF_LIB}/${a}.a")
 done
 (( AV1_ON )) && ARCHIVES+=("${FF_LIB}/libdav1d.a")
-for a in libharfbuzz libfribidi libfreetype \
-         libpng16 libjpeg libwebp libsharpyuv \
-         libcurl libpsl libssl libcrypto libiconv libxml2 libz libbz2 liblzma libzstd libm; do
-    need "${HB}/lib/${a}.a" "sysroot archive missing: ${a}.a"
-    archive="${HB}/lib/${a}.a"
-    if [[ "${a}" == libcurl ]]; then
+source "${APP_ROOT}/scripts/sdk-link-inputs.sh"
+for archive in "${SDK_HOMEBREW_ARCHIVES[@]}"; do
+    need "${archive}" "sysroot archive missing: ${archive##*/}"
+    if [[ "${archive##*/}" == libcurl.a ]]; then
         # Only pinned/audited curl callers, never global variadic interception.
         python3 - "${archive}" <<'PY'
 import hashlib, sys
@@ -249,7 +247,6 @@ PY
     fi
     ARCHIVES+=("${archive}")
 done
-CXX_RUNTIME=("${PS5_SYSROOT}/lib/libc++.a" "${PS5_SYSROOT}/lib/libc++abi.a" "${PS5_SYSROOT}/lib/libunwind.a")
 STUBDIR="${PS5_SYSROOT}/lib"
 # SDK link stubs, minus the WebKit-process and system-process kernel variants
 # (apps on 11.60 import libkernel only; see src/jelly5_libc_stubs.c).
@@ -272,7 +269,7 @@ link_app() {
         "${RUNTIME_OBJS[@]}" "${OBJS[@]}" "$@" "${PRX_STUB_SOS[@]}" \
         --start-group "${ARCHIVES[@]}" --end-group "${CXX_RUNTIME[@]}" \
         --as-needed "${SDK_STUBS[@]}" "${PRX_STUB_SOS[@]}" \
-        --start-group "${PS5_SYSROOT}/lib/libc.a" --end-group \
+        --start-group "${LIBC_ARCHIVE}" --end-group \
         2> "${LINK_LOG}"
 }
 if ! link_app; then
