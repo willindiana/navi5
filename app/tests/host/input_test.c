@@ -5,6 +5,8 @@
  * Synthetic tests of the input (nuvio_input.c): the DualSense and the TV
  * remote on fake pads; no console or server needed. Run by input.sh.
  */
+/* Match the runtime's default API visibility: POSIX.1-2008 alone hides usleep on glibc. */
+#define _DEFAULT_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdio.h>
