@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Navi5 — trusted manual builds only; never creates tags or releases.
+# Navi5 — RELEASE validation builds; never creates tags or releases.
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 # Dynamic Python imports must not create untracked source-tree bytecode.
@@ -12,6 +12,7 @@ cd "$ROOT"
 unset JELLY5_REMOTE_LOG JELLY5_LOG_HOST JELLY5_LOG_PORT NUVIO_BUILD_IMAGE EVO_ROOT JELLY5_AV1_PREFIX
 export NAVI5_DEV_TOOLS=0 JELLY5_AV1=1
 python3 -B scripts/test-package-release.py
+python3 -B scripts/test-store-release.py
 python3 -B scripts/test-ci-release.py
 python3 -B scripts/test-source-privacy.py
 python3 -B scripts/test-prepare-ci-inputs.py

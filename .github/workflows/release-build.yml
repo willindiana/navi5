@@ -1,5 +1,9 @@
-name: Manual RELEASE artifact build
+name: RELEASE validation build
 on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
     inputs:
       upload_artifacts:
@@ -12,7 +16,7 @@ permissions:
   contents: read
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/beta'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -30,9 +34,9 @@ jobs:
         run: bash scripts/ci-release.sh
       # Never upload on failure, and never create a release or tag.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: success() && inputs.upload_artifacts == 'true'
+        if: success() && github.event_name == 'workflow_dispatch' && inputs.upload_artifacts == 'true'
         with:
-          name: Navi5-v0.8.0-beta.1-${{ github.sha }}
+          name: Navi5-${{ github.sha }}
           path: build/ci-release/
           if-no-files-found: error
           retention-days: 7
