@@ -14,6 +14,20 @@ Navidrome/OpenSubsonic music client for use with a jailbroken PlayStation 5.
 - Connect with manual login or LAN QR pairing; saved login reconnects
   on launch.
 
+## Screenshots
+
+### Fullscreen player
+
+![Navi5 fullscreen player with artwork, playback controls and progress bar](docs/media/navi5/player.png)
+
+### Artists
+
+![Navi5 artist grid with selected card and compact playback bar](docs/media/navi5/artists.png)
+
+### Playlist
+
+![Navi5 playlist detail with artwork, track list and playback actions](docs/media/navi5/playlist.png)
+
 ## Roadmap
 
 Post-beta ideas; scope may change:
@@ -31,7 +45,7 @@ ShadowMountPlus, and a reachable Navidrome/OpenSubsonic server. A stock PS5 cann
 For source builds, tests and private development setup, see
 [Development](docs/DEVELOPMENT.md).
 
-## Security before login
+## Security
 
 QR pairing currently uses unencrypted HTTP on your local network. Use only a trusted LAN.
 
