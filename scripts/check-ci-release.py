@@ -77,6 +77,29 @@ def check_build():
     print('RELEASE package/ZIP/licenses/SELF/import checks passed; source gate still required')
 
 
+def check_source_privacy(source, pins):
+    import tarfile
+    # Reviewed upstream archives are byte-exact, not builder-generated payloads.
+    # Their URLs and test fixtures may name root's home on root-runner hosts.
+    pinned = {pin['file'] for pin in pins}
+    for pin in pins:
+        require(sha(source / pin['file']) == pin['sha256'], 'source input hash mismatch: ' + pin['file'])
+    private = str(Path.home()).encode() + b'/'
+    for path in source.iterdir():
+        require(path.is_file() and not path.is_symlink(), 'nonregular source delivery input')
+        if path.name in pinned:
+            continue
+        require(private not in path.read_bytes(), 'private builder root in source file')
+        if tarfile.is_tarfile(path):
+            with tarfile.open(path, mode='r|*') as archive:
+                for member in archive:
+                    require(private not in (member.name + member.linkname).encode(),
+                            'private source archive member metadata')
+                    if member.isfile():
+                        require(private not in archive.extractfile(member).read(),
+                                'private builder root in source archive payload')
+
+
 def source_gate(manifest, revision, source=None):
     require(manifest.get('revision') == revision, 'source revision does not match build')
     require(manifest.get('status') == 'COMPLETE' and manifest.get('missing_source_coverage') == [],
@@ -89,23 +112,7 @@ def source_gate(manifest, revision, source=None):
     pins = json.loads((ROOT / 'scripts/source-inputs.json').read_text())
     require(manifest.get('inputs') == pins, 'source pins differ from reviewed recipe')
     require(len(pins) == 77, 'reviewed source coverage changed')
-    for pin in pins:
-        require(sha(source / pin['file']) == pin['sha256'], 'source input hash mismatch: ' + pin['file'])
-    # Inspect decompressed source payloads, not only compressed outer bytes.
-    # Generic /Users/ test fixtures are intentional; actual builder home is not.
-    private = [str(Path.home()).encode() + b'/']
-    for path in source.iterdir():
-        require(path.is_file() and not path.is_symlink(), 'nonregular source delivery input')
-        require(not any(marker in path.read_bytes() for marker in private), 'private builder root in source file')
-        if tarfile.is_tarfile(path):
-            with tarfile.open(path, mode='r|*') as archive:
-                for member in archive:
-                    require(not any(marker in (member.name + member.linkname).encode() for marker in private),
-                            'private source archive member metadata')
-                    if member.isfile():
-                        data = archive.extractfile(member).read()
-                        require(not any(marker in data for marker in private),
-                                'private builder root in source archive payload')
+    check_source_privacy(source, pins)
     require(manifest.get('source_export_excludes') == ['docs/media', 'app/assets/brand', 'scripts/__pycache__'],
             'unreviewed source exclusions')
     with tempfile.TemporaryDirectory(dir=ROOT / 'build', prefix='delivery-source-check-') as directory:

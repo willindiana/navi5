@@ -13,6 +13,7 @@ unset JELLY5_REMOTE_LOG JELLY5_LOG_HOST JELLY5_LOG_PORT NUVIO_BUILD_IMAGE EVO_RO
 export NAVI5_DEV_TOOLS=0 JELLY5_AV1=1
 python3 -B scripts/test-package-release.py
 python3 -B scripts/test-ci-release.py
+python3 -B scripts/test-source-privacy.py
 python3 -B scripts/test-prepare-ci-inputs.py
 bash scripts/setup-toolchain.sh
 eval "$(bash scripts/setup-toolchain.sh --env)"
