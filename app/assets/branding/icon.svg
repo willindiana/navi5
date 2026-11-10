@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Navi5 concept 05: Glass Note N</title>
+  <desc id="desc">AI-assisted provisional editable draft. Rounded N whose two verticals are note stems and whose feet are note heads, in smoked sage glass on pale sage. Not final branding.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#E1E8D9"/>
+      <stop offset="1" stop-color="#B6C8BE"/>
+    </linearGradient>
+    <linearGradient id="glass" gradientUnits="userSpaceOnUse" x1="120" y1="120" x2="390" y2="390">
+      <stop stop-color="#758F80"/>
+      <stop offset="0.46" stop-color="#344E43"/>
+      <stop offset="0.72" stop-color="#607D6D"/>
+      <stop offset="1" stop-color="#29483B"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-25%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#203E32" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#background)"/>
+  <!-- Group opacity keeps overlaps uniform: rim layer first, glass layer covers inner rims. -->
+  <g opacity="0.95" filter="url(#shadow)">
+    <g fill="#1D372C" stroke="#1D372C" stroke-width="6">
+      <path d="M196 330V150L356 306V150" fill="none" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="170" cy="340" rx="50" ry="35" transform="rotate(-18 170 340)"/>
+      <ellipse cx="330" cy="322" rx="50" ry="35" transform="rotate(-18 330 322)"/>
+    </g>
+    <g fill="url(#glass)">
+      <path d="M196 330V150L356 306V150" fill="none" stroke="url(#glass)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="170" cy="340" rx="50" ry="35" transform="rotate(-18 170 340)"/>
+      <ellipse cx="330" cy="322" rx="50" ry="35" transform="rotate(-18 330 322)"/>
+    </g>
+  </g>
+  <path d="M183 304V156M226 160L318 250M343 240V156" fill="none" stroke="#F0FFF0" stroke-opacity="0.42" stroke-width="5" stroke-linecap="round"/>
+  <path d="M138 336C146 320 168 314 186 318M298 318C306 302 328 296 346 300" fill="none" stroke="#F1FFF1" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round"/>
+  <path d="M150 362C172 371 199 361 208 346M310 344C332 353 359 343 368 328M210 196L340 323" fill="none" stroke="#102F24" stroke-opacity="0.32" stroke-width="4" stroke-linecap="round"/>
+</svg>

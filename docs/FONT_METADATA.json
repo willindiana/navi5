@@ -1,0 +1,317 @@
+[
+  {
+    "file": "app/assets/fonts/Inter-Bold.ttf",
+    "sha256": "288316099b1e0a47a4716d159098005eef7c0066921f34e3200393dbdb01947f",
+    "name_table": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors"
+      ],
+      "1": [
+        "Inter"
+      ],
+      "2": [
+        "Bold"
+      ],
+      "5": [
+        "Version 4.001;git-9221beed3"
+      ],
+      "8": [
+        "rsms"
+      ],
+      "9": [
+        "Rasmus Andersson"
+      ],
+      "11": [
+        "https://rsms.me/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/Inter-Medium.ttf",
+    "sha256": "97ad806f526e41546d46365bb3a393145f75b7b1568913db74549ad8b8dba872",
+    "name_table": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors"
+      ],
+      "1": [
+        "Inter Medium"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 4.001;git-9221beed3"
+      ],
+      "8": [
+        "rsms"
+      ],
+      "9": [
+        "Rasmus Andersson"
+      ],
+      "11": [
+        "https://rsms.me/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/Inter-Regular.ttf",
+    "sha256": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82",
+    "name_table": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors"
+      ],
+      "1": [
+        "Inter"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 4.001;git-9221beed3"
+      ],
+      "8": [
+        "rsms"
+      ],
+      "9": [
+        "Rasmus Andersson"
+      ],
+      "11": [
+        "https://rsms.me/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/Inter-SemiBold.ttf",
+    "sha256": "78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3",
+    "name_table": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors"
+      ],
+      "1": [
+        "Inter SemiBold"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 4.001;git-9221beed3"
+      ],
+      "8": [
+        "rsms"
+      ],
+      "9": [
+        "Rasmus Andersson"
+      ],
+      "11": [
+        "https://rsms.me/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/NotoEmoji.ttf",
+    "sha256": "de6c18832938afc99caf132b39d6a30a19bac7f2e812e28db2535b4608d27551",
+    "name_table": {
+      "0": [
+        "Copyright 2013 Google LLC"
+      ],
+      "1": [
+        "Noto Emoji"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 3.002"
+      ],
+      "8": [
+        "Google, Inc."
+      ],
+      "9": [
+        "Google, Inc."
+      ],
+      "11": [
+        "http://www.google.com/get/noto/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software."
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/NotoNaskhArabicUI-Bold.ttf",
+    "sha256": "1bdd62b362a2a26b19dbcbf34d8bdb95b58ed35522d516f50c601b5f60b2b642",
+    "name_table": {
+      "0": [
+        "Copyright 2013 Google Inc. All Rights Reserved."
+      ],
+      "1": [
+        "Noto Naskh Arabic UI"
+      ],
+      "2": [
+        "Bold"
+      ],
+      "5": [
+        "Version 1.08 uh"
+      ],
+      "8": [
+        "Monotype Imaging Inc."
+      ],
+      "9": [
+        "Monotype Design Team"
+      ],
+      "11": [
+        "http://www.google.com/get/noto/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software."
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/NotoNaskhArabicUI-Regular.ttf",
+    "sha256": "61e022fdf23df726b4fdf2e5022c166c97ec4b3846c5dbb76fc0922798a2083a",
+    "name_table": {
+      "0": [
+        "Copyright 2013 Google Inc. All Rights Reserved."
+      ],
+      "1": [
+        "Noto Naskh Arabic UI"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 1.08 uh"
+      ],
+      "8": [
+        "Monotype Imaging Inc."
+      ],
+      "9": [
+        "Monotype Design Team"
+      ],
+      "11": [
+        "http://www.google.com/get/noto/"
+      ],
+      "13": [
+        "This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software."
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/NotoSansSymbols-Subset.ttf",
+    "sha256": "822fd7854db6f52b75d66d8636cc6586a925ac6aed1ed10d961c1d16c57d8c1b",
+    "name_table": {
+      "0": [
+        "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/symbols)"
+      ],
+      "1": [
+        "Noto Sans Symbols"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 2.003; ttfautohint (v1.8.4.7-5d5b)"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/Roboto-Bold.ttf",
+    "sha256": "36f3709dea3e3ce3c6aedc058079e55980825f898f1e901d091c73c40de8bab1",
+    "name_table": {
+      "0": [
+        "Copyright 2011 Google Inc. All Rights Reserved."
+      ],
+      "1": [
+        "Roboto"
+      ],
+      "2": [
+        "Bold"
+      ],
+      "5": [
+        "Version 2.138; 2017"
+      ],
+      "8": [
+        "Google"
+      ],
+      "9": [
+        "Christian Robertson"
+      ],
+      "11": [
+        "Google.com"
+      ],
+      "13": [
+        "Licensed under the Apache License, Version 2.0"
+      ],
+      "14": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    }
+  },
+  {
+    "file": "app/assets/fonts/Roboto-Regular.ttf",
+    "sha256": "797e35f7f5d6020a5c6ea13b42ecd668bcfb3bbc4baa0e74773527e5b6cb3174",
+    "name_table": {
+      "0": [
+        "Copyright 2011 Google Inc. All Rights Reserved."
+      ],
+      "1": [
+        "Roboto"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "5": [
+        "Version 2.138; 2017"
+      ],
+      "8": [
+        "Google"
+      ],
+      "9": [
+        "Christian Robertson"
+      ],
+      "11": [
+        "Google.com"
+      ],
+      "13": [
+        "Licensed under the Apache License, Version 2.0"
+      ],
+      "14": [
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ]
+    }
+  }
+]

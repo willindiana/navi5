@@ -1,0 +1,62 @@
+/*
+ * Nuvio PS5
+ * Copyright (C) 2026 Husam Osman
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+#pragma once
+/*
+ * Remote artwork for the overlay - title logos, backdrops, episode stills -
+ * fetched and decoded (PNG, JPEG, WebP, SVG) on a worker thread, premultiplied,
+ * scaled to fit the size it will be drawn at and optionally blurred, so the
+ * render loop never waits on the network.
+ */
+#include "ui_canvas.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Starts loading url scaled to fit max_w x max_h (blur > 0: blurred by that
+ * radius after scaling). Asking again for the same url and size returns the
+ * same handle. Returns a handle >= 0, or -1 for an empty url. */
+int ui_image_request(const char *url, int max_w, int max_h, int blur);
+
+/* Jelly5: the same, fetched ahead of its first draw (the next cards of a row):
+ * after everything requested for the screen, at most 24 waiting at a time
+ * (-1 when that many already wait: asked again on a later frame). A request
+ * for the screen for the same picture moves it to the front. */
+int ui_image_prefetch(const char *url, int max_w, int max_h);
+
+/* The image once it has arrived, else NULL. *failed (optional) is set when it
+ * never will. */
+const ui_image *ui_image_get(int handle, int *failed);
+
+/* Jelly5: frees the image and its slot once it is on the GPU (the decoded
+ * pixels are the bulk of the memory). The handle stops resolving; asking for
+ * the picture again fetches it again (from the disk cache). */
+void ui_image_release(int handle);
+
+/* Jelly5: whether a handle still names its image (slots are reused; a stale
+ * handle must be requested again). */
+int ui_image_alive(int handle);
+
+/* Jelly5: a failed image is fetched again (a timeout during an outage is not
+ * forever). Returns its new handle; any other handle comes back as it is. */
+int ui_image_retry(int handle);
+
+/* Bumped whenever an image finishes, so the overlay knows to redraw. */
+unsigned ui_image_generation(void);
+
+/* Jelly5: how many pictures came from the disk cache and how many from the
+ * network since start, and the network fetches' total time (ms). */
+void ui_image_fetch_stats(int *disk, int *net, double *net_ms);
+
+/* Decodes an in-memory PNG/JPEG/WebP/SVG into a premultiplied image. */
+int ui_image_decode(const uint8_t *data, size_t size, int max_w, int max_h, ui_image *out);
+
+/* Drops every image (between playbacks). */
+void ui_image_clear(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,0 +1,3 @@
+# Verbatim upstream licence texts: keep their whitespace byte-for-byte.
+app/licenses/*.txt -whitespace
+app/licenses/*.md -whitespace

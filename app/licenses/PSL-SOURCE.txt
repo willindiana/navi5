@@ -1,0 +1,14 @@
+Public Suffix List data built into PacBrew v0.39 libpsl 0.21.5
+
+Source archive: https://github.com/rockdaboot/libpsl/releases/download/0.21.5/libpsl-0.21.5.tar.gz
+Archive SHA-256: 1dcc9ceae8b128f3c0b3f654decd0e1e891afc6ff81098f227ef260449dae208
+Member: libpsl-0.21.5/list/public_suffix_list.dat
+Member SHA-256: 8a99ee709c83a545413c0ad81033681696fddd3ed2b7296d9a88a11235fe5c6f
+Member SHA-1: d60ac92ab2057010278034ae502fe2b3d50f8068
+
+The identical SHA-1 is embedded in the pinned PacBrew static libpsl.a.
+This ties its built-in data to the source archive, not a live list download.
+Original list project: https://publicsuffix.org/list/
+MPL-2.0 text accompanies this in ca-bundle-MPL-2.0.txt.
+Matching data source accompanies the prepared source inputs; recipients may
+extract the member above. This notice does not assert a calendar snapshot date.

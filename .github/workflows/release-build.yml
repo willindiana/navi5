@@ -1,0 +1,38 @@
+name: Manual RELEASE artifact build
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        description: Store complete artifacts on this CI host (separate approval required)
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+permissions:
+  contents: read
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/beta'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang-18 lld-18 llvm-18 curl unzip zip python3 python3-venv nasm meson ninja-build pkg-config cmake git
+      - name: Build and enforce source delivery gate
+        env:
+          LLVM_CONFIG: llvm-config-18
+        run: bash scripts/ci-release.sh
+      # Never upload on failure, and never create a release or tag.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: success() && inputs.upload_artifacts == 'true'
+        with:
+          name: Navi5-v0.8.0-beta.1-${{ github.sha }}
+          path: build/ci-release/
+          if-no-files-found: error
+          retention-days: 7

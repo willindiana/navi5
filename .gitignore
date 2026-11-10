@@ -1,0 +1,10 @@
+refs/
+toolchain
+build/
+.DS_Store
+*.ffpfsc
+.env*
+app/build-assets.mk
+toolkit/.deps/
+# Local research and working notes are not published.
+private/

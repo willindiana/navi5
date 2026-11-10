@@ -1,0 +1,698 @@
+{
+  "commands": 83,
+  "headers": [
+    {
+      "header": "target/include/_ctype.h",
+      "sha256": "c36047093eaf127b3d51bec7b03bdc356a6b207be51ad65ea8669189bb6c1b51",
+      "sdk_source_matches": [
+        "freebsd/_ctype.h"
+      ]
+    },
+    {
+      "header": "target/include/arpa/inet.h",
+      "sha256": "5da0c355c4c5dd724809e107b362fef921ecf860ec107a55a3ccdde31588225f",
+      "sdk_source_matches": [
+        "freebsd/arpa/inet.h"
+      ]
+    },
+    {
+      "header": "target/include/assert.h",
+      "sha256": "d66ec78f56e38ea24b304e9168a20b7cba750a93658a6eb9ab8662517b5ede75",
+      "sdk_source_matches": [
+        "freebsd/assert.h"
+      ]
+    },
+    {
+      "header": "target/include/ctype.h",
+      "sha256": "65142b9f8347ced336de54a828541ef6381cd4bff82e192a0a2f5347c846c1e5",
+      "sdk_source_matches": [
+        "freebsd/ctype.h"
+      ]
+    },
+    {
+      "header": "target/include/dirent.h",
+      "sha256": "438f1342a822bdab93d51b9fd18dca73c9416b9be090323088f58cabf099dfe8",
+      "sdk_source_matches": [
+        "freebsd/dirent.h"
+      ]
+    },
+    {
+      "header": "target/include/errno.h",
+      "sha256": "1fefa8eba3a0eaec642e0fca02f9a7e0535cc44b0b389fb90fd84e6e41ac3bb1",
+      "sdk_source_matches": [
+        "freebsd/sys/errno.h"
+      ]
+    },
+    {
+      "header": "target/include/fcntl.h",
+      "sha256": "d41a582c3b731d1a4faffe12325f552df9be867b6bfbd6817e32d51eafd9927f",
+      "sdk_source_matches": [
+        "freebsd/sys/fcntl.h"
+      ]
+    },
+    {
+      "header": "target/include/float.h",
+      "sha256": "04d020e33bc494240bb503671f4ae351dd1d2e32a479156d28038187926c06a6",
+      "sdk_source_matches": [
+        "freebsd/machine/float.h"
+      ]
+    },
+    {
+      "header": "target/include/ifaddrs.h",
+      "sha256": "73ec5572055a1be79a3c3676e3df4c4f36313261468f22e98148b3bcc692001c",
+      "sdk_source_matches": [
+        "freebsd/ifaddrs.h"
+      ]
+    },
+    {
+      "header": "target/include/inttypes.h",
+      "sha256": "c924095cd60f0ae775d4ffad2d078c3ab2c9aedf9e34e02aa8d15d7ca48d8270",
+      "sdk_source_matches": [
+        "freebsd/inttypes.h"
+      ]
+    },
+    {
+      "header": "target/include/limits.h",
+      "sha256": "bb02d828e5ba08d401eab0eb2cde85871ce178dc65f04e02211f50c3252f09f0",
+      "sdk_source_matches": [
+        "freebsd/limits.h"
+      ]
+    },
+    {
+      "header": "target/include/locale.h",
+      "sha256": "edce59919b3a83c4c55e74e0ca04c7143fb07aa5a4b6a81237a99d05fc6268cd",
+      "sdk_source_matches": [
+        "freebsd/locale.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/_align.h",
+      "sha256": "f88e1971055e1785c9bf01ad17ee3aaba77b81f2d514e931ac30abcdd0f3eb10",
+      "sdk_source_matches": [
+        "freebsd/machine/_align.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/_inttypes.h",
+      "sha256": "a6b417668ea9641273aa6a5e8511e15af0bfeb28256918e3af4d089656ed833a",
+      "sdk_source_matches": [
+        "freebsd/machine/_inttypes.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/_limits.h",
+      "sha256": "def93e9415d66750ae3c00ada3feaa1e61f8bf8524c7d491adc743869fe82acc",
+      "sdk_source_matches": [
+        "freebsd/machine/_limits.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/_stdint.h",
+      "sha256": "b26f452e7ee438f154ebef9de66793869e62101f36eb26017726d871e3607068",
+      "sdk_source_matches": [
+        "freebsd/machine/_stdint.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/_types.h",
+      "sha256": "28a99920e25187f2db6bbf815b21e3c956a2d30cec62fef8343fcbf4f5abfd16",
+      "sdk_source_matches": [
+        "freebsd/machine/_types.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/endian.h",
+      "sha256": "1f50385d15244a95cb2d5ad34c81667e6ec01124587f8d35b97578261aa8b72c",
+      "sdk_source_matches": [
+        "freebsd/machine/endian.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/param.h",
+      "sha256": "a8ca59296049f0fa4405916af67132bcf6eb0aaa846aec105c69692d6eb653e7",
+      "sdk_source_matches": [
+        "freebsd/machine/param.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/setjmp.h",
+      "sha256": "b0413429582e0c047cb95513b1f08539117cde64ed63d910a950f75a8368ca47",
+      "sdk_source_matches": [
+        "freebsd/machine/setjmp.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/signal.h",
+      "sha256": "e79a3e9435c326a0a1c432f769704619459ae6be4077949f12625306cc243c21",
+      "sdk_source_matches": [
+        "freebsd/machine/signal.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/trap.h",
+      "sha256": "17bb71d3633a364d03eba1fb323329b4ea8e3ee683654e79721828478f45d9af",
+      "sdk_source_matches": [
+        "freebsd/machine/trap.h"
+      ]
+    },
+    {
+      "header": "target/include/machine/ucontext.h",
+      "sha256": "8fc4e5fdc61f57702bc38cd45463c2751556647c45b8dad122a1eb171f4d9128",
+      "sdk_source_matches": [
+        "freebsd/machine/ucontext.h"
+      ]
+    },
+    {
+      "header": "target/include/math.h",
+      "sha256": "e25b39974943af81a2dc67781547304b4eb65e95b5090a1baa81332b115c88df",
+      "sdk_source_matches": [
+        "freebsd/math.h"
+      ]
+    },
+    {
+      "header": "target/include/net/if.h",
+      "sha256": "367d0a155e06e9537de3241a43fa85016f8cdace4a13f740e99b821a954daeba",
+      "sdk_source_matches": [
+        "freebsd/net/if.h"
+      ]
+    },
+    {
+      "header": "target/include/netinet/in.h",
+      "sha256": "222715f1f521abb60748ef37da4919d2f0af9c6eb5561028c644ec054e329e47",
+      "sdk_source_matches": [
+        "freebsd/netinet/in.h"
+      ]
+    },
+    {
+      "header": "target/include/netinet6/in6.h",
+      "sha256": "b6e07e834f8b4b1383d10006b8b8b06e403b3167291a639f31e7b50f0cd6f531",
+      "sdk_source_matches": [
+        "freebsd/netinet6/in6.h"
+      ]
+    },
+    {
+      "header": "target/include/nl_types.h",
+      "sha256": "9067980f9cf42c852ea9b097b95fc6a20e3c76723aa82221797bb894a45d2223",
+      "sdk_source_matches": [
+        "freebsd/nl_types.h"
+      ]
+    },
+    {
+      "header": "target/include/poll.h",
+      "sha256": "a095e29e211e4b2445655bafbaf247bd8be1755a3e947e7c9d1b22fd08a3b4da",
+      "sdk_source_matches": [
+        "freebsd/sys/poll.h"
+      ]
+    },
+    {
+      "header": "target/include/ps5/kernel.h",
+      "sha256": "641b2c0cb63de64ec090fd6498a3b1c28a4077c9115e1889d9f85073552d2be3",
+      "sdk_source_matches": [
+        "ps5/kernel.h"
+      ]
+    },
+    {
+      "header": "target/include/pthread.h",
+      "sha256": "b8c84af542d20ed52124d7aa7df65a3b0c50ce8030dc5f54af0465115750fa18",
+      "sdk_source_matches": [
+        "freebsd/pthread.h"
+      ]
+    },
+    {
+      "header": "target/include/pthread_np.h",
+      "sha256": "dc5ba0b2778b29288b8ec2f223a27a54ad1f5f878614bbe4536198430bd7ce0d",
+      "sdk_source_matches": [
+        "freebsd/pthread_np.h"
+      ]
+    },
+    {
+      "header": "target/include/runetype.h",
+      "sha256": "2171252d2d1e1bd529bb7a50702c9a4044d9710953d2da9a52f923584e5fee21",
+      "sdk_source_matches": [
+        "freebsd/runetype.h"
+      ]
+    },
+    {
+      "header": "target/include/sched.h",
+      "sha256": "84d333b2a249a3bb6ecf132024c014e9f83ac91c65ad2ce032106064c6484b21",
+      "sdk_source_matches": [
+        "freebsd/sys/sched.h"
+      ]
+    },
+    {
+      "header": "target/include/setjmp.h",
+      "sha256": "3fbd776f7061bbf9732549e59ef39e17e8547247e4a0fc752fdbe011cd92c392",
+      "sdk_source_matches": [
+        "freebsd/setjmp.h"
+      ]
+    },
+    {
+      "header": "target/include/signal.h",
+      "sha256": "e2a4c84f7380f4421889c221d247f829f6edfb0b261feec7a2764a93f5b14ec6",
+      "sdk_source_matches": [
+        "freebsd/signal.h"
+      ]
+    },
+    {
+      "header": "target/include/stdarg.h",
+      "sha256": "3647906a70897141edc23de99498b002ce767a054e7061f94c1cf2d435d1d440",
+      "sdk_source_matches": [
+        "freebsd/machine/stdarg.h"
+      ]
+    },
+    {
+      "header": "target/include/stdbool.h",
+      "sha256": "819584301a83a8f0f3e2502228e65beb12bf9559bc8f549b84acdc9dcb3934ec",
+      "sdk_source_matches": [
+        "freebsd/stdbool.h"
+      ]
+    },
+    {
+      "header": "target/include/stddef.h",
+      "sha256": "f9b87dcef55880afd5c33d06c6da4e7621b3b86253096310139137ae38e75f69",
+      "sdk_source_matches": [
+        "freebsd/stddef.h"
+      ]
+    },
+    {
+      "header": "target/include/stdint.h",
+      "sha256": "7959fedbccd25ff491378e21adde00ff30a4f114abfd6919b1f280503eb59174",
+      "sdk_source_matches": [
+        "freebsd/sys/stdint.h"
+      ]
+    },
+    {
+      "header": "target/include/stdio.h",
+      "sha256": "1e0b639eb07c7098f6618b782df76cef37356f1d8d3e1fb7fdeebae9f36b6618",
+      "sdk_source_matches": [
+        "freebsd/stdio.h"
+      ]
+    },
+    {
+      "header": "target/include/stdlib.h",
+      "sha256": "13f957e42e795b6c364959cf239c63daf6cab204349fdae7b5be772babab6a82",
+      "sdk_source_matches": [
+        "freebsd/stdlib.h"
+      ]
+    },
+    {
+      "header": "target/include/string.h",
+      "sha256": "f87d89ae675a01333634a9965562778cbc26abce696ef304266f3a2efae98693",
+      "sdk_source_matches": [
+        "freebsd/string.h"
+      ]
+    },
+    {
+      "header": "target/include/strings.h",
+      "sha256": "609dd67f6e79412d92874df5968ec8e359fbb62f85c658d36a1fe9eaebf24fe6",
+      "sdk_source_matches": [
+        "freebsd/strings.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_bitset.h",
+      "sha256": "162dd50838f442a0c3096150610e03eb74b88684caf1677d23fee403050ead15",
+      "sdk_source_matches": [
+        "freebsd/sys/_bitset.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_cpuset.h",
+      "sha256": "6ba9bc8aded8288fc2548eb5fdd6b6b10a616c84e37d52790f546a502a31accc",
+      "sdk_source_matches": [
+        "freebsd/sys/_cpuset.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_iovec.h",
+      "sha256": "9d7e2dd57fca764186f12b0a1e635fc306a9992dffeabf2e66e13dfef4fe1436",
+      "sdk_source_matches": [
+        "freebsd/sys/_iovec.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_null.h",
+      "sha256": "a99eb389e85e6670342c944eec802a42d65044c684100f1a4960a3778d34a97b",
+      "sdk_source_matches": [
+        "freebsd/sys/_null.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_pthreadtypes.h",
+      "sha256": "116216248126e80b1b727666c3a63ff76dc25df52482053516af7753beb73d3f",
+      "sdk_source_matches": [
+        "freebsd/sys/_pthreadtypes.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_sigset.h",
+      "sha256": "910da11ab45558cb313fc9095c2270a6ee5ed59dd7cbad4fcffb848a38030c5d",
+      "sdk_source_matches": [
+        "freebsd/sys/_sigset.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_sockaddr_storage.h",
+      "sha256": "5682f60d2d95d9db5cae02ff4c860f4f5736747012d130cdffe30bb707d5a9fd",
+      "sdk_source_matches": [
+        "freebsd/sys/_sockaddr_storage.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_stdint.h",
+      "sha256": "67671ac35e1f81ecf45e65bc67c7f9cff646a35f1d42a13ac89319fac0d6161a",
+      "sdk_source_matches": [
+        "freebsd/sys/_stdint.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_timespec.h",
+      "sha256": "ffbc661bc94d6cb7f792620195d27e632f8a8ffbdf50be34eee6ccc6043b32aa",
+      "sdk_source_matches": [
+        "freebsd/sys/_timespec.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_timeval.h",
+      "sha256": "5be80e2278ab4e0f29e4fd8af30dc28159926f059f82513b68d4acab890c5074",
+      "sdk_source_matches": [
+        "freebsd/sys/_timeval.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_types.h",
+      "sha256": "2f8550bf75580c2685100d3da694da2bd8fa162a19bc94055568bf580b75ce93",
+      "sdk_source_matches": [
+        "freebsd/sys/_types.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/_ucontext.h",
+      "sha256": "e80395096e88d4595cfd5461b7ee1e7daa21a34f0c1a3a7cd9095325d4a7ad43",
+      "sdk_source_matches": [
+        "freebsd/sys/_ucontext.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/bitset.h",
+      "sha256": "c6d82380ff34d1fab1f2880c5a588b6bd7114840df44d8952384e55418afeb9f",
+      "sdk_source_matches": [
+        "freebsd/sys/bitset.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/cdefs.h",
+      "sha256": "4d57a1bc5c6cd4b0b0ae8d2d4d1486f868c03aeea02049610a49ce65a1f005b3",
+      "sdk_source_matches": [
+        "freebsd/sys/cdefs.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/cpuset.h",
+      "sha256": "ed91edae9f544a68f0ad8bb331dcb3a8ef7a395a14892ecdcaae757b3da8bc60",
+      "sdk_source_matches": [
+        "freebsd/sys/cpuset.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/dirent.h",
+      "sha256": "8e43c428f51c19e6b32b23ea2460ab5774f52e7e0cdb04e4b51aa0c555e3b93b",
+      "sdk_source_matches": [
+        "freebsd/sys/dirent.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/limits.h",
+      "sha256": "9e5af188cfbd9ca8d3d514f92e4b3ef218a018f66fab4d29f7c8fc81c0f248a4",
+      "sdk_source_matches": [
+        "freebsd/sys/limits.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/param.h",
+      "sha256": "5320b88e72409c38ee5a5673783a9182e2e3136d0aedaa31c7af94dff286ca25",
+      "sdk_source_matches": [
+        "freebsd/sys/param.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/select.h",
+      "sha256": "705983f0088caabacf0d9ea3b5ec1550e96231a79a223f5945644fdfa78e0425",
+      "sdk_source_matches": [
+        "freebsd/sys/select.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/signal.h",
+      "sha256": "8942fcbd8d9c99ad5ffce3ce78c65786c45d672322e92bc0bc1e181971b7367a",
+      "sdk_source_matches": [
+        "freebsd/sys/signal.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/socket.h",
+      "sha256": "5dc1783b68e9790d6b07fd694e6e1b05d0c1fe6e0c467c1d0dec76c2767d096c",
+      "sdk_source_matches": [
+        "freebsd/sys/socket.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/stat.h",
+      "sha256": "33b19ac8d547c631f656b707fe2d6f737813884176aca1f71d593a35f3fd8365",
+      "sdk_source_matches": [
+        "freebsd/sys/stat.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/stdint.h",
+      "sha256": "7959fedbccd25ff491378e21adde00ff30a4f114abfd6919b1f280503eb59174",
+      "sdk_source_matches": [
+        "freebsd/sys/stdint.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/syslimits.h",
+      "sha256": "109cc538df651767d5ce07b5f38be42e864fd0c53fdf2496c468f77eb0374f5f",
+      "sdk_source_matches": [
+        "freebsd/sys/syslimits.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/time.h",
+      "sha256": "af814fb3b76c2934b0fae7d29e6ce56f64853b344f4ce5dad209bd461aca7427",
+      "sdk_source_matches": [
+        "freebsd/sys/time.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/timespec.h",
+      "sha256": "3541c41894e5357a509224cc4f168ad0d2d36fd12396e81c8cf949735d42cf33",
+      "sdk_source_matches": [
+        "freebsd/sys/timespec.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/types.h",
+      "sha256": "8c3c5962287dd7f23683f8c77563f79010f5eb874280953d852e07dab7de6fdd",
+      "sdk_source_matches": [
+        "freebsd/sys/types.h"
+      ]
+    },
+    {
+      "header": "target/include/sys/unistd.h",
+      "sha256": "80305ed345b9b43186d57a736c456aceab0f9c8987e20f6cf57c5244e52e4959",
+      "sdk_source_matches": [
+        "freebsd/sys/unistd.h"
+      ]
+    },
+    {
+      "header": "target/include/time.h",
+      "sha256": "1d3518b38a3ac3cd40308702e42ab7939fcad4357f58d85f5e12d91860fc6665",
+      "sdk_source_matches": [
+        "freebsd/time.h"
+      ]
+    },
+    {
+      "header": "target/include/ucontext.h",
+      "sha256": "82ad2f49b7a5249d3346abdd2758e37cbb2d22f4e6ffc60fbe6220ea26d847a9",
+      "sdk_source_matches": [
+        "freebsd/sys/ucontext.h"
+      ]
+    },
+    {
+      "header": "target/include/unistd.h",
+      "sha256": "a69fe86ee9267af53ededa0b3013dd2e62bc835ca5a6cbde151f78389063f20b",
+      "sdk_source_matches": [
+        "freebsd/unistd.h"
+      ]
+    },
+    {
+      "header": "target/include/wchar.h",
+      "sha256": "f6b24ec722ea6314b1f53ab0fadea79bd4e67c423fbb450acfcb1983badab75f",
+      "sdk_source_matches": [
+        "freebsd/wchar.h"
+      ]
+    },
+    {
+      "header": "target/include/wctype.h",
+      "sha256": "eae6171a4166b4cf3331b3c55820b040d760186f249aa629f791effaa5c48763",
+      "sdk_source_matches": [
+        "freebsd/wctype.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/_align.h",
+      "sha256": "626914211771b4efe1e6605c1e1a3d99ff7e656c2957272551a84c4b3ad95520",
+      "sdk_source_matches": [
+        "freebsd/x86/_align.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/_inttypes.h",
+      "sha256": "2a94c44f25070e2c9462bd2ff15a176a4d880f876e0adfb60288327efca371e6",
+      "sdk_source_matches": [
+        "freebsd/x86/_inttypes.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/_limits.h",
+      "sha256": "46e8ac5bd498f07c0ad68452f4bc8675d6cb26fb375fd22251541cc9e30760de",
+      "sdk_source_matches": [
+        "freebsd/x86/_limits.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/_stdint.h",
+      "sha256": "bf8f518683a8c0d6aa269dfabf473d4d8840050cf9ebcbf58f6f9cb360a145ff",
+      "sdk_source_matches": [
+        "freebsd/x86/_stdint.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/_types.h",
+      "sha256": "65976701a171449e759e8b53f491fb3df47a098f8d80eb1bda0213b5e19f4131",
+      "sdk_source_matches": [
+        "freebsd/x86/_types.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/endian.h",
+      "sha256": "786900a84764b9742e3050aafba4fc479d07c73a6b0c998bd93f8c2b0dba5ee6",
+      "sdk_source_matches": [
+        "freebsd/x86/endian.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/float.h",
+      "sha256": "ff466dc397350f87f58f34505f5842a5c3a26bae48dd6c227ba5fd97c721dc84",
+      "sdk_source_matches": [
+        "freebsd/x86/float.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/setjmp.h",
+      "sha256": "c40404b7d41348ccd080489c507347a78fe3879d83e483e2f6fdb48ec7c5e4f0",
+      "sdk_source_matches": [
+        "freebsd/x86/setjmp.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/signal.h",
+      "sha256": "3fa59ba086a1f11e394d9a70cf4c8304d88cdbd6da277c708e6f49d9a585b3e9",
+      "sdk_source_matches": [
+        "freebsd/x86/signal.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/stdarg.h",
+      "sha256": "6967beeb289abdc3574d1d629bc945a4df31ef05f3f7631b27a456ce9f910840",
+      "sdk_source_matches": [
+        "freebsd/x86/stdarg.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/trap.h",
+      "sha256": "8096d4d52d80807026d02c4b88cba80090e3a14c1bac6bd5fe49994a67153d14",
+      "sdk_source_matches": [
+        "freebsd/x86/trap.h"
+      ]
+    },
+    {
+      "header": "target/include/x86/ucontext.h",
+      "sha256": "79c563fa40548bb5af5e16300fd715f4bf73b74f685b2de111305fd0763b6b9e",
+      "sdk_source_matches": [
+        "freebsd/x86/ucontext.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale.h",
+      "sha256": "838adfd14ad534f79118b07cb2147011550bb30634ffdb71d2452939dec3e3b5",
+      "sdk_source_matches": [
+        "freebsd/xlocale.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_ctype.h",
+      "sha256": "44043cb01fa086f5b259478121db3be34961c03861fd9f42a9eda38ac343ca79",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_ctype.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_inttypes.h",
+      "sha256": "1c5db33b69674e9fc08780f8f35c9871ccfb3b2c7878fb3d8e1f5a6cebb7fc13",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_inttypes.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_locale.h",
+      "sha256": "9eb4d8e7c388c283adc8d198937449ccd35f1871e96a212ea6e5bfe05ae2920a",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_locale.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_stdio.h",
+      "sha256": "c1c9038cc79e08ae75b995c8a9c19692f6ceda5d7ce301e20e33d5bafb82a482",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_stdio.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_stdlib.h",
+      "sha256": "bcd5862ca3d97b15057e2e5004874d3efce132d57984120abc462bac5a2929ff",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_stdlib.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_string.h",
+      "sha256": "6f24ae28a1a56883dd004b56738ff4fc809fe3485103ef1a0160b36982d5c873",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_string.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_strings.h",
+      "sha256": "b05d977c9ac2d8a76d94093f10b2e6aaf69e1be237baf3711b8798638b994d4b",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_strings.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_time.h",
+      "sha256": "2f99046ab296d903a932c47e35285143b291b1f6263a1d8a8844d1dfe662672e",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_time.h"
+      ]
+    },
+    {
+      "header": "target/include/xlocale/_wchar.h",
+      "sha256": "b1ba22d6ef75ac6533d69c298722bde3897d8974673e60bc753472b3a4459942",
+      "sdk_source_matches": [
+        "freebsd/xlocale/_wchar.h"
+      ]
+    }
+  ]
+}

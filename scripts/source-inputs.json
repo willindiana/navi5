@@ -1,0 +1,451 @@
+[
+  {
+    "file": "babel-2.18.0.tar.gz",
+    "sha256": "b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d",
+    "source": "https://files.pythonhosted.org/packages/7d/b2/51899539b6ceeeb420d40ed3cd4b7a40519404f9baf3d4ac99dc413a834b/babel-2.18.0.tar.gz"
+  },
+  {
+    "file": "pycountry-24.6.1.tar.gz",
+    "sha256": "b61b3faccea67f87d10c1f2b0fc0be714409e8fcdcc1315613174f6466c10221",
+    "source": "https://files.pythonhosted.org/packages/76/57/c389fa68c50590881a75b7883eeb3dc15e9e73a0fdc001cdd45c13290c92/pycountry-24.6.1.tar.gz"
+  },
+  {
+    "file": "fribidi-1.0.15.tar.xz",
+    "sha256": "0bbc7ff633bfa208ae32d7e369cf5a7d20d5d2557a0b067c9aa98bcbf9967587",
+    "source": "https://github.com/fribidi/fribidi/releases/download/v1.0.15/fribidi-1.0.15.tar.xz"
+  },
+  {
+    "file": "libiconv-1.17.tar.gz",
+    "sha256": "8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313",
+    "source": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz"
+  },
+  {
+    "file": "libpsl-0.21.5.tar.gz",
+    "sha256": "1dcc9ceae8b128f3c0b3f654decd0e1e891afc6ff81098f227ef260449dae208",
+    "source": "https://github.com/rockdaboot/libpsl/releases/download/0.21.5/libpsl-0.21.5.tar.gz"
+  },
+  {
+    "file": "pacbrew-58ac3742a927ec8a1d9103ecb5b729b0a8f6bb7b.tar.gz",
+    "sha256": "94df36b944962ee565cf2424ee03039b7fbe1667acd05a1a89c6949a4850da25",
+    "source": "https://codeload.github.com/ps5-payload-dev/pacbrew-repo/tar.gz/58ac3742a927ec8a1d9103ecb5b729b0a8f6bb7b"
+  },
+  {
+    "file": "sdk-d9c9519116944a7f1c22d262012c53b80b3520b7.tar.gz",
+    "sha256": "44b541e77eef201afb4fbb6b32af9b97a4cdf893fc2d944d228ff46a8235fd10",
+    "source": "https://codeload.github.com/ps5-payload-dev/sdk/tar.gz/d9c9519116944a7f1c22d262012c53b80b3520b7"
+  },
+  {
+    "file": "ffmpeg-7.1.1.tar.xz",
+    "sha256": "733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1",
+    "source": "https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz"
+  },
+  {
+    "file": "dav1d-1.5.1.tar.xz",
+    "sha256": "401813f1f89fa8fd4295805aa5284d9aed9bc7fc1fdbe554af4292f64cbabe21",
+    "source": "https://downloads.videolan.org/pub/videolan/dav1d/1.5.1/dav1d-1.5.1.tar.xz"
+  },
+  {
+    "file": "curl-8.18.0.tar.xz",
+    "sha256": "40df79166e74aa20149365e11ee4c798a46ad57c34e4f68fd13100e2c9a91946",
+    "source": "https://curl.haxx.se/download/curl-8.18.0.tar.xz",
+    "recipe": "curl/PKGBUILD"
+  },
+  {
+    "file": "bzip2-1.0.8.tar.gz",
+    "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
+    "source": "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz",
+    "recipe": "bzip2/PKGBUILD"
+  },
+  {
+    "file": "freetype-2.13.2.tar.gz",
+    "sha256": "1ac27e16c134a7f2ccea177faba19801131116fd682efc1f5737037c5db224b5",
+    "source": "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.gz",
+    "recipe": "freetype/PKGBUILD"
+  },
+  {
+    "file": "harfbuzz-9.0.0.tar.xz",
+    "sha256": "a41b272ceeb920c57263ec851604542d9ec85ee3030506d94662067c7b6ab89e",
+    "source": "https://github.com/harfbuzz/harfbuzz/releases/download/9.0.0/harfbuzz-9.0.0.tar.xz",
+    "recipe": "harfbuzz/PKGBUILD"
+  },
+  {
+    "file": "libjpeg-turbo-3.0.2.tar.gz",
+    "sha256": "c2ce515a78d91b09023773ef2770d6b0df77d674e144de80d63e0389b3a15ca6",
+    "source": "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.2/libjpeg-turbo-3.0.2.tar.gz",
+    "recipe": "libjpeg-turbo/PKGBUILD",
+    "checksum_evidence": "locally hashed HTTPS release; recipe uses SKIP, not independently authenticated"
+  },
+  {
+    "file": "libpng-1.6.43.tar.xz",
+    "sha256": "6a5ca0652392a2d7c9db2ae5b40210843c0bbc081cbd410825ab00cc59f14a6c",
+    "source": "https://download.sourceforge.net/libpng/libpng-1.6.43.tar.xz",
+    "recipe": "libpng/PKGBUILD"
+  },
+  {
+    "file": "libwebp-1.4.0.tar.gz",
+    "sha256": "61f873ec69e3be1b99535634340d5bde750b2e4447caa1db9f61be3fd49ab1e5",
+    "source": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.4.0.tar.gz",
+    "recipe": "libwebp/PKGBUILD"
+  },
+  {
+    "file": "zlib-1.3.2.tar.gz",
+    "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+    "source": "https://zlib.net/fossils/zlib-1.3.2.tar.gz",
+    "recipe": "zlib/PKGBUILD"
+  },
+  {
+    "file": "zstd-1.5.6.tar.gz",
+    "sha256": "8c29e06cf42aacc1eafc4077ae2ec6c6fcb96a626157e0593d5e82a34fd403c1",
+    "source": "https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz",
+    "recipe": "zstd/PKGBUILD"
+  },
+  {
+    "file": "xz-5.4.6.tar.xz",
+    "sha256": "b92d4e3a438affcf13362a1305cd9d94ed47ddda22e456a42791e630a5644f5c",
+    "source": "https://github.com/tukaani-project/xz/releases/download/v5.4.6/xz-5.4.6.tar.xz",
+    "recipe": "xz/PKGBUILD"
+  },
+  {
+    "file": "openssl-3.5.2.tar.gz",
+    "sha256": "c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec",
+    "source": "https://github.com/openssl/openssl/releases/download/openssl-3.5.2/openssl-3.5.2.tar.gz",
+    "recipe": "openssl/PKGBUILD"
+  },
+  {
+    "file": "openlibm-0.8.6.tar.gz",
+    "sha256": "347998968cfeb2f9b91de6a8e85d2ba92dec0915d53500a4bc483e056f85b94c",
+    "source": "https://github.com/JuliaMath/openlibm/archive/refs/tags/v0.8.6.tar.gz",
+    "recipe": "openlibm/PKGBUILD"
+  },
+  {
+    "file": "musl-1.2.5.tar.gz",
+    "sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+    "source": "https://musl.libc.org/releases/musl-1.2.5.tar.gz",
+    "checksum_evidence": "locally hashed HTTPS source; comparison reference, not claimed SDK import revision"
+  },
+  {
+    "file": "libcxx-18.1.8.src.tar.xz",
+    "sha256": "bdecf90be0072bc720fd5c9c8ab061cdb197edd0c8ad3e170dc3e6bfaa49f388",
+    "source": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/libcxx-18.1.8.src.tar.xz"
+  },
+  {
+    "file": "libcxxabi-18.1.8.src.tar.xz",
+    "sha256": "256c30d724eeb72713bc08ae1692f53aaf4ebe8a1d662c92bf59e69d6c53dce9",
+    "source": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/libcxxabi-18.1.8.src.tar.xz"
+  },
+  {
+    "file": "libunwind-18.1.8.src.tar.xz",
+    "sha256": "c31577d16978b0da0e472ef751f74893a5b459a7ea4a383b75f7ab93cf1e6877",
+    "source": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/libunwind-18.1.8.src.tar.xz"
+  },
+  {
+    "file": "cmake-18.1.8.src.tar.xz",
+    "sha256": "59badef592dd34893cd319d42b323aaa990b452d05c7180ff20f23ab1b41e837",
+    "source": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/cmake-18.1.8.src.tar.xz"
+  },
+  {
+    "file": "runtimes-18.1.8.src.tar.xz",
+    "sha256": "9997c2e91e5438e2963306ba5019d85b5384b467535632738d8670ced8f07cb3",
+    "source": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/runtimes-18.1.8.src.tar.xz"
+  },
+  {
+    "file": "llvm-18.1.8-LICENSE.TXT",
+    "sha256": "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/LICENSE.TXT",
+    "llvm_path": "llvm/LICENSE.TXT"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-README",
+    "sha256": "3024d25ed9aef73c2520cb95a1975e9c2fa33ec8a1e12f03c5dcb321269d4c51",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/README",
+    "llvm_path": "llvm/cmake/README"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-config-ix.cmake",
+    "sha256": "8529d7fad964268042e0b8a364be9ba2b45a18b5ac74757bf49baef2f5ff49d6",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/config-ix.cmake",
+    "llvm_path": "llvm/cmake/config-ix.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-config.guess",
+    "sha256": "3088fa29112ac4e7e4fb25d3afa195c22952054d4beff4926d6e065212c6f12a",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/config.guess",
+    "llvm_path": "llvm/cmake/config.guess"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-dummy.cpp",
+    "sha256": "3415b7e1d86a0df94d6c7731e4acda65e954190ea7e42bb0d70192d974a94e7e",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/dummy.cpp",
+    "llvm_path": "llvm/cmake/dummy.cpp"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-AddLLVM.cmake",
+    "sha256": "01f24b045ec69a7f330e13746edd85e5025c58ddbf5419033d58239429ba28cd",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/AddLLVM.cmake",
+    "llvm_path": "llvm/cmake/modules/AddLLVM.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-AddOCaml.cmake",
+    "sha256": "e62e7132a697c6f2f13e2f79453fb90577f573e97b4c3f2e76772e75ec9a6e4b",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/AddOCaml.cmake",
+    "llvm_path": "llvm/cmake/modules/AddOCaml.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-AddSphinxTarget.cmake",
+    "sha256": "0019d5de31657999de0ccc986b32dd7b0ca694168f37a5c3757078419dde3f28",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/AddSphinxTarget.cmake",
+    "llvm_path": "llvm/cmake/modules/AddSphinxTarget.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CMakeLists.txt",
+    "sha256": "4e267c7eb0e9cd3a5c2c8bc1420e437ff15bcd78fbd1990f1042230a8375cb4c",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CMakeLists.txt",
+    "llvm_path": "llvm/cmake/modules/CMakeLists.txt"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CheckAtomic.cmake",
+    "sha256": "69f60d47fe7238f6828529adc7be610c2c77454f9f0626c405876922e98f7afd",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CheckAtomic.cmake",
+    "llvm_path": "llvm/cmake/modules/CheckAtomic.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CheckCompilerVersion.cmake",
+    "sha256": "dda8788146eaf464f7f6070f30dda54eb6459305b3e8a909420efab40f0a3917",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CheckCompilerVersion.cmake",
+    "llvm_path": "llvm/cmake/modules/CheckCompilerVersion.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CheckProblematicConfigurations.cmake",
+    "sha256": "17eec4c4d79b0455eb3dac957bef7262c8717f64ba9b4760daca0f615b02aa99",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CheckProblematicConfigurations.cmake",
+    "llvm_path": "llvm/cmake/modules/CheckProblematicConfigurations.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CoverageReport.cmake",
+    "sha256": "47ab88f15262587ae101dd572f7bfe7a366dde6c255fe656940f002c26a89bfb",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CoverageReport.cmake",
+    "llvm_path": "llvm/cmake/modules/CoverageReport.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-CrossCompile.cmake",
+    "sha256": "fde8407af75b76a1ec498065d462023e49f89abea72a90eff3de66a52a7fedd4",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/CrossCompile.cmake",
+    "llvm_path": "llvm/cmake/modules/CrossCompile.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-DetermineGCCCompatible.cmake",
+    "sha256": "a163d7c75bcd9694feb57367c962b88a7023cc120a0338383ffc6b2f57cabf38",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/DetermineGCCCompatible.cmake",
+    "llvm_path": "llvm/cmake/modules/DetermineGCCCompatible.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindFFI.cmake",
+    "sha256": "acbb5f2991a63b7d076e095c63c253fdae1c117accc0dd32b41ae59a7f435304",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindFFI.cmake",
+    "llvm_path": "llvm/cmake/modules/FindFFI.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindLibEdit.cmake",
+    "sha256": "9b8f3ca9c328786746eea9b3f3b51c38ee078af3c87cdbfe0735cb4781551f5d",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindLibEdit.cmake",
+    "llvm_path": "llvm/cmake/modules/FindLibEdit.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindLibpfm.cmake",
+    "sha256": "535f90a113021096102cf8c5fedb98cb0e18c6e2a634f384aab15597a69ad498",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindLibpfm.cmake",
+    "llvm_path": "llvm/cmake/modules/FindLibpfm.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindOCaml.cmake",
+    "sha256": "f27a5cb89ad1322240382c99f41df5a6606d325c94a66b6126fe8d12d112e6c1",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindOCaml.cmake",
+    "llvm_path": "llvm/cmake/modules/FindOCaml.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindSphinx.cmake",
+    "sha256": "579bac18bd2bb1472ff3dd2ed996f1a9245fdbc4573832955f5580ddfc14cf0d",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindSphinx.cmake",
+    "llvm_path": "llvm/cmake/modules/FindSphinx.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindTerminfo.cmake",
+    "sha256": "90ad9c0bf13daf7de7220b0224f709ca8c3ac00e63555bcb66a94e52653238d6",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindTerminfo.cmake",
+    "llvm_path": "llvm/cmake/modules/FindTerminfo.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-FindZ3.cmake",
+    "sha256": "0413b4e7b5d6dd064a4644e1b19af9b3cbde224e1b07782ca83b6c372a68f302",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/FindZ3.cmake",
+    "llvm_path": "llvm/cmake/modules/FindZ3.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-Findzstd.cmake",
+    "sha256": "4fb579be270cd66148d246225f004eef5ce2e299f7878494c5b5d32764a8af52",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/Findzstd.cmake",
+    "llvm_path": "llvm/cmake/modules/Findzstd.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-GenerateVersionFromVCS.cmake",
+    "sha256": "82e557440ce1513557a9ba60b46ca86ed056df852b09b7f02f3667210b1dc218",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/GenerateVersionFromVCS.cmake",
+    "llvm_path": "llvm/cmake/modules/GenerateVersionFromVCS.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-GetErrcMessages.cmake",
+    "sha256": "4a341aaeafbbed52073a0659ee54461b3642a6c9489d83da33b54357e6f41817",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/GetErrcMessages.cmake",
+    "llvm_path": "llvm/cmake/modules/GetErrcMessages.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-GetHostTriple.cmake",
+    "sha256": "05a0861f9b37db628698eabcc20231ec1268d491b3ebdcfe2668f837fe57d08e",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/GetHostTriple.cmake",
+    "llvm_path": "llvm/cmake/modules/GetHostTriple.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-GetLibraryName.cmake",
+    "sha256": "e83da114460f29a98050810decc3d76784664c84a3e2359bd29c402bae8a874a",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/GetLibraryName.cmake",
+    "llvm_path": "llvm/cmake/modules/GetLibraryName.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-HandleLLVMOptions.cmake",
+    "sha256": "94b4b4dee52b99c141b1a4a09044f5f413e3259404074d0de68947cc414e13d5",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/HandleLLVMOptions.cmake",
+    "llvm_path": "llvm/cmake/modules/HandleLLVMOptions.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-HandleLLVMStdlib.cmake",
+    "sha256": "b3dc309d3c971dfb79bada0a3a0e1cff56ee512bba05b9f6ac72e1ad2cdd356c",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/HandleLLVMStdlib.cmake",
+    "llvm_path": "llvm/cmake/modules/HandleLLVMStdlib.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVM-Build.cmake",
+    "sha256": "d99cffbb8fba80cd28562d79873a3c06d52aab30d7aea1c930560778b936a655",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVM-Build.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVM-Build.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVM-Config.cmake",
+    "sha256": "40fe49ca6ca76859c4de1223f4cff16c374dfbf2470c8db4ef3a70859e5864d2",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVM-Config.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVM-Config.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMCheckLinkerFlag.cmake",
+    "sha256": "288facba62e0536ba24428c7e928e1dde212709a2d5be4dc6d641cf9f739c42a",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMCheckLinkerFlag.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVMCheckLinkerFlag.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMConfig.cmake.in",
+    "sha256": "9308dee4053b5862ed3ceb1f2a0a85986a07167ea5de682ca4f4e2b1a5bb2097",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMConfig.cmake.in",
+    "llvm_path": "llvm/cmake/modules/LLVMConfig.cmake.in"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMConfigVersion.cmake.in",
+    "sha256": "3c1abde6d55529016526aa6e85becff229648ffa49bb57b0d70785cd7f11cc11",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMConfigVersion.cmake.in",
+    "llvm_path": "llvm/cmake/modules/LLVMConfigVersion.cmake.in"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMDistributionSupport.cmake",
+    "sha256": "1b368a630e22a4fd5b13a4c9468cc4bab8ab4012fb0de9dd3cacde5a1bc26d64",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMDistributionSupport.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVMDistributionSupport.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMExternalProjectUtils.cmake",
+    "sha256": "494ef0c05ccc6f56e0b4f5b997bab8e474da97814d909ab3bc8ae111e31bffb8",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMExternalProjectUtils.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVMExternalProjectUtils.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMInstallSymlink.cmake",
+    "sha256": "1dfe06be235db963859b3c9d5e0c133612c3aaabeb0196c17f7d6e3a66385530",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMInstallSymlink.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVMInstallSymlink.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-LLVMProcessSources.cmake",
+    "sha256": "4820665700d033b8ce654c386d6021e80bf77f0a3b9958eb11ca5397c919e9ab",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/LLVMProcessSources.cmake",
+    "llvm_path": "llvm/cmake/modules/LLVMProcessSources.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-TableGen.cmake",
+    "sha256": "b8a4383de7d57e500b644337a276c0dcadf136147f73315c9aff46f96338446f",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/TableGen.cmake",
+    "llvm_path": "llvm/cmake/modules/TableGen.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-TensorFlowCompile.cmake",
+    "sha256": "61e6a599d421351065c1bd5aef6a1a57c7d38b1f7ccc603c388605f0fa7a4991",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/TensorFlowCompile.cmake",
+    "llvm_path": "llvm/cmake/modules/TensorFlowCompile.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-UseLibtool.cmake",
+    "sha256": "c88d3cff98cd1cf5d2f0bd9fbf4a3af0177c7a0a37277b4335cc19923ed47d3b",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/UseLibtool.cmake",
+    "llvm_path": "llvm/cmake/modules/UseLibtool.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-VersionFromVCS.cmake",
+    "sha256": "25237009ef66de60b44a8bada3ad5219cf67a7a415fac72479d060abf71685f2",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/VersionFromVCS.cmake",
+    "llvm_path": "llvm/cmake/modules/VersionFromVCS.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-modules-llvm-driver-template.cpp.in",
+    "sha256": "e3c4625666383376c9ef08cd90950351171f1ed55f84a7e67b157300ec145832",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/modules/llvm-driver-template.cpp.in",
+    "llvm_path": "llvm/cmake/modules/llvm-driver-template.cpp.in"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-nsis_icon.ico",
+    "sha256": "3363560105b156ef3c18aad1b3be4e27d42a7a3c62a3c41efc9f2a5fcd36343c",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/nsis_icon.ico",
+    "llvm_path": "llvm/cmake/nsis_icon.ico"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-nsis_logo.bmp",
+    "sha256": "6cd903320b42248cf565fbb58545c991171d1d0409ddec4810137fc98ee2e9c0",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/nsis_logo.bmp",
+    "llvm_path": "llvm/cmake/nsis_logo.bmp"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-platforms-Android.cmake",
+    "sha256": "3281ad5179dcc4c53712b06d26332d83bd126650a5dab9b69701b6266556b6d8",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/platforms/Android.cmake",
+    "llvm_path": "llvm/cmake/platforms/Android.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-platforms-ClangClCMakeCompileRules.cmake",
+    "sha256": "6166994e9bf8cd8eefdf6f05e9de3e48ed1e9cd1ea2b398ef41536b98677eefa",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/platforms/ClangClCMakeCompileRules.cmake",
+    "llvm_path": "llvm/cmake/platforms/ClangClCMakeCompileRules.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-platforms-WinMsvc.cmake",
+    "sha256": "401387942f50a3d649b7595f9491c490ea07f81573cda70a41f1a55b70457628",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/platforms/WinMsvc.cmake",
+    "llvm_path": "llvm/cmake/platforms/WinMsvc.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-platforms-iOS.cmake",
+    "sha256": "f0a618ef6543dc73479fbd5710b31258fe461ad18aa2238c16721bbcfe2ac03b",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/platforms/iOS.cmake",
+    "llvm_path": "llvm/cmake/platforms/iOS.cmake"
+  },
+  {
+    "file": "llvm-18.1.8-cmake-unwind.h",
+    "sha256": "d146994076c2729cff1b7bf2bb6ab0f26b6cb04a440940a17bc8be7885e1300d",
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/3b5b5c1ec4a3095ab096dd780e84d7ab81f3d7ff/llvm/cmake/unwind.h",
+    "llvm_path": "llvm/cmake/unwind.h"
+  }
+]

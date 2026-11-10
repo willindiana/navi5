@@ -1,0 +1,634 @@
+/*
+ * Jelly5 — Jellyfin for PS5
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+#include "ui/screen.h"
+#include "app/i18n.h"
+
+#include "gfx/art.h"
+#include "ui_image.h"
+#include "ui_assets.h"
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <unordered_map>
+
+namespace ui {
+
+uint32_t alpha(uint32_t c, float a)
+{
+    a = std::max(0.f, std::min(1.f, a));
+    return ((uint32_t)(((c >> 24) & 0xff) * a + 0.5f) << 24) | (c & 0xffffff);
+}
+
+float Lifts::step(const std::string &key, bool focused, float dt, bool *animating)
+{
+    Lift &l = m_lift[key];
+    l.a.to(focused ? 1.f : 0.f);
+    if (l.a.step(dt, 14.f) && animating)
+        *animating = true;
+    return l.a.value;
+}
+
+void draw_check(float cx, float cy, float size, uint32_t color)
+{
+    const float u = size / 20.f, d = 3.2f * u;   /* one unit; the stroke's square */
+    /* The two strokes span 27.2 x 21.2 units from (x, y - 14): centred on (cx, cy). */
+    const float x = cx - 13.6f * u, y = cy + 3.4f * u;
+    for (int s = 0; s < 6; s++)
+        gfx::fill({x + s * 1.6f * u, y - 4 * u + s * 1.6f * u, d, d}, color, d / 3);
+    for (int s = 0; s < 11; s++)
+        gfx::fill({x + 8 * u + s * 1.6f * u, y + 4 * u - s * 1.8f * u, d, d}, color, d / 3);
+}
+
+void Drop::to(const gfx::Rect &abs, int key, float ox, float oy)
+{
+    const gfx::Rect r{abs.x - ox, abs.y - oy, abs.w, abs.h};
+    m_ox = ox, m_oy = oy;
+    if (!m_shown || !m_placed) {   /* appearing: in place, popping in */
+        m_x = r.x, m_y = r.y, m_w = r.w, m_h = r.h;
+        m_vx = m_vy = m_vw = m_vh = 0;
+        m_pop = -0.35f, m_vpop = 0;
+        m_placed = true;
+    } else if (key != m_key) {
+        m_vpop += 2.2f;   /* a nudge: it swells as it leaves */
+    }
+    m_key = key;
+    m_target = r;
+    m_shown = true;
+}
+
+void Drop::draw(float dt, float a, bool *animating, float radius)
+{
+    if (!m_shown) {
+        m_placed = false;
+        return;
+    }
+    for (float left = std::min(dt, 0.05f); left > 0; left -= 1.f / 240) {   /* small steps: stable */
+        const float h = std::min(left, 1.f / 240);
+        auto spring = [h](float &v, float &x, float to) {
+            v += (260.f * (to - x) - 19.f * v) * h;
+            x += v * h;
+        };
+        spring(m_vx, m_x, m_target.x);
+        spring(m_vy, m_y, m_target.y);
+        spring(m_vw, m_w, m_target.w);
+        spring(m_vh, m_h, m_target.h);
+        m_vpop += (300.f * -m_pop - 14.f * m_vpop) * h;
+        m_pop += m_vpop * h;
+    }
+    const bool moving = std::fabs(m_target.x - m_x) + std::fabs(m_target.y - m_y) + std::fabs(m_target.w - m_w) +
+                                std::fabs(m_target.h - m_h) > 0.4f ||
+                        std::fabs(m_vx) + std::fabs(m_vy) > 3.f || std::fabs(m_pop) > 0.003f ||
+                        std::fabs(m_vpop) > 0.05f;
+    if (moving) {
+        if (animating)
+            *animating = true;
+    } else {
+        m_x = m_target.x, m_y = m_target.y, m_w = m_target.w, m_h = m_target.h;
+        m_vx = m_vy = m_vw = m_vh = m_pop = m_vpop = 0;
+    }
+    /* Stretch along the way it moves, thin across it; swell with the pop. */
+    /* In pixels, not in proportion: a wide row must not swell by a hundred pixels
+     * (it read as a sideways bounce on vertical moves). */
+    const float sx = std::min(1.f, std::fabs(m_vx) / 1600.f), sy = std::min(1.f, std::fabs(m_vy) / 1600.f);
+    const float w = m_w + 10.f * m_pop + 40.f * sx - 6.f * sy;
+    const float hh = m_h + 6.f * m_pop + 24.f * sy - std::min(10.f, m_h * 0.14f) * sx;
+    const float grow = 1.f + 6.f * m_pop / std::max(1.f, m_h);
+    const float cx = m_ox + m_x + m_w / 2, cy = m_oy + m_y + m_h / 2;
+    m_drawn = {cx - w / 2, cy - hh / 2, w, hh};
+    glass_panel(m_drawn, radius < 0 ? std::min(w, hh) / 2 : radius * grow, a, false, 1.f);
+}
+
+void glass_panel(const gfx::Rect &r, float radius, float a, bool shadow, float lift)
+{
+    if (a <= 0.01f)
+        return;
+    if (lift > 0) {
+        /* The focus drop sits on glass that already bends the picture: it is that
+         * glass lifted - brighter, a sheen from above, a lit rim - with no backdrop
+         * pass of its own (its own lens over a moving picture flickered). */
+        if (shadow)
+            gfx::shadow(r, radius, 30, 0.35f * a, 10);
+        gfx::fill(r, alpha(0x2effffffu, a * lift), radius);
+        gfx::fill_vgradient(r, alpha(0x30ffffffu, a * lift), 0x00000000u, radius);   /* the whole shape: a part of it had its own corners */
+        gfx::rim(r, radius, 0.45f * a);
+        return;
+    }
+    if (shadow)
+        gfx::shadow(r, radius, 40, 0.4f * a, 14);
+    /* The drop is clearer than a pane but not sharp: it sits on panes with lit rims,
+     * and its lens squeezing a sharp rim into its edge aliased into blue blocks. */
+    const int glass = gfx::backdrop_blur(r, radius, lift > 0 ? 9.f : 18.f, a, lift);
+    if (glass == 2)
+        return;   /* the shader drew the whole pane */
+    if (glass == 1) {   /* Liquid Glass: clear, a sheen from above, a lit rim */
+        gfx::fill(r, lift > 0 ? alpha(0x33ffffffu, a * lift) : alpha(0x4d0c0c12u, a), radius);
+        gfx::fill_vgradient(r, alpha(0x22ffffffu, a), 0x00000000u, radius);
+        gfx::rim(r, radius, 0.9f * a);
+    } else {
+        gfx::fill(r, lift > 0 ? alpha(0x40ffffffu, a * lift) : alpha(0xdc1c1c22u, a), radius);
+        gfx::fill({r.x + radius * 0.6f, r.y, r.w - radius * 1.2f, 1.5f}, alpha(0x2effffffu, a));
+    }
+}
+
+float draw_pad_hint(float x, float cy, PadButton b, const std::string &label, float size, float a)
+{
+    const uint32_t disc = alpha(0xff3a3a42u, a), ink = alpha(0xfff5f5f7u, a);
+    const float d = size, r = d / 2, st = std::max(2.f, d * 0.09f);   /* disc, radius, stroke */
+    float w = d;
+    switch (b) {
+    case PadButton::Cross: {
+        gfx::fill({x, cy - r, d, d}, disc, r);
+        const int n = 10;
+        const float s = d * 0.46f;
+        for (int i = 0; i <= n; i++) {   /* two strokes from small squares */
+            const float t = (float)i / n * s;
+            gfx::fill({x + r - s / 2 + t - st / 2, cy - s / 2 + t - st / 2, st, st}, ink, st / 2);
+            gfx::fill({x + r + s / 2 - t - st / 2, cy - s / 2 + t - st / 2, st, st}, ink, st / 2);
+        }
+        break;
+    }
+    case PadButton::Circle: {
+        gfx::fill({x, cy - r, d, d}, disc, r);
+        const float o = d * 0.52f, i = o - 2 * st;
+        gfx::fill({x + r - o / 2, cy - o / 2, o, o}, ink, o / 2);
+        gfx::fill({x + r - i / 2, cy - i / 2, i, i}, disc, i / 2);
+        break;
+    }
+    case PadButton::Triangle: {
+        gfx::fill({x, cy - r, d, d}, disc, r);
+        auto tri = [&](float h, uint32_t c) {   /* a filled triangle from rows */
+            const int n = (int)(h / 1.2f);
+            for (int k = 0; k < n; k++) {
+                const float row = (float)k / n, ww = h * 1.15f * row;
+                gfx::fill({x + r - ww / 2, cy - h * 0.55f + row * h, std::max(1.f, ww), h / n + 0.6f}, c);
+            }
+        };
+        tri(d * 0.5f, ink);
+        tri(d * 0.5f - 2.6f * st, disc);
+        break;
+    }
+    case PadButton::Square: {
+        gfx::fill({x, cy - r, d, d}, disc, r);
+        const float o = d * 0.44f, i = o - 2 * st;
+        gfx::fill({x + r - o / 2, cy - o / 2, o, o}, ink, 1.5f);
+        gfx::fill({x + r - i / 2, cy - i / 2, i, i}, disc, 1.f);
+        break;
+    }
+    case PadButton::Options: {   /* a pill with three lines */
+        w = d * 1.5f;
+        gfx::fill({x, cy - r, w, d}, disc, r);
+        const float lw = d * 0.5f;
+        for (int k = -1; k <= 1; k++)
+            gfx::fill({x + w / 2 - lw / 2, cy + k * d * 0.17f - st / 2, lw, st}, ink, st / 2);
+        break;
+    }
+    case PadButton::Touchpad: {   /* the pad's wide top: a rounded panel */
+        w = d * 1.7f;
+        gfx::fill({x, cy - r * 0.8f, w, d * 0.8f}, ink, d * 0.18f);
+        gfx::fill({x + st, cy - r * 0.8f + st, w - 2 * st, d * 0.8f - 2 * st}, disc, d * 0.18f - st);
+        break;
+    }
+    case PadButton::L1:
+    case PadButton::R1:
+    case PadButton::L2:
+    case PadButton::R2: {
+        const char *t = b == PadButton::L1 ? "L1" : b == PadButton::R1 ? "R1" : b == PadButton::L2 ? "L2" : "R2";
+        const gfx::TextStyle ts{gfx::Bold, d * 0.5f};
+        w = gfx::text_width(t, ts) + d * 0.7f;
+        gfx::fill({x, cy - r, w, d}, disc, r);
+        gfx::text(x + w / 2, cy + d * 0.18f, t, ts, ink, 1);
+        break;
+    }
+    }
+    if (label.empty())
+        return w;
+    return w + 10 + gfx::text(x + w + 10, cy + d * 0.28f, label, {gfx::Medium, d * 0.72f}, alpha(kText2, a));
+}
+
+float pad_hint_width(PadButton b, const std::string &label, float size)
+{
+    float w = size;
+    if (b == PadButton::Options)
+        w = size * 1.5f;
+    else if (b == PadButton::Touchpad)
+        w = size * 1.7f;
+    else if (b == PadButton::L1 || b == PadButton::R1 || b == PadButton::L2 || b == PadButton::R2)
+        w = gfx::text_width("L1", {gfx::Bold, size * 0.5f}) + size * 0.7f;
+    return label.empty() ? w : w + 10 + gfx::text_width(label, {gfx::Medium, size * 0.72f});
+}
+
+float draw_pad_hints(float x, float cy, const std::vector<PadHint> &hints, int align, float size, float a)
+{
+    const float gap = size * 0.9f;
+    float total = 0;
+    for (size_t i = 0; i < hints.size(); i++)
+        total += pad_hint_width(hints[i].button, hints[i].label, size) + (i ? gap : 0);
+    float hx = align == 1 ? x - total / 2 : align == 2 ? x - total : x;
+    for (const PadHint &h : hints)
+        hx += draw_pad_hint(hx, cy, h.button, h.label, size, a) + gap;
+    return total;
+}
+
+/* Apple TV's living backdrop: the picture, covering the screen, slowly zooms in
+ * (6 % over 30 s) while drifting toward one corner (which one follows the
+ * picture, so it is the same each time that title comes back). */
+void draw_drift(const gfx::Rect &full, const gfx::Texture *t, float a, double age, const std::string &key)
+{
+    const float tw = (float)gfx::texture_width(t), th = (float)gfx::texture_height(t);
+    if (tw <= 0 || th <= 0)
+        return;
+    /* The cover crop, as gfx::image(cover) makes it. */
+    float u0 = 0, v0 = 0, u1 = 1, v1 = 1;
+    const float ia = tw / th, ra = full.w / full.h;
+    if (ia > ra) {
+        const float k = ra / ia;
+        u0 = (1.f - k) / 2;
+        u1 = 1.f - u0;
+    } else {
+        const float k = ia / ra;
+        v0 = (1.f - k) / 2;
+        v1 = 1.f - v0;
+    }
+    /* Ease in and out over 30 s, then hold. */
+    float p = (float)std::min(1.0, age / 30.0);
+    p = p * p * (3.f - 2.f * p);
+    const float zoom = 0.06f * p;
+    unsigned h = 0;
+    for (char ch : key)
+        h = h * 31u + (unsigned char)ch;
+    const float dx = (h & 1) ? 1.f : -1.f, dy = (h & 2) ? 0.6f : -0.6f;
+    const float w = u1 - u0, hh = v1 - v0;
+    const float cu = u0 + w / 2 + dx * w * zoom / 2, cv = v0 + hh / 2 + dy * hh * zoom / 2;
+    const float hw = w * (1.f - zoom) / 2, hv = hh * (1.f - zoom) / 2;
+    gfx::image_uv(full, t, cu - hw, cv - hv, cu + hw, cv + hv, a, 0);
+}
+
+float brand_width(float size) { return gfx::text_width(T("Navi5"), {gfx::Bold, size}); }
+
+const gfx::Texture *launch_backdrop()
+{
+    static const gfx::Texture *t = nullptr;
+    static bool tried = false;
+    if (tried)
+        return t;
+    tried = true;
+    /* 1920x1080 (the GPU's filtering is invisible on glows this broad), RGBA. */
+    constexpr int w = 1920, h = 1080;
+    struct Glow {
+        float r, g, b, cx, cy, radius, k;
+    };
+    static const Glow glows[] = {   /* as make_backdrop.py's GLOWS */
+        {38, 92, 255, 0.04f, 0.06f, 0.62f, 0.34f},
+        {128, 58, 236, 0.98f, 1.02f, 0.58f, 0.30f},
+    };
+    constexpr int n = sizeof glows / sizeof glows[0];
+    /* Separable: exp(-(dx² + dy²) / r²) = exp(-dx² / r²) · exp(-dy² / r²). */
+    std::vector<float> gx(n * w), gy(n * h);
+    for (int i = 0; i < n; i++) {
+        const Glow &g = glows[i];
+        for (int x = 0; x < w; x++) {
+            const float d = ((x + 0.5f) / w - g.cx) * ((float)w / h);
+            gx[i * w + x] = std::exp(-d * d / (g.radius * g.radius));
+        }
+        for (int y = 0; y < h; y++) {
+            const float d = (y + 0.5f) / h - g.cy;
+            gy[i * h + y] = g.k * std::exp(-d * d / (g.radius * g.radius));
+        }
+    }
+    ui_image img;
+    if (ui_image_alloc(&img, w, h) != 0)
+        return nullptr;
+    uint32_t seed = 0x9e3779b9u;
+    for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++) {
+            float c[3] = {7, 7, 12};
+            for (int i = 0; i < n; i++) {
+                const float f = gy[i * h + y] * gx[i * w + x];
+                c[0] += f * glows[i].r, c[1] += f * glows[i].g, c[2] += f * glows[i].b;
+            }
+            uint32_t px = 0xff000000u;
+            for (int k = 0; k < 3; k++) {
+                seed ^= seed << 13, seed ^= seed >> 17, seed ^= seed << 5;   /* dither: ±half a step */
+                const float v = c[k] + (seed >> 8) * (1.f / 16777216.f) - 0.5f;
+                px |= (uint32_t)std::max(0.f, std::min(255.f, std::round(v))) << (8 * k);
+            }
+            img.px[y * w + x] = px;
+        }
+    t = gfx::texture_from_image(&img);
+    ui_image_free(&img);
+    return t;
+}
+
+float draw_brand(float x, float baseline, float size, float opacity, bool glow)
+{
+    (void)glow;
+    return gfx::text(x, baseline, T("Navi5"), {gfx::Bold, size}, alpha(kText, opacity));
+}
+
+float draw_label_chip(float x, float y, const char *label, uint32_t color, float a, float size, float max_w)
+{
+    /* The poster chips' glass (a tint, a sheen, a lit rim; no blur), a dot of its colour;
+     * max_w: the poster's room (the label ends in an ellipsis past it). */
+    const float h = size * 2.f, d = size * 0.6f, pad = h * 0.42f;
+    const gfx::TextStyle ts{gfx::SemiBold, size, max_w > 0 ? max_w - (pad + d + 8 + pad) : 0};
+    const float w = pad + d + 8 + gfx::text_width(label, ts) + pad;
+    const gfx::Rect b{x, y, w, h};
+    gfx::fill(b, alpha(0x99101014u, a), h / 2);
+    gfx::fill_vgradient(b, alpha(0x3cffffffu, a), 0x00000000u, h / 2);
+    gfx::rim(b, h / 2, 0.8f * a);
+    gfx::fill({x + pad, y + h / 2 - d / 2, d, d}, alpha(color, a), d / 2);
+    gfx::text(x + pad + d + 8, y + h / 2 + size * 0.36f, label, ts, alpha(kText, a));
+    return w;
+}
+
+void draw_note(const std::string &text, float a, uint32_t dot)
+{
+    if (a <= 0.01f || text.empty())
+        return;
+    const gfx::TextStyle ts{gfx::SemiBold, 24};
+    const float w = gfx::text_width(text, ts) + 72;
+    const gfx::Rect r{gfx::W / 2 - w / 2, 96 - 20 * (1.f - a), w, 60};
+    glass_panel(r, 30, a, true);
+    gfx::fill({r.x + 26, r.y + 25, 10, 10}, alpha(dot, a), 5);
+    gfx::text(r.x + 48, r.y + 39, text, ts, alpha(kText, a));
+}
+
+void draw_glass_placeholder(const gfx::Rect &r, float radius, float a)
+{
+    gfx::fill(r, alpha(0x59141418u, a), radius);
+    gfx::fill_vgradient(r, alpha(0x1fffffffu, a), 0x00000000u, radius);   /* sheen from above */
+    gfx::rim(r, radius, 0.75f * a);
+}
+
+void draw_title_card(const gfx::Rect &r, const std::string &title, int seed, float radius, float a)
+{
+    /* Dark, slightly coloured: a row of them reads as posters, not as holes. */
+    static const uint32_t kTop[] = {0xff3a2f5bu, 0xff23405au, 0xff47293au, 0xff1f4a43u, 0xff4a3a24u, 0xff2b3550u};
+    static const uint32_t kBottom[] = {0xff15121fu, 0xff0f1a24u, 0xff1a1117u, 0xff0d1d1au, 0xff1d170eu, 0xff11151fu};
+    const unsigned k = (unsigned)seed % 6u;
+    gfx::fill_vgradient(r, alpha(kTop[k], a), alpha(kBottom[k], a), radius);
+    gfx::rim(r, radius, 0.35f * a);
+    const float size = std::max(16.f, std::min(30.f, r.w / 9.f));
+    const float pad = std::max(14.f, r.w * 0.08f);
+    gfx::text(r.x + pad, r.y + r.h * 0.28f + size, title, {gfx::Bold, size, r.w - 2 * pad, 4, size * 1.22f},
+              alpha(kText, 0.9f * a));
+}
+
+void Ambient::set(const std::string &blurhash, double now)
+{
+    m_now = now;
+    if (blurhash.empty())
+        return;
+    if (m_cur.empty()) {
+        m_cur = blurhash;
+        return;
+    }
+    if (blurhash != m_pending) {
+        m_pending = blurhash;
+        m_pending_since = now;
+    }
+}
+
+void Ambient::draw(float dt, float dim, bool *animating)
+{
+    /* Settled on a new colour: start (or redirect) the fade. Back on the one a
+     * fade is leaving: it turns round from where it is. */
+    const bool waiting = !m_pending.empty() && (m_pending != m_cur || !m_next.empty()) && m_pending != m_next;
+    if (waiting && animating)
+        *animating = true;
+    if (waiting && m_now - m_pending_since > 0.35) {
+        if (m_pending == m_cur) {
+            std::swap(m_cur, m_next);
+            m_mix.snap(1.f - m_mix.value);
+        } else {
+            if (!m_next.empty() && m_mix.value > 0.5f)
+                m_cur = m_next;       /* mostly there already: that becomes the base */
+            m_next = m_pending;
+            m_mix.snap(0.f);
+        }
+        m_mix.to(1.f);
+    }
+    const gfx::Rect full{0, 0, gfx::W, gfx::H};
+    gfx::fill(full, kBg);
+    if (const gfx::Texture *t = art::blurhash(m_cur))
+        gfx::image(full, t, 1.f, 0, true);
+    if (!m_next.empty()) {
+        if (m_mix.step(dt, 3.2f)) {
+            if (animating)
+                *animating = true;
+        } else {
+            m_cur = m_next;
+            m_next.clear();
+        }
+        if (const gfx::Texture *t = art::blurhash(m_next))
+            gfx::image(full, t, smoothstep(m_mix.value), 0, true);
+    }
+    gfx::fill(full, alpha(kBg, dim));
+}
+
+} // namespace ui
+
+namespace ui {
+
+namespace {
+constexpr float kPillPad = 6, kPillGap = 6;
+const gfx::TextStyle kPillText{gfx::Bold, 30};
+float pill_w(const std::string &label, float max_w)
+{
+    const float w = gfx::text_width(label, kPillText) + 64;
+    return max_w > 0 ? std::min(max_w, w) : w;
+}
+} // namespace
+
+float pill_bar_offset(const std::vector<std::string> &labels, int i, float max_w)
+{
+    float x = kPillPad;
+    for (int k = 0; k < i && k < (int)labels.size(); k++)
+        x += pill_w(labels[k], max_w) + kPillGap;
+    return x;
+}
+
+float pill_bar_center(const std::vector<std::string> &labels, int i, float max_w)
+{
+    return i < (int)labels.size() ? pill_bar_offset(labels, i, max_w) + pill_w(labels[i], max_w) / 2 : 0;
+}
+
+float row_scroll(Anim &a, float row_w, float room, float c, float dt, bool *animating)
+{
+    if (row_w <= room) {
+        a.snap(0);
+        return 0;
+    }
+    a.to(std::max(0.f, std::min(row_w - room, c - room / 2)));
+    if (a.step(dt, 12.f) && animating)
+        *animating = true;
+    return a.value;
+}
+
+float pill_bar_width(const std::vector<std::string> &labels, float max_w)
+{
+    return labels.empty() ? 0 : pill_bar_offset(labels, (int)labels.size(), max_w) - kPillGap + kPillPad;
+}
+
+float pill_bar(float x, float y, const std::vector<std::string> &labels, int on, bool focused, Drop &drop, float dt,
+               float opacity, bool *animating, float ox, float oy, float max_w)
+{
+    const float bw = pill_bar_width(labels, max_w);
+    glass_panel({x, y, bw, 76}, 38, opacity, false);   /* the pane, then the drop, then the labels */
+    const int n = (int)labels.size();
+    if (on >= 0 && on < n)
+        drop.to({x + pill_bar_offset(labels, on, max_w), y + kPillPad, pill_w(labels[on], max_w), 64}, on, ox, oy);
+    else
+        drop.hide();
+    drop.draw(dt, opacity * (focused ? 1.f : 0.4f), animating);
+    float px = x + kPillPad;
+    for (int i = 0; i < n; i++) {
+        const float w = pill_w(labels[i], max_w);
+        gfx::TextStyle ts = kPillText;
+        ts.max_w = w - 40;
+        marquee_text(px + w / 2, y + kPillPad + 42, labels[i], ts, alpha(i == on ? kText : kText2, opacity),
+                     focused && i == on, 1);
+        px += w + kPillGap;
+    }
+    return bw;
+}
+
+std::string host_of(const std::string &url)
+{
+    const size_t s = url.find("//");
+    const std::string h = url.substr(s == std::string::npos ? 0 : s + 2);
+    return h.substr(0, h.find('/'));
+}
+
+bool draw_logo_fit(const std::string &url, const gfx::Rect &box, float a)
+{
+    if (url.empty() || art::failed(url))
+        return false;
+    const gfx::Texture *t = art::get(url, 320, 320);
+    if (!t)
+        return true;
+    const float iw = (float)gfx::texture_width(t), ih = (float)gfx::texture_height(t);
+    const float k = std::min(box.w / iw, box.h / ih);
+    gfx::image({box.x + (box.w - iw * k) / 2, box.y + (box.h - ih * k) / 2, iw * k, ih * k}, t, a * art::fade(url), 6,
+               false);
+    return true;
+}
+
+/* ---- marquee ---------------------------------------------------------- */
+
+namespace {
+
+constexpr double kMarqueeWait = 1.2;    /* s on the cut label before it first moves */
+constexpr float kMarqueeSpeed = 70.f;   /* logical px a second */
+constexpr double kMarqueeRest = 1.5;    /* s with the start back in place, between rounds */
+
+struct MarqueeState {
+    double start = 0;
+    uint64_t frame = 0;   /* the last frame it was drawn focused */
+};
+std::unordered_map<std::string, MarqueeState> s_marquee;
+bool s_marquee_moving = false;
+
+/* Whether the label's first strong letter is Arabic or Hebrew (the paragraph
+ * direction ui_text's bidi pass gives it). */
+bool starts_rtl(const std::string &s)
+{
+    const unsigned char *p = (const unsigned char *)s.data();
+    for (size_t i = 0, n = s.size(); i < n;) {
+        uint32_t cp = p[i];
+        size_t len = cp < 0x80 ? 1 : (cp & 0xe0) == 0xc0 ? 2 : (cp & 0xf0) == 0xe0 ? 3 : (cp & 0xf8) == 0xf0 ? 4 : 1;
+        if (len > 1) {
+            if (i + len > n)
+                break;
+            cp &= 0x3fu >> (len - 1);
+            for (size_t k = 1; k < len; k++)
+                cp = (cp << 6) | (p[i + k] & 0x3f);
+        }
+        i += len;
+        if ((cp >= 0x0590 && cp <= 0x08ff) || (cp >= 0xfb1d && cp <= 0xfdff) || (cp >= 0xfe70 && cp <= 0xfeff))
+            return true;
+        if ((cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') || (cp >= 0x00c0 && cp < 0x0590) || cp >= 0x0900)
+            return false;
+    }
+    return false;
+}
+
+double marquee_now()
+{
+    using namespace std::chrono;
+    return duration<double>(steady_clock::now().time_since_epoch()).count();
+}
+
+} // namespace
+
+float marquee_text(float x, float baseline, const std::string &s, const gfx::TextStyle &st, uint32_t color,
+                   bool focused, int align)
+{
+    if (!focused || st.max_w <= 0 || st.max_lines > 1 || s.empty())
+        return gfx::text(x, baseline, s, st, color, align);
+    gfx::TextStyle whole = st;
+    whole.max_w = 0;
+    const float full = gfx::text_width(s, whole);
+    const float room = st.max_w;
+    if (full <= room + 0.5f)
+        return gfx::text(x, baseline, s, st, color, align);
+
+    /* One state per label (its text and size): it starts over when the label was
+     * not drawn focused in the frame before (focus came back, or moved to it). */
+    char key_tail[48];
+    std::snprintf(key_tail, sizeof key_tail, "\x1f%d/%d/%d", (int)st.weight, (int)(st.size * 10), (int)room);
+    const std::string key = s + key_tail;
+    const uint64_t frame = gfx::frame_index();
+    const double now = marquee_now();
+    auto [it, fresh] = s_marquee.try_emplace(key);
+    MarqueeState &m = it->second;
+    if (fresh || m.frame + 1 < frame)
+        m.start = now;
+    m.frame = frame;
+    if (s_marquee.size() > 64)   /* labels no longer focused */
+        for (auto it = s_marquee.begin(); it != s_marquee.end();)
+            it = it->second.frame + 1 < frame ? s_marquee.erase(it) : std::next(it);
+
+    /* A ticker: the label runs out to the left and a copy follows a gap behind,
+     * so the start comes back in place from the right, with no jump. */
+    s_marquee_moving = true;
+    const float gap = std::max(48.f, st.size * 2.5f);
+    const float lap = full + gap;
+    const double glide = lap / kMarqueeSpeed;
+    const double t = now - m.start;
+    if (t < kMarqueeWait)
+        return gfx::text(x, baseline, s, st, color, align);   /* first the cut label, as unfocused */
+    const double p = std::fmod(t - kMarqueeWait, glide + kMarqueeRest);
+    const float off = p < glide ? (float)(p * kMarqueeSpeed) : 0.f;
+    const float left = align == 1 ? x - room / 2 : align == 2 ? x - room : x;
+    const gfx::Rect clip{left - 2, baseline - st.size * 1.4f, room + 4, st.size * 2.2f};
+    gfx::push_scissor(clip);
+    const bool soft = !gfx::fade_mask_active();   /* inside a list's own fade: hard edges */
+    /* Right to left (Arabic, Hebrew): the start is on the right, so the label
+     * rests right-aligned and runs out to the right. */
+    const bool rtl = starts_rtl(s);
+    const float lead = off > 1.f ? 18.f : 0.f;
+    if (soft)
+        gfx::push_fade_mask(clip, 0, 0, rtl ? 18.f : lead, rtl ? lead : 18.f);
+    const float at = rtl ? left - (full - room) + off : left - off;
+    gfx::text(at, baseline, s, whole, color, 0);
+    if (off > lap - room)   /* the copy that brings the start back */
+        gfx::text(rtl ? at - lap : at + lap, baseline, s, whole, color, 0);
+    if (soft)
+        gfx::pop_fade_mask();
+    gfx::pop_scissor();
+    return room;
+}
+
+bool marquee_take_animating()
+{
+    const bool moving = s_marquee_moving;
+    s_marquee_moving = false;
+    return moving;
+}
+
+} // namespace ui
