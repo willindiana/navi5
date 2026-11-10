@@ -65,4 +65,4 @@ credentials, QR codes, server URLs, private library metadata or raw captures.
 | Options | Log out |
 
 Fullscreen controls fade when idle; the first direction or Cross wakes them
-without activating. See [gallery/player behavior](GALLERY_PLAYER.md).
+without activating.
