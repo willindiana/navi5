@@ -2,7 +2,8 @@
 # Navi5 — trusted manual builds only; never creates tags or releases.
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
-export LC_ALL=C
+# Dynamic Python imports must not create untracked source-tree bytecode.
+export LC_ALL=C PYTHONDONTWRITEBYTECODE=1
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 [[ -z "$(git status --porcelain --untracked-files=normal)" ]] || { echo 'Commit reviewed source first' >&2; exit 1; }
