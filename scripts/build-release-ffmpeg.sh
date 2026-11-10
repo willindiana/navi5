@@ -32,7 +32,22 @@ done
 exec "$NAVI5_FFMPEG_SDK/bin/prospero-pkg-config" "$@"
 EOF
 chmod +x "$WORK/bin/navi5-pkg-config"
-tar -xJf "$SOURCE" -C "$WORK"
+python3 - "$SOURCE" "$WORK" <<'PY'
+from pathlib import PurePosixPath
+import sys
+import tarfile
+with tarfile.open(sys.argv[1]) as archive:
+    seen = set()
+    for member in archive:
+        name = member.name[:-1] if member.isdir() and member.name.endswith('/') else member.name
+        path = PurePosixPath(name)
+        if (path.is_absolute() or '..' in path.parts or not path.parts
+                or str(path) != name or path.parts[0] != 'ffmpeg-7.1.1' or str(path) in seen
+                or not (member.isfile() or member.isdir())):
+            raise ValueError('unsafe FFmpeg source member')
+        seen.add(str(path))
+    archive.extractall(sys.argv[2], filter='data')
+PY
 cd "$WORK/ffmpeg-7.1.1"
 # Only neutral literal arguments enter runtime *_configuration() strings. SDK
 # wrappers resolve real host paths through PATH, not recorded configure arguments.

@@ -58,23 +58,7 @@ print_env() {
 
 if [[ "${1:-}" == "--env" ]]; then print_env; exit 0; fi
 
-sha256_ok() { # sha file
-    if command -v sha256sum >/dev/null 2>&1; then
-        echo "$1  $2" | sha256sum -c - >/dev/null 2>&1
-    else
-        echo "$1  $2" | shasum -a 256 -c - >/dev/null 2>&1
-    fi
-}
-
-fetch() { # url sha file
-    local url="$1" sha="$2" out="${DL}/$3"
-    mkdir -p "${DL}"
-    if [[ ! -f "${out}" ]] || ! sha256_ok "${sha}" "${out}"; then
-        echo "==> downloading $3"
-        curl -fSL -o "${out}" "${url}"
-    fi
-    sha256_ok "${sha}" "${out}" || { echo "checksum mismatch: $3" >&2; exit 1; }
-}
+source "$ROOT/scripts/download.sh"
 
 if [[ "${OS}" == "Darwin" ]]; then
     for t in llvm lld coreutils; do
