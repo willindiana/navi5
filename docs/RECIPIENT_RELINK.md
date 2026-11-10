@@ -26,6 +26,35 @@ Target supported setup: ShadowMount 1.7beta11. No claim for other loader or firm
    python3 scripts/check-smoke-package.py app/build/app/NAVI00001
    ```
 
+## Normal release download and CI packaging
+
+Download `Navi5-00.008.000.zip` for installation, not the `-source.zip`.
+Extract into a fresh directory; its only root is `NAVI00001/`. Follow installation
+and update precautions below; never replace a mounted title directory.
+
+`Navi5-00.008.000-source.zip` contains source/relink material, not another install
+ZIP. Verify root `SHA256SUMS`, then `source/SHA256SUMS` from `source/`.
+Extract `source/navi5.tar` into a fresh source directory.
+
+Trusted manual GitHub and Forgejo workflows run `scripts/ci-release.sh` against
+current checked-out HEAD. Full validated delivery remains in `build/ci-delivery`;
+`build/ci-release` contains exactly the normal and source ZIPs. Source gate and
+independent recipient replay run before packaging. CI logs final asset names,
+sizes and SHA-256 hashes even when `upload_artifacts=false` (default).
+`DISTRIBUTION.md` in new CI source ZIPs maps original mixed-root build ZIP to
+folder-only distributed ZIP; unchanged `validation.json` records original build
+hashes and actual CI revision. Existing published source kits use
+`SOURCE_IDENTITY.md` for their original/distributed mapping.
+
+Packaging copies native-folder bytes and metadata, omitting root image and
+redundant root licenses. No binary rebuild happens during packaging. Same recipe
+and checks are reproducible; byte-identical binaries across LLVM versions or
+host toolchains are not promised. Offline packaging regression:
+
+```sh
+python3 -B scripts/test-package-release.py
+```
+
 ## Installation on supported setup
 
 FTP is unencrypted. Use a trusted LAN. Commands below perform console writes;

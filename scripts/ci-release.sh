@@ -6,10 +6,12 @@ export LC_ALL=C
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 [[ -z "$(git status --porcelain --untracked-files=normal)" ]] || { echo 'Commit reviewed source first' >&2; exit 1; }
-[[ ! -e app/build && ! -e build/ci-release && ! -e build/ci-source ]] || { echo 'Fresh build directories required; preserve previous artifacts elsewhere' >&2; exit 1; }
+[[ ! -e app/build && ! -e build/ci-release && ! -e build/ci-delivery && ! -e build/ci-source ]] || { echo 'Fresh build directories required; preserve previous artifacts elsewhere' >&2; exit 1; }
 # Never inherit local development destinations, overrides or remote logging.
 unset JELLY5_REMOTE_LOG JELLY5_LOG_HOST JELLY5_LOG_PORT NUVIO_BUILD_IMAGE EVO_ROOT JELLY5_AV1_PREFIX
 export NAVI5_DEV_TOOLS=0 JELLY5_AV1=1
+python3 -B scripts/test-package-release.py
+python3 -B scripts/test-ci-release.py
 bash scripts/setup-toolchain.sh
 eval "$(bash scripts/setup-toolchain.sh --env)"
 command -v llvm-readelf >/dev/null
@@ -30,3 +32,6 @@ python3 scripts/assemble-source.py --cache toolchain/source-cache --output build
   --relink app/build/relink.tar --verification build/recipient-verification/verification.json \
   --modified-library "$NAVI5_MODIFIED_FRIBIDI" --modified-source "$NAVI5_MODIFIED_FRIBIDI_SOURCE"
 python3 scripts/check-ci-release.py --delivery
+# Both host workflows collect ci-release; preserve full validated delivery separately.
+mv build/ci-release build/ci-delivery
+python3 -B scripts/package-release.py "app/build/app/Navi5-$(python3 -c 'import json; print(json.load(open("app/sce_sys/param.json"))["contentVersion"])').zip" build/ci-delivery build/ci-release
