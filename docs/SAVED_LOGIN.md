@@ -68,10 +68,17 @@ Play. All with a disposable account:
   "API key is invalid or revoked. Sign in again." and did not retry.
 - Forget showed the revoke-the-player note; the next launch had no saved login.
 
+Hardware check, 2026-11-13, same setup: a password saved against Navidrome
+0.64.2 (no API keys) was replaced by a key on the first auto-connect after the
+server was swapped to the develop build on the same data; a relaunch after
+changing the account password still connected. A track then played from the
+key-only session (album page, fullscreen player, progress advancing).
+
 The saved file itself was not read: the helper gets EACCES on the app's 0700
-data directory. **Not yet verified:** HTTPS issuance, the saved-password
-upgrade path on hardware, a stable Navidrome release, and the Media `--release`
-build. Request shapes were taken from Navidrome source at `a7f19c7`
+data directory. HTTPS issuance is covered on the host by the live check in
+[CI_VALIDATION.md](CI_VALIDATION.md), not on hardware. **Not yet verified:**
+HTTPS issuance on hardware, a stable Navidrome release, and the Media
+`--release` build. Request shapes were taken from Navidrome source at `a7f19c7`
 (2026-11-11): `model/player.go`, `persistence/player_repository.go`,
 `server/auth.go`, `server/subsonic/middlewares.go`.
 
@@ -130,7 +137,7 @@ Residual behavior worth knowing:
 
 ## Follow-ups
 
-- Verify HTTPS issuance and the saved-password upgrade path on hardware.
+- Verify HTTPS issuance on hardware when a trusted-certificate test server is available.
 - When a stable Navidrome release ships it, update the README security note.
 - Optional: reuse or rotate this console's own player instead of adding one
   per password sign-in (needs a per-console identity to stay safe with two

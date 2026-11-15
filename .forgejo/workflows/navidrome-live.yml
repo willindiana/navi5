@@ -1,0 +1,34 @@
+name: Navidrome live API key check
+# Early warning, not a merge gate: Navidrome's develop image moves, and the
+# stable image will gain API keys in a future release. Disposable servers and
+# account only; no secrets, no console, no personal server.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      navidrome-develop:
+        image: deluan/navidrome:develop
+        env:
+          ND_LOGLEVEL: warn
+      navidrome-stable:
+        image: deluan/navidrome:latest
+        env:
+          ND_LOGLEVEL: warn
+    steps:
+      - uses: https://github.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          persist-credentials: false
+      - name: Host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang pkg-config python3 openssl ca-certificates libcurl4-openssl-dev libavutil-dev
+      - name: Issue, use and revoke a key; stable fallback
+        env:
+          NAVI5_LIVE_DEVELOP_URL: http://navidrome-develop:4533
+          NAVI5_LIVE_STABLE_URL: http://navidrome-stable:4533
+        run: python3 -B app/tests/host/navidrome_live.py
