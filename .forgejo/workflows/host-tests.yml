@@ -22,6 +22,6 @@ jobs:
           # The NAS runner's storage makes dpkg's per-file syncs very slow; this container is thrown away.
           echo force-unsafe-io | sudo tee /etc/dpkg/dpkg.cfg.d/90-ci-unsafe-io >/dev/null
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential clang pkg-config python3 openssl ca-certificates libcurl4-openssl-dev libavformat-dev libavcodec-dev libswresample-dev libavutil-dev
+          sudo apt-get install -y --no-install-recommends build-essential clang libclang-rt-18-dev pkg-config python3 openssl ca-certificates libcurl4-openssl-dev libavformat-dev libavcodec-dev libswresample-dev libavutil-dev
       - name: Offline host checks
         run: bash scripts/ci-host-tests.sh
