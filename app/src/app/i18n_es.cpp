@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &spanish_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Reproducir a continuación"},
+        {"Spilles neste:", "A continuación:"},
+        {"Henter spor …", "Cargando pistas …"},
+        {"Kunne ikke laste spor til køen", "No se pudieron cargar las pistas para la cola"},
+        {"Køen er full (20000 spor)", "La cola está llena (20000 pistas)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Espera a que termine la actualización anterior de la cola"},
+        {"Køen er tom", "La cola está vacía"},
+        {"Oppdaterer køen …", "Actualizando la cola …"},
+        {"Slipp", "Soltar"},
+        {"Flytt", "Mover"},
+        {"Fjern", "Quitar"},
+        {"Logge ut?", "¿Cerrar sesión?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "La reproducción se detiene y el inicio de sesión guardado se borra de la consola. La clave de API sigue siendo válida en el servidor hasta que elimines el reproductor «Navi5 (PS5)» en Navidrome. Navi5 ya no tiene la contraseña y no puede revocarla."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "La reproducción se detiene y el inicio de sesión guardado se borra de la consola."},
+        {"QR-paring er stoppet.", "El emparejamiento por QR está detenido."},
+        {"Skriv inn server manuelt", "Introducir servidor manualmente"},
+        {"Logg inn på nytt", "Iniciar sesión de nuevo"},
+        {"Koble til", "Conectar"},
+        {"Glem lagret innlogging", "Olvidar inicio de sesión guardado"},
+        {"Fullskjermspiller", "Reproductor a pantalla completa"},
         {"Kø", "Cola"},
         {"Stopp", "Detener"},
         {"Gjenta", "Repetir"},

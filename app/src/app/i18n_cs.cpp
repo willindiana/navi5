@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &czech_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Přehrát jako další"},
+        {"Spilles neste:", "Přehraje se jako další:"},
+        {"Henter spor …", "Načítání skladeb …"},
+        {"Kunne ikke laste spor til køen", "Skladby se nepodařilo načíst do fronty"},
+        {"Køen er full (20000 spor)", "Fronta je plná (20000 skladeb)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Počkejte na dokončení předchozí aktualizace fronty"},
+        {"Køen er tom", "Fronta je prázdná"},
+        {"Oppdaterer køen …", "Aktualizace fronty …"},
+        {"Slipp", "Pustit"},
+        {"Flytt", "Přesunout"},
+        {"Fjern", "Odebrat"},
+        {"Logge ut?", "Odhlásit se?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Přehrávání se zastaví a uložené přihlášení se z konzole smaže. Klíč API zůstává na serveru platný, dokud v Navidrome nesmažete přehrávač „Navi5 (PS5)“. Navi5 už heslo nemá a nemůže klíč zneplatnit."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Přehrávání se zastaví a uložené přihlášení se z konzole smaže."},
+        {"QR-paring er stoppet.", "Párování QR je zastaveno."},
+        {"Skriv inn server manuelt", "Zadat server ručně"},
+        {"Logg inn på nytt", "Přihlásit se znovu"},
+        {"Koble til", "Připojit"},
+        {"Glem lagret innlogging", "Zapomenout uložené přihlášení"},
+        {"Fullskjermspiller", "Přehrávač na celou obrazovku"},
         {"Hjem", "Domů"},
         {"Musikk", "Hudba"},
         {"Album", "Alba"},

@@ -45,14 +45,18 @@ struct PlayerState {
         return toggle;
     }
     // First direction after idle wakes, never changes focus.
+    // Control row, left to right: previous, play/pause, next, shuffle, stop, queue
+    // (focus 0, 1, 2, 4, 5, 6). Focus 3 is the seek bar below the row.
+    static constexpr int row[] = {0, 1, 2, 4, 5, 6};
+    static constexpr int row_size = 6;
+    static int slot(int focus) {
+        for (int i = 0; i < row_size; ++i) if (row[i] == focus) return i;
+        return 1;
+    }
     void direction(int delta, double now) {
         const bool awake = controls(now);
         activity = now;
-        if (awake) {
-            if (focus == 4) { if (delta < 0) focus = 2; }
-            else if (focus == 2 && delta > 0) focus = 4;
-            else focus = std::clamp(focus + delta, 0, 2);
-        }
+        if (awake) focus = row[std::clamp(slot(focus) + (delta < 0 ? -1 : 1), 0, row_size - 1)];
     }
 };
 inline bool show_up_next(double position, int duration, bool has_next, bool repeat_one, bool playing) {

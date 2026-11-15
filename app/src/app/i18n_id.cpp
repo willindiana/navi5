@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &indonesian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Putar berikutnya"},
+        {"Spilles neste:", "Diputar berikutnya:"},
+        {"Henter spor …", "Memuat lagu …"},
+        {"Kunne ikke laste spor til køen", "Tidak dapat memuat lagu ke antrean"},
+        {"Køen er full (20000 spor)", "Antrean penuh (20000 lagu)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Tunggu pembaruan antrean sebelumnya selesai"},
+        {"Køen er tom", "Antrean kosong"},
+        {"Oppdaterer køen …", "Memperbarui antrean …"},
+        {"Slipp", "Lepas"},
+        {"Flytt", "Pindahkan"},
+        {"Fjern", "Hapus"},
+        {"Logge ut?", "Keluar?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Pemutaran berhenti dan login tersimpan dihapus dari konsol. Kunci API tetap berlaku di server sampai Anda menghapus pemutar “Navi5 (PS5)” di Navidrome. Navi5 tidak lagi menyimpan kata sandi dan tidak dapat mencabut kunci itu."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Pemutaran berhenti dan login tersimpan dihapus dari konsol."},
+        {"QR-paring er stoppet.", "Penyandingan QR dihentikan."},
+        {"Skriv inn server manuelt", "Masukkan server secara manual"},
+        {"Logg inn på nytt", "Masuk lagi"},
+        {"Koble til", "Hubungkan"},
+        {"Glem lagret innlogging", "Lupakan login tersimpan"},
+        {"Fullskjermspiller", "Pemutar layar penuh"},
         {"Hjem", "Beranda"},
         {"Musikk", "Musik"},
         {"Album", "Album"},

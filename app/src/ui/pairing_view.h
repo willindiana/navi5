@@ -23,7 +23,9 @@ public:
     // Call every frame, even with pressed=0, to drain expiry cancellation.
     // Monotonic seconds, same clock for input/draw/show_code. Circle wins ties.
     Action input(uint32_t pressed, double now);
-    void draw(double now, float dt);
+    // Content only, centered on cx inside the login panel's QR area; the parent
+    // owns the panel. Buttons and the cancel hint show only while focused.
+    void draw(double now, float dt, float cx = 960, bool focused = true);
     // Marshal worker results to UI thread. Ignore stale generations. Caller must
     // stop listener on cancel/retry/expiry/success/failure; this view cannot stop workers.
     // Deadline is listener's actual expiry, not a new TTL created on delivery.

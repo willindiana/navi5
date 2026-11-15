@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &thai_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "เล่นถัดไป"},
+        {"Spilles neste:", "เล่นถัดไป:"},
+        {"Henter spor …", "กำลังโหลดเพลง …"},
+        {"Kunne ikke laste spor til køen", "ไม่สามารถโหลดเพลงเข้าคิวได้"},
+        {"Køen er full (20000 spor)", "คิวเต็มแล้ว (20000 เพลง)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "รอให้การอัปเดตคิวก่อนหน้าเสร็จก่อน"},
+        {"Køen er tom", "คิวว่างเปล่า"},
+        {"Oppdaterer køen …", "กำลังอัปเดตคิว …"},
+        {"Slipp", "วาง"},
+        {"Flytt", "ย้าย"},
+        {"Fjern", "นำออก"},
+        {"Logge ut?", "ออกจากระบบหรือไม่"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "การเล่นจะหยุดและข้อมูลเข้าสู่ระบบที่บันทึกไว้จะถูกลบออกจากคอนโซล คีย์ API ยังใช้งานได้บนเซิร์ฟเวอร์จนกว่าคุณจะลบเครื่องเล่น “Navi5 (PS5)” ใน Navidrome Navi5 ไม่มีรหัสผ่านแล้วจึงเพิกถอนคีย์ไม่ได้"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "การเล่นจะหยุดและข้อมูลเข้าสู่ระบบที่บันทึกไว้จะถูกลบออกจากคอนโซล"},
+        {"QR-paring er stoppet.", "การจับคู่ด้วย QR หยุดแล้ว"},
+        {"Skriv inn server manuelt", "ป้อนเซิร์ฟเวอร์ด้วยตนเอง"},
+        {"Logg inn på nytt", "เข้าสู่ระบบอีกครั้ง"},
+        {"Koble til", "เชื่อมต่อ"},
+        {"Glem lagret innlogging", "ลืมข้อมูลเข้าสู่ระบบที่บันทึกไว้"},
+        {"Fullskjermspiller", "เครื่องเล่นเต็มหน้าจอ"},
         {"Hjem", "หน้าหลัก"},
         {"Musikk", "เพลง"},
         {"Album", "อัลบั้ม"},

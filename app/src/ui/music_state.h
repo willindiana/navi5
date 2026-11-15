@@ -81,6 +81,22 @@ struct PlayIntent {
     std::vector<Item> top_snapshot = {}; // Exact ranked occurrences shown by artist page.
 };
 
+// Virtualized queue view: at most `capacity` rows of play order from `first`.
+// Indices are play-order positions; `position` is the current entry. uid is a
+// stable entry identity (app::PlayQueue), never a song ID.
+struct QueueRow {
+    uint64_t uid = 0;
+    std::string title, artist;
+    int duration = 0;
+};
+struct QueueWindow {
+    static constexpr size_t capacity = 48;
+    uint64_t serial = 0; // Changes with every publication.
+    size_t first = 0, position = 0, total = 0;
+    bool pending = false; // Accepted edits still waiting for a safe successor swap.
+    std::vector<QueueRow> rows;
+};
+
 /* Single UI-thread owner. Parent drains requests and dispatches work elsewhere;
  * completed pages return on UI thread. Tokens reject stale results. No I/O here.
  * Cursor is opaque to UI, including for APIs whose adapter uses numeric offsets. */

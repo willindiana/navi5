@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &polish_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Odtwórz jako następne"},
+        {"Spilles neste:", "Następne w kolejce:"},
+        {"Henter spor …", "Pobieranie utworów …"},
+        {"Kunne ikke laste spor til køen", "Nie udało się wczytać utworów do kolejki"},
+        {"Køen er full (20000 spor)", "Kolejka jest pełna (20000 utworów)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Poczekaj na zakończenie poprzedniej aktualizacji kolejki"},
+        {"Køen er tom", "Kolejka jest pusta"},
+        {"Oppdaterer køen …", "Aktualizowanie kolejki …"},
+        {"Slipp", "Upuść"},
+        {"Flytt", "Przenieś"},
+        {"Fjern", "Usuń"},
+        {"Logge ut?", "Wylogować?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Odtwarzanie zostanie zatrzymane, a zapisane logowanie usunięte z konsoli. Klucz API pozostaje ważny na serwerze, dopóki nie usuniesz odtwarzacza „Navi5 (PS5)” w Navidrome. Navi5 nie ma już hasła i nie może go unieważnić."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Odtwarzanie zostanie zatrzymane, a zapisane logowanie usunięte z konsoli."},
+        {"QR-paring er stoppet.", "Parowanie QR jest zatrzymane."},
+        {"Skriv inn server manuelt", "Wpisz serwer ręcznie"},
+        {"Logg inn på nytt", "Zaloguj się ponownie"},
+        {"Koble til", "Połącz"},
+        {"Glem lagret innlogging", "Zapomnij zapisane logowanie"},
+        {"Fullskjermspiller", "Odtwarzacz pełnoekranowy"},
         {"Hjem", "Strona główna"},
         {"Musikk", "Muzyka"},
         {"Album", "Albumy"},

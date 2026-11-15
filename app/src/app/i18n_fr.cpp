@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &french_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Lire ensuite"},
+        {"Spilles neste:", "Lecture ensuite :"},
+        {"Henter spor …", "Chargement des titres …"},
+        {"Kunne ikke laste spor til køen", "Impossible de charger les titres pour la file d’attente"},
+        {"Køen er full (20000 spor)", "La file d’attente est pleine (20000 titres)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Attendez la fin de la mise à jour précédente de la file d’attente"},
+        {"Køen er tom", "La file d’attente est vide"},
+        {"Oppdaterer køen …", "Mise à jour de la file d’attente …"},
+        {"Slipp", "Déposer"},
+        {"Flytt", "Déplacer"},
+        {"Fjern", "Retirer"},
+        {"Logge ut?", "Se déconnecter ?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "La lecture s’arrête et la connexion enregistrée est supprimée de la console. La clé d’API reste valide sur le serveur jusqu’à ce que vous supprimiez le lecteur « Navi5 (PS5) » dans Navidrome. Navi5 n’a plus le mot de passe et ne peut pas la révoquer."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "La lecture s’arrête et la connexion enregistrée est supprimée de la console."},
+        {"QR-paring er stoppet.", "L’appairage par QR est arrêté."},
+        {"Skriv inn server manuelt", "Saisir le serveur manuellement"},
+        {"Logg inn på nytt", "Se reconnecter"},
+        {"Koble til", "Connexion"},
+        {"Glem lagret innlogging", "Oublier la connexion enregistrée"},
+        {"Fullskjermspiller", "Lecteur plein écran"},
         {"Kø", "File d'attente"},
         {"Stopp", "Arrêter"},
         {"Gjenta", "Répéter"},

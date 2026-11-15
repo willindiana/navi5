@@ -13,6 +13,10 @@
 #include "gfx/art.h"
 #include "subsonic/http_jf.h"
 #include "ui/music_screen.h"
+#include "ui/login_view.h"
+#include "ui/options_menu.h"
+#include "ui/pad_route.h"
+#include "ui/queue_view.h"
 #include "ui/player_state.h"
 #include <cmath>
 #include <limits>
@@ -223,13 +227,24 @@ int main()
             work->loaded = app::saved_login::load(work->login);
             work->done.store(true, std::memory_order_release);
         })) saved_work->done.store(true, std::memory_order_release);
-    bool saved_loaded = false, startup_qr = true, saved_connect = false, saved_retry = false;
+    bool saved_loaded = false, saved_connect = false, saved_retry = false;
     bool saved_key = false; // Saved file holds a server-side key: Forget explains revocation.
     app::saved_login::Login pending_login;
     std::string saved_api_key; // Loaded key for saved connect/retry only. Never shown or logged.
     bool connected = false, connecting = false, consent = false, warning = false, nav = false;
-    int field = 0;
-    bool scheme_popup = false, choose_http = false, show_password = false;
+    bool scheme_popup = false, choose_http = false;
+    // Login screen: entry form left, QR area right; whichever completes first wins.
+    // Pairing opens whenever the screen appears (qr_wanted) and stops when it is left.
+    ui::LoginView login_view;
+    ui::SavedFailedView saved_failed;
+    bool login_screen_was = false, qr_wanted = false, qr_needed_was = false;
+    bool show_password = false;
+    ui::OptionsMenu menu;
+    ui::QueueView queue_view;
+    bool logout_forget = false; // Logout during an unfinished Save: forget right after it.
+    uint64_t enqueue_serial = 0;
+    std::string toast; // Short confirmation, e.g. Play Next. Fixed local text plus titles only.
+    double toast_until = 0;
     ui::MusicScreen music;
     ui::PairingView pairing_view;
     std::shared_ptr<PairingWork> pairing_work;
@@ -254,7 +269,6 @@ int main()
             if (found.size() > 1 && found.size() <= 3) pairing_view.choose(found);
         }
         pairing_open = true;
-        password.clear(); show_password = false; note.clear(); diagnostic.clear();
     };
     auto start_listener = [&](const std::string &address) {
         pairing_address = address;
@@ -279,7 +293,7 @@ int main()
     ui::PlayerState player_view;
     ui::Anim controls_alpha;
     ui::Drop transport_drop;
-    ui::Drop login_drop;
+    ui::Drop login_drop, menu_drop;
     double previous = art::now();
     uint64_t play_serial = 0, play_wanted = 0;
     auto send = [&](Command c) { c.generation = generation; return worker && mailbox->send(std::move(c)); };
@@ -303,6 +317,17 @@ int main()
                 work->ok = work->kind == SavedWork::Save ? app::saved_login::save(value) : app::saved_login::forget();
                 work->done.store(true, std::memory_order_release);
             })) work->done.store(true, std::memory_order_release);
+    };
+    // Same generation/logout path as every account switch: stale results are
+    // dropped, the worker stops playback and forgets its client. The saved login
+    // is deleted through the Forget path; nothing can revoke the key from here.
+    auto logout = [&] {
+        reset_session(); connected = false; nav = false; consent = false;
+        server.clear(); username.clear(); password.clear(); saved_api_key.clear(); pending_login = {};
+        saved_connect = saved_retry = false; note.clear(); diagnostic.clear(); toast.clear();
+        music = ui::MusicScreen{}; player_view.dismiss(); queue_view.close(); menu.close(); play_wanted = 0;
+        login_view = {}; show_password = false;
+        if (saved_work) logout_forget = true; else persist(SavedWork::Forget);
     };
     auto login = [&] {
         show_password = false;
@@ -342,7 +367,6 @@ int main()
             if (work->kind == SavedWork::Load) {
                 saved_loaded = true;
                 if (work->loaded == app::saved_login::Load::Ok) {
-                    startup_qr = false;
                     server = std::move(work->login.server); username = std::move(work->login.user);
                     password = std::move(work->login.password); saved_api_key = std::move(work->login.api_key);
                     saved_key = !saved_api_key.empty();
@@ -353,6 +377,7 @@ int main()
                 }
             } else if (work->kind == SavedWork::Save) {
                 if (!work->ok) note = T("Kunne ikke lagre innlogging. Økten fortsetter.");
+                if (logout_forget) { logout_forget = false; note.clear(); persist(SavedWork::Forget); }
             } else {
                 password.clear(); saved_api_key.clear(); pending_login = {}; saved_connect = saved_retry = consent = false;
                 // Forgetting cannot revoke: that needs the password this file no longer holds.
@@ -360,7 +385,6 @@ int main()
                     : saved_key ? T("Lagret innlogging glemt. Slett spilleren «Navi5 (PS5)» i Navidrome for å tilbakekalle nøkkelen.")
                     : T("Lagret innlogging glemt.");
                 if (work->ok) saved_key = false;
-                field = 5;
             }
         }
         if (connected && history_seen != playback.history_revision) {
@@ -390,11 +414,9 @@ int main()
                     history_seen = playback.history_revision;
                     password.clear(); music = ui::MusicScreen{}; music.activate(); nav = false;
                 } else if (saved_connect) {
-                    using F = subsonic::LoginFailure;
-                    const bool auth = result.failure == F::Authentication || result.failure == F::Http401 || result.failure == F::Http403 ||
-                        result.failure == F::ApiKeyRejected || result.failure == F::ApiKeyUnsupported;
-                    saved_retry = !auth;
-                    if (auth) { password.clear(); saved_api_key.clear(); pending_login = {}; saved_connect = false; field = 2; }
+                    // Network and credential failures alike: the file is kept and the
+                    // failed-login screen offers Retry, Forget, or signing in again.
+                    saved_retry = true; saved_failed = {};
                 }
             } else if (result.kind == Command::Browse && connected) {
                 music.state().complete(result.token, std::move(result.page), result.ok);
@@ -404,16 +426,35 @@ int main()
                 play_wanted = 0;
                 if (result.ok) { player_view.open(art::now()); note.clear(); }
                 else note = result.playback_error.empty() ? T("Kunne ikke starte avspilling") : T(result.playback_error.c_str());
+            } else if (result.kind == Command::Enqueue && connected) {
+                if (result.ok) {
+                    toast = std::string(T("Spilles neste:")) + " " + (result.count == 1 && !result.title.empty()
+                        ? result.title : TN(int(result.count), "%d spor", "%d spor"));
+                } else toast = result.playback_error.empty() ? T("Kunne ikke laste spor til køen") : T(result.playback_error.c_str());
+                toast_until = art::now() + 4;
             }
         }
         if (!discovery_seen && discovery->done.load(std::memory_order_acquire)) discovery_seen = true;
-        if (saved_loaded && discovery_seen && startup_qr) {
-            startup_qr = false;
-            if (!connected && !connecting && !pairing_open && !pairing_work && !scheme_popup && !warning &&
-                    !keyboard && !ime::active() && discovery->addresses.size() == 1) {
+        const bool qr_possible = discovery_seen && !discovery->addresses.empty();
+        const bool login_screen = !connected && !connecting && !saved_retry && saved_loaded && !saved_work;
+        if (login_screen && !login_screen_was) qr_wanted = true;
+        login_screen_was = login_screen;
+        if (!login_screen) show_password = false;
+        if (!login_screen && pairing_open) {
+            // Leaving the login screen (manual connect in flight): stop the listener.
+            if (pairing_work) pairing_work->listener->cancel();
+            pairing_view.input(NUVIO_BTN_CIRCLE, pairing_now());
+            pairing_open = false;
+        }
+        // QR first: one address starts the session at once, two or three show the
+        // picker, more ask for the address; none leaves manual entry only.
+        if (qr_wanted && login_screen && discovery_seen && !pairing_open && !pairing_work && !keyboard && !ime::active()) {
+            qr_wanted = false;
+            if (qr_possible) {
                 open_pairing();
-                if (discovery->addresses.size() == 1 && pairing_flow.begin(pairing_view, false, pairing_now(), false))
-                    start_listener(discovery->addresses[0]);
+                if (pairing_view.state() == ui::PairingView::State::Starting) {
+                    if (pairing_flow.begin(pairing_view, false, pairing_now(), false)) start_listener(discovery->addresses[0]);
+                } else login_view.attention(true);
             }
         }
         if (!pairing_open && pairing_work && pairing_work->finished.load(std::memory_order_acquire))
@@ -424,22 +465,75 @@ int main()
         const bool can_seek = ui::PlayerState::seekable(audio.duration, audio.position, seek_active,
             audio.seeking || audio.track != audio.next_track);
         uint32_t pressed = keyboard || ime::active() || (!connected && saved_work) ? 0 : in.pressed;
-        if (!connected && pressed) startup_qr = false; // User chose login form before discovery completed.
         if (!connected) {
+            uint32_t qr_pressed = 0;
             if (saved_retry) {
-                if (pressed & NUVIO_BTN_CIRCLE) {
+                using Failed = ui::SavedFailedView::Action;
+                const auto action = saved_failed.input(pressed);
+                if (action == Failed::Login) {
                     saved_retry = saved_connect = false;
-                    password.clear(); saved_api_key.clear(); pending_login = {}; field = 5;
-                } else if (pressed & NUVIO_BTN_CROSS) {
+                    password.clear(); saved_api_key.clear(); pending_login = {};
+                } else if (action == Failed::Retry) {
                     saved_retry = false;
                     connecting = submit_login(saved_command());
                     saved_retry = !connecting;
                     note = connecting ? T("Kobler til med lagret innlogging …") : T("Kunne ikke starte arbeidet");
+                } else if (action == Failed::Forget) {
+                    saved_retry = saved_connect = false;
+                    persist(SavedWork::Forget);
                 }
-            } else if (pairing_open) {
+            } else if (scheme_popup) {
+                if (pressed & NUVIO_BTN_CIRCLE) scheme_popup = false;
+                else if (pressed & (NUVIO_BTN_UP | NUVIO_BTN_DOWN)) choose_http = !choose_http;
+                else if (pressed & NUVIO_BTN_CROSS) {
+                    server = std::string(choose_http ? "http://" : "https://") + server;
+                    scheme_popup = false; consent = false;
+                    if (choose_http) warning = true;
+                }
+            } else if (warning) {
+                if (pressed & NUVIO_BTN_CIRCLE) warning = false;
+                else if (pressed & NUVIO_BTN_CROSS) { consent = true; warning = false; login(); }
+            } else if (connecting) {
+                // Circle only drops the stale result (generation). It cannot cancel a worker
+                // blocked inside a syscall: that worker stays busy until the syscall returns.
+                if (pressed & NUVIO_BTN_CIRCLE) {
+                    reset_session(); connecting = false; saved_connect = saved_retry = false;
+                    password.clear(); saved_api_key.clear(); pending_login = {}; note.clear();
+                }
+            } else if (login_screen) {
+                using Login = ui::LoginView::Action;
+                const bool on_form = login_view.focus != ui::LoginView::Focus::Qr;
+                if (on_form && (pressed & NUVIO_BTN_CIRCLE)) show_password = false;
+                const auto action = login_view.input(pressed, qr_possible, qr_pressed);
+                if (action == Login::Server) {
+                    ime::request(ime::Kind::Url, T("Serveradresse"), server, [&](const std::string &value) {
+                        server = value; consent = false; show_password = false; note.clear();
+                        const auto input = prepare_server(server);
+                        scheme_popup = input == ServerInput::NeedsScheme; choose_http = false;
+                        if (input == ServerInput::Invalid) note = T("Ugyldig serveradresse. Bruk http:// eller https:// uten kontodata.");
+                    });
+                } else if (action == Login::Username) {
+                    ime::request(ime::Kind::Text, T("Brukernavn"), username, [&](const std::string &value) { username = value; });
+                } else if (action == Login::Password) {
+                    show_password = false;
+                    ime::request(ime::Kind::Password, T("Passord"), "", [&](const std::string &value) { password = value; });
+                } else if (action == Login::ToggleShow) show_password = !show_password;
+                else if (action == Login::Connect) login();
+                // Stopped with Circle earlier: Cross on the QR area starts a fresh session.
+                if (!pairing_open && qr_possible && (qr_pressed & NUVIO_BTN_CROSS)) {
+                    qr_pressed = 0;
+                    if (!pairing_work || pairing_work->finished.load(std::memory_order_acquire)) {
+                        pairing_work.reset(); open_pairing();
+                        if (pairing_view.state() == ui::PairingView::State::Starting &&
+                                pairing_flow.begin(pairing_view, false, pairing_now(), false))
+                            start_listener(discovery->addresses[0]);
+                    } else note = T("Vent til paring er stoppet.");
+                }
+            }
+            if (pairing_open) {
                 using View = ui::PairingView;
                 if (pairing_view.state() == View::State::Failed) pairing_address.clear();
-                const auto action = pairing_view.input(pressed, pairing_now());
+                const auto action = pairing_view.input(qr_pressed, pairing_now());
                 if (action == View::Action::Cancel) {
                     if (pairing_work) pairing_work->listener->cancel();
                     if (pairing_view.state() == View::State::Closed) pairing_open = false;
@@ -492,65 +586,50 @@ int main()
                 if (pairing_open && !pairing_work && !pairing_address.empty() && pairing_flow.auto_restart(pairing_view, false) &&
                         pairing_flow.begin(pairing_view, false, pairing_now(), false))
                     start_listener(pairing_address);
-            } else if (scheme_popup) {
-                if (pressed & NUVIO_BTN_CIRCLE) { scheme_popup = false; show_password = false; }
-                else if (pressed & (NUVIO_BTN_UP | NUVIO_BTN_DOWN)) choose_http = !choose_http;
-                else if (pressed & NUVIO_BTN_CROSS) {
-                    server = std::string(choose_http ? "http://" : "https://") + server;
-                    scheme_popup = false; consent = false;
-                    if (choose_http) warning = true;
-                }
-            } else if (warning) {
-                if (pressed & NUVIO_BTN_CIRCLE) { warning = false; show_password = false; }
-                else if (pressed & NUVIO_BTN_CROSS) { consent = true; warning = false; login(); }
-            } else if (connecting) {
-                // Circle only drops the stale result (generation). It cannot cancel a worker
-                // blocked inside a syscall: that worker stays busy until the syscall returns.
-                if (pressed & NUVIO_BTN_CIRCLE) {
-                    reset_session(); connecting = false; saved_connect = saved_retry = false;
-                    password.clear(); saved_api_key.clear(); pending_login = {}; show_password = false; note.clear();
-                }
-            } else {
-                if (pressed & NUVIO_BTN_CIRCLE) show_password = false;
-                if (pressed & NUVIO_BTN_UP) field = std::max(0, field - 1);
-                if (pressed & NUVIO_BTN_DOWN) field = std::min(6, field + 1);
-                if (pressed & NUVIO_BTN_CROSS) {
-                    if (field == 0) ime::request(ime::Kind::Url, T("Serveradresse"), server, [&](const std::string &value) {
-                        server = value; consent = false; show_password = false; note.clear();
-                        const auto input = prepare_server(server);
-                        scheme_popup = input == ServerInput::NeedsScheme; choose_http = false;
-                        if (input == ServerInput::Invalid) note = T("Ugyldig serveradresse. Bruk http:// eller https:// uten kontodata.");
-                    });
-                    else if (field == 1) ime::request(ime::Kind::Text, T("Brukernavn"), username, [&](const std::string &value) { username = value; });
-                    else if (field == 2) {
-                        show_password = false;
-                        ime::request(ime::Kind::Password, T("Passord"), "", [&](const std::string &value) { password = value; });
-                    }
-                    else if (field == 3) show_password = !show_password;
-                    else if (field == 4) login();
-                    else if (field == 6) persist(SavedWork::Forget);
-                    else if (!pairing_work || pairing_work->finished.load(std::memory_order_acquire)) {
-                        pairing_work.reset(); open_pairing();
-                        if (pairing_view.state() == ui::PairingView::State::Starting &&
-                                pairing_flow.begin(pairing_view, false, pairing_now(), false))
-                            start_listener(discovery->addresses[0]);
-                    } else note = T("Vent til paring er stoppet.");
-                }
-            }
+                // Retry needs Cross on the QR area: bring focus there once.
+                const bool needs_pad = pairing_open && (pairing_view.state() == View::State::Failed ||
+                    (pairing_view.state() == View::State::Expired && pairing_flow.restarts <= 0));
+                if (needs_pad && !qr_needed_was && !scheme_popup && !warning) login_view.attention(true);
+                qr_needed_was = needs_pad;
+            } else qr_needed_was = false;
         } else {
             music.session(audio_generation == generation && !song_id.empty() && (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused),
                           audio.state == app::AudioState::paused, track, artist, artwork);
-            if (pressed & NUVIO_BTN_OPTIONS) {
-                reset_session(); connected = false; nav = false; consent = false;
-                password.clear(); show_password = false; note.clear(); music = ui::MusicScreen{}; player_view.dismiss(); play_wanted = 0;
-            } else {
-                if ((pressed & NUVIO_BTN_SQUARE) && music.search_backspace(player_view.visible))
-                    pressed &= ~NUVIO_BTN_SQUARE; // Search consumes Square; never also pause.
-                if (pressed & (NUVIO_BTN_SQUARE | NUVIO_BTN_PLAYPAUSE)) {
+            if (queue_view.visible() && (!player_view.visible || !seek_active)) queue_view.close();
+            // One table for the global buttons (ui/pad_route.h); the rest goes to the focused view.
+            const ui_pad_context pad{player_view.visible, queue_view.visible(), menu.open(), music.searching(), !song_id.empty()};
+            const ui_pad_route route = ui_route_pad(pressed, pad);
+            pressed = route.rest;
+            if (route.menu) menu.show();
+            else if (menu.open()) {
+                if (menu.input(pressed) == ui::OptionsMenu::Action::Logout) logout();
+                pressed = 0;
+            }
+            if (connected) {
+                if (route.search_backspace) music.search_backspace(false);
+                if (route.pause_toggle) {
                     Command c; c.kind = audio.state == app::AudioState::paused ? Command::Resume : Command::Pause;
                     if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet");
                 }
-                if (pressed & NUVIO_BTN_TOUCHPAD) { play_wanted = 0; Command c; c.kind = Command::Stop; if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet"); }
+                if (route.open_player) player_view.open(art::now());
+                if (route.play_next) {
+                    if (auto target = music.play_next_target()) {
+                        const bool single = target->kind == ui::music::Kind::Track;
+                        Command c; c.kind = Command::Enqueue; c.item = std::move(*target);
+                        c.request.token = ++enqueue_serial;
+                        toast = send(std::move(c)) ? (single ? "" : T("Henter spor …")) : T("Kunne ikke starte arbeidet");
+                        toast_until = art::now() + 4;
+                    }
+                }
+                if (queue_view.visible()) {
+                    const auto action = queue_view.input(pressed, art::now());
+                    if (action.kind == ui::QueueView::Action::Move || action.kind == ui::QueueView::Action::Remove) {
+                        Command c; c.kind = action.kind == ui::QueueView::Action::Move ? Command::QueueMove : Command::QueueRemove;
+                        c.uid = action.uid; c.anchor = action.anchor;
+                        if (!send(std::move(c))) { toast = T("Kunne ikke starte arbeidet"); toast_until = art::now() + 4; }
+                    }
+                    player_view.activity = art::now(); // Controls stay awake under the view.
+                } else
                 if (player_view.visible) {
                     const double time = art::now();
                     if (pressed & NUVIO_BTN_CIRCLE) {
@@ -573,6 +652,13 @@ int main()
                                 c.playback_revision = playback_revision;
                                 if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet");
                             }
+                        } else if (player_view.controls(time) && player_view.focus == 5) {
+                            play_wanted = 0;
+                            Command c; c.kind = Command::Stop;
+                            if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet");
+                            player_view.dismiss();
+                        } else if (player_view.controls(time) && player_view.focus == 6) {
+                            if (seek_active) queue_view.open();
                         } else if (player_view.controls(time) && player_view.focus <= 2) {
                             Command c; c.kind = player_view.focus == 0 ? Command::Previous : player_view.focus == 2 ? Command::Next : audio.state == app::AudioState::paused ? Command::Resume : Command::Pause;
                             c.playback_revision = playback_revision;
@@ -580,11 +666,10 @@ int main()
                         }
                         player_view.activity = time;
                     } else if (pressed) player_view.activity = time;
-                } else if ((pressed & NUVIO_BTN_TRIANGLE) && !song_id.empty()) {
-                    player_view.open(art::now());
                 } else if (nav) {
                     if (pressed & (NUVIO_BTN_DOWN | NUVIO_BTN_CROSS | NUVIO_BTN_CIRCLE)) { nav = false; music.enter_from_top(); }
                 } else if (music.input(pressed).kind == ui::Action::ToNav) nav = true;
+                if (music.take_menu_open()) menu.show(); // Header gear; Options is the shortcut.
                 if (music.take_player_open() && audio_generation == generation && !song_id.empty() &&
                         (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused)) {
                     if (audio.state == app::AudioState::paused) {
@@ -597,6 +682,8 @@ int main()
             }
         }
         if (connected) {
+            mailbox->watch_queue(queue_view.visible(), queue_view.wanted_first(), generation);
+            queue_view.sync(playback.queue, art::now());
             music.state().tick(art::now());
             if (auto request = music.state().take_request()) {
                 ui::music::Page page;
@@ -655,21 +742,46 @@ int main()
                     can_seek, audio.seeking || audio.buffering, audio.seek_failed || player_view.seek_error,
                     player_view.preview, player_view.target, shuffle_enabled, shuffle_pending, playback.shuffle_error};
                 ui::draw_music_player(presentation, player_view.focus, controls_alpha.value, dt, transport_drop);
+                queue_view.draw(dt);
             } else if (music.active_session()) {
                 ui::glass_panel({140, 950, 1640, 100}, 24);
                 art::draw({158, 965, 70, 70}, artwork, "", 720, 720, 8);
                 gfx::text(250, 992, track.empty() ? T("Uten tittel") : track, {gfx::SemiBold, 25, 760}, ui::kText);
                 gfx::text(250, 1026, artist, {gfx::Medium, 22, 760}, ui::kText2);
                 gfx::text(1750, 990, std::string(status) + position, {gfx::Medium, 22, 700}, ui::kText2, 2);
-                ui::draw_pad_hints(1750, 1018, {{ui::PadButton::Triangle, T("Fullskjermspiller")}}, 2, 26);
+                ui::draw_pad_hints(1750, 1018, {{ui::PadButton::Touchpad, T("Fullskjermspiller")}}, 2, 26);
                 ui::draw_mini_player_progress(audio.position, audio.duration);
             }
+            if (!toast.empty() && now < toast_until)
+                gfx::text(1820, 100, toast, {gfx::Medium, 24, 760}, ui::kText, 2);
+            if (menu.state == ui::OptionsMenu::State::Menu) {
+                // Drops down under the header gear (x 1744..1820).
+                ui::glass_panel({1400, 146, 420, 104}, 28);
+                bool moving = false;
+                menu_drop.to({1414, 160, 392, 76}, 0); menu_drop.draw(dt, 1, &moving, 20);
+                gfx::text(1446, 210, T("Logg ut"), {gfx::SemiBold, 30, 330}, ui::kText);
+            } else if (menu.state == ui::OptionsMenu::State::Confirm) {
+                gfx::fill({0, 0, gfx::W, gfx::H}, 0xa0000000);
+                ui::glass_panel({410, 290, 1100, 500}, 40);
+                gfx::text(960, 380, T("Logge ut?"), {gfx::Bold, 40, 1000}, ui::kText, 1);
+                // The key outlives logout: revoking needs the password, which is no longer held.
+                gfx::text_centered(960, 450, saved_key
+                    ? T("Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.")
+                    : T("Avspillingen stopper og lagret innlogging slettes fra konsollen."),
+                    {gfx::Medium, 26, 980, 6}, ui::kText);
+                ui::draw_pad_hints(960, 730, {{ui::PadButton::Cross, T("Logg ut")}, {ui::PadButton::Circle, T("Avbryt")}}, 1, 28);
+            }
         } else {
-            ui::glass_panel({360, 180, 1200, 740}, 48);
-            gfx::text(960, 270, T("Navi5"), {gfx::Bold, 56}, ui::kText, 1);
+            ui::glass_panel({160, 140, 1600, 790}, 48);
+            gfx::text(960, 215, T("Navi5"), {gfx::Bold, 52}, ui::kText, 1);
+            bool moving = false;
             if (saved_retry) {
-                gfx::text(960, 480, T("Lagret innlogging mislyktes. Filen beholdes."), {gfx::Bold, 30, 1080}, ui::kText, 1);
-                gfx::text(960, 620, T("Cross: prøv igjen   Circle: åpne innlogging / QR"), {gfx::Medium, 28, 1080}, ui::kText, 1);
+                gfx::text(960, 420, T("Lagret innlogging mislyktes. Filen beholdes."), {gfx::Bold, 30, 1080}, ui::kText, 1);
+                login_drop.to({610, 498.f + saved_failed.row * 76, 700, 64}, 10 + saved_failed.row);
+                login_drop.draw(dt, 1, &moving, 22);
+                gfx::text(960, 540, T("Prøv igjen"), {gfx::SemiBold, 30, 640}, ui::kText, 1);
+                gfx::text(960, 616, T("Glem lagret innlogging"), {gfx::SemiBold, 30, 640}, ui::kText, 1);
+                ui::draw_pad_hints(960, 740, {{ui::PadButton::Cross, T("Velg")}, {ui::PadButton::Circle, T("Logg inn på nytt")}}, 1, 28);
             } else if (scheme_popup) {
                 gfx::text(960, 410, T("Velg protokoll for serveradressen"), {gfx::Bold, 30, 1080}, ui::kText, 1);
                 gfx::text(960, 500, choose_http ? "HTTPS" : "> HTTPS", {gfx::Medium, 30}, ui::kText, 1);
@@ -679,24 +791,33 @@ int main()
                 gfx::text(960, 410, T("HTTP sender innlogging og musikk ukryptert."), {gfx::Bold, 30, 1080}, ui::kText, 1);
                 gfx::text(960, 470, T("Bruk kun et betrodd nettverk. Andre kan stjele kontoen."), {gfx::Medium, 27, 1080}, ui::kText, 1);
                 gfx::text(960, 620, T("Cross: godta og koble til   Circle: avbryt"), {gfx::Medium, 28}, ui::kText, 1);
-            } else {
-                const std::string labels[] = {std::string(T("Serveradresse")) + ": " + server,
+            } else if (connecting) {
+                ui::draw_pad_hints(960, 620, {{ui::PadButton::Circle, T("Avbryt")}}, 1, 28);
+            } else if (login_screen) {
+                // Form on the left, QR on the right; without a private address, the form only.
+                const bool form_focused = login_view.focus != ui::LoginView::Focus::Qr;
+                const float left = qr_possible ? 200.f : 560.f, width = 800;
+                const std::string rows[] = {std::string(T("Serveradresse")) + ": " + server,
                     std::string(T("Brukernavn")) + ": " + username,
                     std::string(T("Passord")) + (password.empty() ? ": —" : show_password ? ": " + password : ": ********"),
-                    show_password ? T("Skjul passord") : T("Vis passord"), T("Koble til"), T("Koble til med QR-kode"), T("Glem lagret innlogging")};
-                login_drop.to({410, 312.f + field * 62, 1100, 58}, field);
-                bool animating = false; login_drop.draw(dt, 1, &animating, 22);
-                for (int i = 0; i < 7; ++i) gfx::text(450, 355.f + i * 62, labels[i], {gfx::Medium, 30, 1020}, ui::kText);
-                gfx::text(960, 800, T("Lagres ukryptert på konsollen: API-nøkkel om mulig, ellers passord."), {gfx::Medium, 24, 1100}, ui::kText2, 1);
-                if (consent && server.compare(0, 7, "http://") == 0)
-                    gfx::text(960, 840, T("HTTP sender innlogging og musikk ukryptert."), {gfx::Medium, 24, 1100}, ui::kText2, 1);
+                    show_password ? T("Skjul passord") : T("Vis passord"), T("Koble til")};
+                const int row = static_cast<int>(form_focused ? login_view.focus : login_view.row);
+                if (form_focused) login_drop.to({left, 352.f + row * 72, width, 62}, row);
+                else login_drop.hide();
+                login_drop.draw(dt, 1, &moving, 22);
+                for (int i = 0; i < 5; ++i)
+                    gfx::text(left + 36, 393.f + i * 72, rows[i], {i == 4 ? gfx::SemiBold : gfx::Medium, 30, width - 72}, ui::kText);
+                if (form_focused) ui::draw_pad_hints(left + 36, 760, {{ui::PadButton::Cross, T("Velg")}}, 0, 26);
+                if (qr_possible) pairing_view.draw(pairing_now(), dt, 1360, !form_focused);
             }
+            // One status line: the current note, else what applies to this screen.
+            const char *status = !note.empty() ? note.c_str()
+                : !login_screen || scheme_popup || warning ? ""
+                : consent && server.compare(0, 7, "http://") == 0 ? T("HTTP sender innlogging og musikk ukryptert.")
+                : T("Lagres ukryptert på konsollen: API-nøkkel om mulig, ellers passord.");
+            gfx::text(960, 885, status, {gfx::Medium, 24, 1400}, ui::kText2, 1);
         }
-        if (pairing_open) {
-            gfx::fill({0, 0, gfx::W, gfx::H}, 0xc0000000);
-            pairing_view.draw(pairing_now(), dt);
-        }
-        if (!pairing_open && !note.empty()) gfx::text(960, 900, note, {gfx::Medium, 24, 1400}, ui::kText, 1);
+        if (connected && !note.empty()) gfx::text(960, 900, note, {gfx::Medium, 24, 1400}, ui::kText, 1);
         if (!connected) gfx::text(960, 950, jf::kDiagBuild, {gfx::Medium, 22}, ui::kText2, 1);
         if (!connected && !diagnostic.empty()) gfx::text(960, 985, diagnostic, {gfx::Medium, 20, 1800}, ui::kText2, 1);
 #ifdef NAVI5_DEV_TOOLS

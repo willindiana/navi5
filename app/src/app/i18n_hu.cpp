@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &hungarian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Lejátszás következőként"},
+        {"Spilles neste:", "Következőként:"},
+        {"Henter spor …", "Számok betöltése …"},
+        {"Kunne ikke laste spor til køen", "Nem sikerült betölteni a számokat a sorba"},
+        {"Køen er full (20000 spor)", "A sor megtelt (20000 szám)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Várd meg az előző sorfrissítés végét"},
+        {"Køen er tom", "A sor üres"},
+        {"Oppdaterer køen …", "Sor frissítése …"},
+        {"Slipp", "Letétel"},
+        {"Flytt", "Áthelyezés"},
+        {"Fjern", "Eltávolítás"},
+        {"Logge ut?", "Kijelentkezel?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "A lejátszás leáll, és a mentett bejelentkezés törlődik a konzolról. Az API-kulcs érvényes marad a szerveren, amíg nem törlöd a „Navi5 (PS5)” lejátszót a Navidrome-ban. A Navi5 már nem ismeri a jelszót, így nem tudja visszavonni."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "A lejátszás leáll, és a mentett bejelentkezés törlődik a konzolról."},
+        {"QR-paring er stoppet.", "A QR-párosítás leállt."},
+        {"Skriv inn server manuelt", "Szerver megadása kézzel"},
+        {"Logg inn på nytt", "Bejelentkezés újra"},
+        {"Koble til", "Csatlakozás"},
+        {"Glem lagret innlogging", "Mentett bejelentkezés elfelejtése"},
+        {"Fullskjermspiller", "Teljes képernyős lejátszó"},
         {"Hjem", "Kezdőlap"},
         {"Musikk", "Zene"},
         {"Album", "Albumok"},

@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &turkish_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Sıradaki olarak çal"},
+        {"Spilles neste:", "Sırada:"},
+        {"Henter spor …", "Parçalar yükleniyor …"},
+        {"Kunne ikke laste spor til køen", "Parçalar kuyruğa yüklenemedi"},
+        {"Køen er full (20000 spor)", "Kuyruk dolu (20000 parça)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Önceki kuyruk güncellemesinin bitmesini bekleyin"},
+        {"Køen er tom", "Kuyruk boş"},
+        {"Oppdaterer køen …", "Kuyruk güncelleniyor …"},
+        {"Slipp", "Bırak"},
+        {"Flytt", "Taşı"},
+        {"Fjern", "Kaldır"},
+        {"Logge ut?", "Çıkış yapılsın mı?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Çalma durur ve kayıtlı oturum konsoldan silinir. API anahtarı, Navidrome'da “Navi5 (PS5)” oynatıcısını silene kadar sunucuda geçerli kalır. Navi5 artık parolaya sahip değildir ve anahtarı iptal edemez."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Çalma durur ve kayıtlı oturum konsoldan silinir."},
+        {"QR-paring er stoppet.", "QR eşleştirme durduruldu."},
+        {"Skriv inn server manuelt", "Sunucuyu elle gir"},
+        {"Logg inn på nytt", "Yeniden oturum aç"},
+        {"Koble til", "Bağlan"},
+        {"Glem lagret innlogging", "Kayıtlı oturumu unut"},
+        {"Fullskjermspiller", "Tam ekran oynatıcı"},
         {"Hjem", "Ana Ekran"},
         {"Musikk", "Müzik"},
         {"Album", "Albümler"},

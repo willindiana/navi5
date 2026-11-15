@@ -111,6 +111,20 @@ struct TextStyle {
 float text(float x, float baseline, const std::string &s, const TextStyle &st, uint32_t color,
            int align = 0 /* 0 left, 1 centre, 2 right */);
 float text_width(const std::string &s, const TextStyle &st);
+/* Centred on cx. Wrapped text is rastered as a max_w-wide block with left-aligned
+ * lines, so a short string in a multi-line style would sit left of centre: when
+ * it fits on one line it is drawn as one line instead. */
+inline float text_centered(float cx, float baseline, const std::string &s, const TextStyle &st, uint32_t color)
+{
+    if (st.max_lines > 1 && st.max_w > 0) {
+        TextStyle one = st;
+        one.max_lines = 1; one.max_w = 0;
+        if (text_width(s, one) > st.max_w) return text(cx, baseline, s, st, color, 1);
+    }
+    TextStyle one = st;
+    one.max_lines = 1;
+    return text(cx, baseline, s, one, color, 1);
+}
 
 /* Drops cached textures that were not drawn for a while (call once per frame). */
 void collect();

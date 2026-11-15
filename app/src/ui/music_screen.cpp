@@ -12,6 +12,23 @@
 #include <cstdio>
 
 namespace ui {
+void draw_gear_icon(float cx, float cy, uint32_t color)
+{
+    // Native geometry, like the search glyph: ring, hub and eight teeth.
+    for (int i = 0; i < 48; ++i) {
+        const float angle = float(i) * 6.2831853f / 48;
+        gfx::fill({cx - 2 + std::cos(angle) * 12, cy - 2 + std::sin(angle) * 12, 4, 4}, color, 1);
+    }
+    for (int i = 0; i < 24; ++i) {
+        const float angle = float(i) * 6.2831853f / 24;
+        gfx::fill({cx - 1.5f + std::cos(angle) * 5, cy - 1.5f + std::sin(angle) * 5, 3, 3}, color, 1);
+    }
+    for (int i = 0; i < 8; ++i) {
+        const float angle = float(i) * 6.2831853f / 8;
+        for (float r = 15; r <= 19; r += 2)
+            gfx::fill({cx - 3 + std::cos(angle) * r, cy - 3 + std::sin(angle) * r, 6, 6}, color, 1);
+    }
+}
 namespace {
 // Shared six-column browse geometry; Home, library grids and artist albums align.
 constexpr int kGridColumns = 6;
@@ -153,7 +170,9 @@ void MusicScreen::draw_search(float dt)
         y += 76;
     }
     gfx::pop_scissor();
-    draw_pad_hints(100, live_ ? 922 : 1010, {{PadButton::Cross, T("Velg")}, {PadButton::Circle, T("Tilbake")}});
+    std::vector<PadHint> hints{{PadButton::Cross, T("Velg")}, {PadButton::Circle, T("Tilbake")}};
+    if (play_next_target()) hints.push_back({PadButton::Triangle, T("Spill neste")});
+    draw_pad_hints(100, live_ ? 922 : 1010, hints);
 }
 void MusicScreen::select_home()
 {
@@ -175,14 +194,29 @@ Action MusicScreen::input(uint32_t pressed)
         if (next == 4) state_.search();
         else state_.tab(next);
         tabs_focused_ = true;
-        search_button_ = next == 4;
+        search_button_ = next == 4; settings_button_ = false;
         artist_action_ = 0;
         album_play_ = true; album_shuffle_ = false;
         return {};
     }
     if (!tabs_focused_ && state_.request().view == music::View::Search) return search_input(pressed);
+    if (tabs_focused_ && settings_button_) {
+        // Rightmost header control: Left back to Search, Down/Circle leave the header row.
+        if (pressed & NUVIO_BTN_LEFT) { settings_button_ = false; search_button_ = true; }
+        else if (pressed & NUVIO_BTN_CROSS) open_menu_ = true;
+        else if (pressed & NUVIO_BTN_DOWN) {
+            settings_button_ = false;
+            if (state_.request().view == music::View::Search) { search_button_ = true; state_.search(); search_results_ = false; }
+            tabs_focused_ = false;
+        } else if (pressed & NUVIO_BTN_CIRCLE) {
+            settings_button_ = false;
+            search_button_ = state_.request().view == music::View::Search;
+        } else if (pressed & NUVIO_BTN_RIGHT) m_bump = true;
+        return {};
+    }
     if (tabs_focused_ && search_button_) {
-        if (pressed & NUVIO_BTN_LEFT) { state_.tab(3); search_button_ = false; }
+        if (pressed & NUVIO_BTN_RIGHT) { search_button_ = false; settings_button_ = true; }
+        else if (pressed & NUVIO_BTN_LEFT) { state_.tab(3); search_button_ = false; }
         else if (pressed & (NUVIO_BTN_CROSS | NUVIO_BTN_DOWN)) {
             state_.search(); tabs_focused_ = false; search_results_ = false;
         } else if (pressed & NUVIO_BTN_CIRCLE) {
@@ -279,8 +313,6 @@ Action MusicScreen::input(uint32_t pressed)
     if (pressed & NUVIO_BTN_CIRCLE) {
         if (!state_.back()) return {Action::ToNav};
         tabs_focused_ = false;
-    } else if (pressed & NUVIO_BTN_TRIANGLE) {
-        return {Action::ToNav};
     } else if (tabs_focused_) {
         if (pressed & NUVIO_BTN_UP) return {}; // Header is topmost focus boundary.
         if (pressed & (NUVIO_BTN_LEFT | NUVIO_BTN_RIGHT)) {
@@ -317,6 +349,46 @@ Action MusicScreen::input(uint32_t pressed)
     }
     return {};
 }
+std::optional<music::Item> MusicScreen::play_next_target() const
+{
+    using music::Kind; using music::View;
+    if (!m_focused || tabs_focused_) return std::nullopt;
+    const auto &page = state_.page();
+    const auto view = state_.request().view;
+    const auto selected = [&]() -> std::optional<music::Item> {
+        if (state_.selected() >= page.items.size()) return std::nullopt;
+        const auto &item = page.items[state_.selected()];
+        return item.id.empty() ? std::nullopt : std::optional<music::Item>(item);
+    };
+    if (view == View::Search)
+        return search_results_ && state_.status() == music::Status::Ready ? selected() : std::nullopt;
+    if (state_.status() != music::Status::Ready) return std::nullopt;
+    if (view == View::Home && !page.sections.empty()) {
+        if (home_row_ < 0 || size_t(home_row_) >= page.sections.size() || !page.sections[home_row_].count) return std::nullopt;
+        return selected();
+    }
+    const auto context = [&](Kind kind) -> std::optional<music::Item> {
+        if (state_.request().parent_id.empty() || page.items.empty()) return std::nullopt;
+        music::Item item;
+        item.kind = kind; item.id = state_.request().parent_id;
+        item.title = !page.detail.title.empty() ? page.detail.title : state_.title();
+        return item;
+    };
+    if (view == View::ArtistAlbums) {
+        if (artist_action_ == 0 || artist_action_ == 1) return context(Kind::Artist);
+        if (artist_action_ == 2) {
+            const auto count = std::min(page.top_songs.size(), artist_expanded_ ? size_t(20) : size_t(5));
+            if (artist_song_ >= count || page.top_songs[artist_song_].id.empty()) return std::nullopt;
+            return page.top_songs[artist_song_];
+        }
+        return artist_action_ < 0 ? selected() : std::nullopt;
+    }
+    if (view == View::AlbumTracks || view == View::PlaylistTracks) {
+        if (album_play_) return context(view == View::AlbumTracks ? Kind::Album : Kind::Playlist);
+        return selected();
+    }
+    return selected();
+}
 void MusicScreen::draw(double now, float dt)
 {
     search_now_ = now;
@@ -334,7 +406,8 @@ void MusicScreen::draw(double now, float dt)
     const bool searching = state_.request().view == music::View::Search;
     const float pill_x = 100 + gfx::text_width(T("Navi5"), brand) + 32;
     const float search_x = pill_x + 16 + pill_bar(pill_x, 58, {T("Hjem"), T("Artister"), T("Album"), T("Spillelister")},
-             searching || search_button_ ? -1 : state_.tab_index(), m_focused && tabs_focused_ && !search_button_, tabs_drop_, dt, 1, &animating_);
+             searching || search_button_ || settings_button_ ? -1 : state_.tab_index(),
+             m_focused && tabs_focused_ && !search_button_ && !settings_button_, tabs_drop_, dt, 1, &animating_);
     // Active Search gets pane emphasis; keyboard focus gets the same drop as tabs.
     glass_panel({search_x, 58, 76, 76}, 38, searching ? .7f : .35f, false);
     if (m_focused && tabs_focused_ && search_button_) {
@@ -346,6 +419,14 @@ void MusicScreen::draw(double now, float dt)
         gfx::fill({search_x + 33 + std::cos(angle) * 12, 89 + std::sin(angle) * 12, 3, 3}, kText, 1);
     }
     for (int i = 0; i < 13; ++i) gfx::fill({search_x + 43.f + i, 99.f + i, 4, 4}, kText, 2);
+    // Gear at the far right of the header (menu: Log out). Same glass button as Search.
+    constexpr float gear_x = 1744;
+    glass_panel({gear_x, 58, 76, 76}, 38, .35f, false);
+    if (m_focused && tabs_focused_ && settings_button_) {
+        tabs_drop_.to({gear_x + 6, 64, 64, 64}, 5);
+        tabs_drop_.draw(dt, 1, &animating_, 32);
+    }
+    draw_gear_icon(gear_x + 38, 96, kText);
     if (searching) {
         draw_search(dt);
         animating_ = animating_ || art::animating();
@@ -568,6 +649,7 @@ void MusicScreen::draw(double now, float dt)
             ? (artist_action_ == 3 ? T("Mer") : artist_action_ == 2 ? T("Spill av") : artist_action_ == 1 ? T("Bland") : T("Spill alle")) :
         (view == music::View::AlbumTracks || view == music::View::PlaylistTracks) ? (album_play_ && album_shuffle_ ? T("Bland") : T("Spill av")) : T("Åpne")},
         {PadButton::Circle, T("Tilbake")}};
+    if (play_next_target()) hints.push_back({PadButton::Triangle, T("Spill neste")});
     draw_pad_hints(100, footer_y + 34, hints);
     animating_ = art::animating() || marquee_take_animating() || animating_;
 }
@@ -610,6 +692,13 @@ std::string playback_time(double seconds)
 void draw_music_icon(MusicIcon icon, float x, float y, uint32_t color)
 {
     if (icon == MusicIcon::Shuffle) shuffle_icon(x - 15, y, color);
+    else if (icon == MusicIcon::Stop) gfx::fill({x - 16, y - 16, 32, 32}, color, 4);
+    else if (icon == MusicIcon::Queue) {
+        // Three list lines; the first is the bold "now" entry.
+        gfx::fill({x - 18, y - 15, 36, 7}, color, 2);
+        gfx::fill({x - 18, y - 2, 36, 4}, color, 2);
+        gfx::fill({x - 18, y + 10, 36, 4}, color, 2);
+    }
     else transport_icon(x, y, icon == MusicIcon::Previous ? -1 : icon == MusicIcon::Next ? 1 : 0,
                         icon == MusicIcon::Play, color);
 }
@@ -620,6 +709,8 @@ const char *player_control_label(const PlaybackPresentation &p, int focus)
     case 1: return p.paused ? T("Fortsett") : T("Pause");
     case 2: return T("Neste spor");
     case 4: return p.shuffle_pending ? T("Bland: endrer …") : p.shuffle_enabled ? T("Bland: på") : T("Bland: av");
+    case 5: return T("Stopp");
+    case 6: return T("Kø");
     default: return p.seeking ? T("Søker / bufrer …") : p.seek_failed ? T("Kunne ikke søke. Prøv igjen.") :
         !p.seekable ? T("Søking utilgjengelig") : T("Venstre/høyre: 10 s   Cross: søk   Opp: kontroller");
     }
@@ -664,10 +755,9 @@ void draw_music_player(const PlaybackPresentation &p, int focus, float controls_
     if (a > .01f) {
         gfx::text(120, 1024, playback_time(position), {gfx::Medium, 23}, alpha(kText2, a));
         gfx::text(1800, 1024, known_duration ? playback_time(p.duration) : "--:--", {gfx::Medium, 23}, alpha(kText2, a), 2);
-        focus = std::clamp(focus, 0, 4);
+        focus = std::clamp(focus, 0, 6);
         if (focus == 3) transport_drop.hide();
-        else if (focus == 4) transport_drop.to({456, 838, 88, 80}, focus);
-        else transport_drop.to({120.f + focus * 112.f, 838, 88, 80}, focus);
+        else transport_drop.to({120.f + PlayerState::slot(focus) * 112.f, 838, 88, 80}, focus);
         if (focus == 3) {
             const float fraction = known_duration && known_position ?
                 static_cast<float>(std::clamp(position / p.duration, 0.0, 1.0)) : 0.f;
@@ -684,6 +774,11 @@ void draw_music_player(const PlaybackPresentation &p, int focus, float controls_
         // Pending retains confirmed state until the toggle completes.
         if (p.shuffle_enabled) gfx::fill({472, 854, 56, 48}, alpha(0xff354038, a), 12);
         draw_music_icon(MusicIcon::Shuffle, 500, 878, alpha(p.shuffle_enabled ? 0xffa8bfa8 : kText, a));
+        draw_music_icon(MusicIcon::Stop, 612, 878, alpha(kText, a));
+        draw_music_icon(MusicIcon::Queue, 724, 878, alpha(kText, a));
+        // Transport icons stay unlabeled (earlier design); Stop and Queue are new
+        // and less familiar, so name them while focused.
+        if (focus >= 5) gfx::text(800, 887, player_control_label(p, focus), {gfx::Medium, 24, 460}, alpha(kText2, a));
         if (p.preview)
             draw_pad_hints(960, 1016, {{PadButton::Cross, T("Utfør søk")}, {PadButton::Circle, T("Avbryt søk")}}, 1, 28, a);
     }

@@ -112,9 +112,14 @@ network, and a non-admin account where practical.
 
 Residual behavior worth knowing:
 
-- **Forget does not revoke.** Revoking through the native API needs a session
-  token, which needs the password Navi5 deliberately no longer has. Forget
-  deletes the local file and tells the user to delete the `Navi5 (PS5)` player.
+- **Logout and Forget do not revoke.** Revoking through the native API needs a
+  session token, which needs the password Navi5 deliberately no longer has.
+  Both delete the local file and tell the user to delete the `Navi5 (PS5)` player.
+- **Where they are (v1.0).** Signed in: Options, Log out, confirm. That stops
+  playback through the usual account reset, deletes the file through the Forget
+  path and clears server, username and secrets from memory. Not signed in:
+  "Forget saved login" is on the saved-login-failed screen, beside Retry, shown
+  for network and credential failures alike. It is no longer on the login list.
 - **Each password sign-in issues a new key.** A previous `Navi5 (PS5)` player
   is left in place, because a second console may be using it. Stale players
   are harmless but should be deleted when a console is retired or a key is

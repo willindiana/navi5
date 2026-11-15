@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &japanese_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "次に再生"},
+        {"Spilles neste:", "次に再生:"},
+        {"Henter spor …", "曲を読み込み中 …"},
+        {"Kunne ikke laste spor til køen", "キューに曲を読み込めませんでした"},
+        {"Køen er full (20000 spor)", "キューがいっぱいです（20000曲）"},
+        {"Vent til forrige kø-oppdatering er ferdig", "前のキュー更新が終わるまでお待ちください"},
+        {"Køen er tom", "キューは空です"},
+        {"Oppdaterer køen …", "キューを更新中 …"},
+        {"Slipp", "ここに置く"},
+        {"Flytt", "移動"},
+        {"Fjern", "削除"},
+        {"Logge ut?", "ログアウトしますか？"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "再生を停止し、保存されたログイン情報を本体から削除します。APIキーは、Navidromeでプレーヤー「Navi5 (PS5)」を削除するまでサーバー上で有効です。Navi5はパスワードを保持していないため、キーを無効にできません。"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "再生を停止し、保存されたログイン情報を本体から削除します。"},
+        {"QR-paring er stoppet.", "QRペアリングは停止しています。"},
+        {"Skriv inn server manuelt", "サーバーを手動で入力"},
+        {"Logg inn på nytt", "もう一度サインイン"},
+        {"Koble til", "接続"},
+        {"Glem lagret innlogging", "保存したログイン情報を消去"},
+        {"Fullskjermspiller", "フルスクリーンプレーヤー"},
         {"Hjem", "ホーム"},
         {"Musikk", "ミュージック"},
         {"Album", "アルバム"},

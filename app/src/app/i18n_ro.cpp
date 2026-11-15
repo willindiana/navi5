@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &romanian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Redă următoarea"},
+        {"Spilles neste:", "Urmează:"},
+        {"Henter spor …", "Se încarcă piesele …"},
+        {"Kunne ikke laste spor til køen", "Piesele nu au putut fi încărcate în coadă"},
+        {"Køen er full (20000 spor)", "Coada este plină (20000 de piese)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Așteaptă finalizarea actualizării anterioare a cozii"},
+        {"Køen er tom", "Coada este goală"},
+        {"Oppdaterer køen …", "Se actualizează coada …"},
+        {"Slipp", "Plasează"},
+        {"Flytt", "Mută"},
+        {"Fjern", "Elimină"},
+        {"Logge ut?", "Te deconectezi?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Redarea se oprește, iar autentificarea salvată este ștearsă de pe consolă. Cheia API rămâne validă pe server până când ștergi playerul „Navi5 (PS5)” din Navidrome. Navi5 nu mai are parola și nu o poate revoca."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Redarea se oprește, iar autentificarea salvată este ștearsă de pe consolă."},
+        {"QR-paring er stoppet.", "Asocierea prin QR este oprită."},
+        {"Skriv inn server manuelt", "Introdu serverul manual"},
+        {"Logg inn på nytt", "Autentifică-te din nou"},
+        {"Koble til", "Conectare"},
+        {"Glem lagret innlogging", "Uită autentificarea salvată"},
+        {"Fullskjermspiller", "Player pe tot ecranul"},
         {"Hjem", "Acasă"},
         {"Musikk", "Muzică"},
         {"Album", "Albume"},

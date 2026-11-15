@@ -59,10 +59,16 @@ credentials, QR codes, server URLs, private library metadata or raw captures.
 | Fullscreen Down, Left / Right, Cross | Focus seek, preview in 10-second steps, apply |
 | Fullscreen Circle while seeking | Cancel preview before leaving player |
 | Fullscreen Left / Right, Cross on Shuffle | Focus shuffle after Next, request live toggle; wait for pending result |
-| Square | Backspace anywhere in Search; pause / resume elsewhere, including fullscreen player |
-| Touchpad | Stop |
-| Triangle | Reopen player from compact playback bar |
-| Options | Log out |
+| Fullscreen Left / Right, Cross on Stop / Queue | Stop playback; open the queue view |
+| Queue view: Cross, Up / Down, Cross | Pick up an upcoming track, carry it, drop it. L1 / R1 page. Circle cancels a carry, then closes |
+| Queue view: Square | Remove the focused upcoming track (the current track is fixed) |
+| Square | Backspace anywhere in Search; remove in the queue view; pause / resume elsewhere, including fullscreen player |
+| Triangle | Play Next for the focused track, album, playlist or artist; starts playback when nothing is playing |
+| Touchpad | Open the fullscreen player |
+| Options, or Cross on the header gear (Right past Search) | Menu: Log out (asks first; deletes the saved login) |
+
+The global buttons are one table, `app/src/ui/pad_route.h`, covered by
+`input.sh` (from a pad press) and `music.sh`. See [queue behavior](QUEUE.md).
 
 Fullscreen controls fade when idle; the first direction or Cross wakes them
 without activating.

@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &chinese_traditional_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "接著播放"},
+        {"Spilles neste:", "接著播放："},
+        {"Henter spor …", "正在載入曲目 …"},
+        {"Kunne ikke laste spor til køen", "無法將曲目載入佇列"},
+        {"Køen er full (20000 spor)", "佇列已滿（20000 首）"},
+        {"Vent til forrige kø-oppdatering er ferdig", "請等待上一次佇列更新完成"},
+        {"Køen er tom", "佇列是空的"},
+        {"Oppdaterer køen …", "正在更新佇列 …"},
+        {"Slipp", "放下"},
+        {"Flytt", "移動"},
+        {"Fjern", "移除"},
+        {"Logge ut?", "要登出嗎？"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "播放將停止，儲存的登入資訊將從主機刪除。在你於 Navidrome 中刪除播放器「Navi5 (PS5)」之前，API 金鑰在伺服器上仍然有效。Navi5 已不再保存密碼，無法撤銷該金鑰。"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "播放將停止，儲存的登入資訊將從主機刪除。"},
+        {"QR-paring er stoppet.", "QR 配對已停止。"},
+        {"Skriv inn server manuelt", "手動輸入伺服器"},
+        {"Logg inn på nytt", "重新登入"},
+        {"Koble til", "連線"},
+        {"Glem lagret innlogging", "忘記儲存的登入資訊"},
+        {"Fullskjermspiller", "全螢幕播放器"},
         {"Hjem", "首頁"},
         {"Musikk", "音樂"},
         {"Album", "專輯"},

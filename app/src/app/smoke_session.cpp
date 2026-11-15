@@ -471,14 +471,22 @@ uint64_t Mailbox::reset()
     commands.clear(); results.clear(); audio = {}; song_id.clear(); title.clear(); artist.clear(); artwork_url.clear(); next_title.clear(); duration = 0;
     artist_id.clear(); portrait_url.clear();
     shuffle_enabled = shuffle_pending = shuffle_error = false;
+    queue_window = {}; queue_window.serial = ++queue_serial; queue_watch = queue_poke = false; queue_first = 0;
     Command c; c.generation = generation; c.playback_revision = playback_revision; c.kind = Command::Logout;
     commands.push_back(std::move(c)); wake.notify_one();
     return generation;
 }
+void Mailbox::watch_queue(bool open, size_t first, uint64_t current)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    if (quit || current != generation || (open == queue_watch && (!open || first == queue_first))) return;
+    queue_watch = open; queue_first = open ? first : 0;
+    if (open) { queue_poke = true; wake.notify_one(); }
+}
 bool Mailbox::send(Command c)
 {
     std::lock_guard<std::mutex> lock(mutex);
-    if (quit || c.generation != generation) return false;
+    if (quit || c.generation != generation || c.kind == Command::EnqueueReady) return false;
     ++browse_revision; // Any explicit action outranks speculation between HTTP calls.
     if (c.kind == Command::Play) first_pages.erase(View::Home); // Recent history changes after playback.
     if (c.kind == Command::Login) {
@@ -599,6 +607,42 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
         std::optional<bool> shuffle_request;
         bool shuffle_error = false;
         std::mt19937 shuffle_rng(av_get_random_seed());
+        // Accepted queue edits, applied together once the audio player admits the
+        // resulting successor (or at once when nothing is playing).
+        struct QueueEdit {
+            enum Kind { Insert, Move, Remove } kind = Insert;
+            std::vector<subsonic::Song> songs;
+            uint64_t uid = 0, anchor = 0;
+        };
+        std::deque<QueueEdit> edits;
+        // Album/artist Play Next assembles on its own thread so gapless declarations
+        // keep running here. One at a time; the flag cancels and identifies it.
+        std::shared_ptr<std::atomic<bool>> enqueue_job;
+        auto cancel_enqueue = [&] { if (enqueue_job) { *enqueue_job = true; enqueue_job.reset(); } };
+        // Songs are copied: a refused admission retries the same edits next tick.
+        auto apply_edits = [&](PlayQueue &target) {
+            bool inserted = false;
+            for (const auto &edit : edits) {
+                if (edit.kind == QueueEdit::Insert) inserted = target.play_next(edit.songs) || inserted;
+                else if (edit.kind == QueueEdit::Move) target.move_after(edit.uid, edit.anchor);
+                else target.remove(edit.uid);
+            }
+            return inserted;
+        };
+        auto accept_enqueue = [&](std::vector<subsonic::Song> songs, Result &result) {
+            size_t waiting = songs.size();
+            for (const auto &edit : edits) waiting += edit.songs.size();
+            if (songs.empty() || edits.size() >= 64 || queue.size() > PlayQueue::max_tracks ||
+                waiting > PlayQueue::max_tracks - queue.size()) {
+                result.playback_error = songs.empty() ? "Kunne ikke laste spor til køen" : "Køen er full (20000 spor)";
+                return;
+            }
+            result.ok = true; result.count = songs.size();
+            edits.push_back({QueueEdit::Insert, std::move(songs)});
+        };
+        uint64_t published_revision = 0;
+        size_t published_first = 0;
+        bool published_pending = false;
         auto successor_url = [&] {
             auto index = queue.successor_index();
             return index ? client->stream_url(queue.tracks()[*index].id) : std::string{};
@@ -631,16 +675,18 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
         };
         for (;;) {
             Command c;
-            bool have = false;
+            bool have = false, poked = false;
             {
                 std::unique_lock<std::mutex> lock(box->mutex);
-                box->wake.wait_for(lock, std::chrono::milliseconds(100), [&] { return box->quit || !box->commands.empty(); });
+                box->wake.wait_for(lock, std::chrono::milliseconds(100), [&] { return box->quit || !box->commands.empty() || box->queue_poke; });
                 if (box->quit) break;
+                poked = box->queue_poke; box->queue_poke = false;
                 if (!box->commands.empty()) { c = std::move(box->commands.front()); box->commands.pop_front(); have = true; }
             }
             if (have) {
                 { std::lock_guard<std::mutex> lock(box->mutex); if (c.generation != box->generation) continue; }
                 Result result; result.kind = c.kind; result.generation = c.generation; result.token = c.request.token;
+                bool post = c.kind == Command::Login || c.kind == Command::Play;
 #ifdef NAVI5_DEV_TOOLS
                 if (c.kind == Command::Login) jf::live_progress.publish(5, 10, 0, 0, 0, 0);
 #endif
@@ -648,6 +694,10 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                 if (c.kind == Command::Play || c.kind == Command::Stop || c.kind == Command::Next || c.kind == Command::Logout || c.kind == Command::Login) {
                     shuffle_request.reset(); shuffle_error = false;
                     pending_context.reset();
+                }
+                // Next/Previous keep accepted edits; these end the queue they were for.
+                if (c.kind == Command::Play || c.kind == Command::Stop || c.kind == Command::Logout || c.kind == Command::Login) {
+                    edits.clear(); cancel_enqueue();
                 }
                 if (c.kind == Command::Logout || c.kind == Command::Login) {
                     player.stop(); client.reset(); library = {}; queue = PlayQueue{};
@@ -704,10 +754,15 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                             }
                         }
                         break;
-                    case Command::Next:
+                    case Command::Next: {
                         playback = c.playback_revision;
-                        if (queue.next()) start_track();
+                        // A restart needs no successor swap: waiting edits apply first, so
+                        // Next lands on what was just asked to play next.
+                        auto candidate = queue;
+                        if (!edits.empty()) apply_edits(candidate);
+                        if (candidate.next()) { queue = std::move(candidate); edits.clear(); start_track(); }
                         break;
+                    }
                     case Command::Previous: {
                         { std::lock_guard<std::mutex> lock(box->mutex); if (c.playback_revision != box->playback_revision) break; }
                         playback = c.playback_revision;
@@ -726,7 +781,12 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                             return player.seek(0, s.track);
                         };
                         if (restart(false)) break;
-                        if (queue.previous()) { shuffle_request.reset(); shuffle_error = false; pending_context.reset(); start_track(); }
+                        auto candidate = queue;
+                        if (!edits.empty()) apply_edits(candidate);
+                        if (candidate.previous()) {
+                            queue = std::move(candidate); edits.clear();
+                            shuffle_request.reset(); shuffle_error = false; pending_context.reset(); start_track();
+                        }
                         else if (queue.current() && !restart(true)) {
                             // First entry, not seekable: replay same occurrence; keep pause/pending shuffle.
                             const auto keep = shuffle_request; start_track(); shuffle_request = keep;
@@ -752,6 +812,66 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                             shuffle_error = false;
                         }
                         break;
+                    case Command::Enqueue: {
+                        post = true;
+                        if (c.item.id.empty()) { result.playback_error = "Kunne ikke laste spor til køen"; break; }
+                        if (c.item.kind == Kind::Track) {
+                            // Row already carries everything playback shows; no request needed.
+                            subsonic::Song song; song.id = c.item.id; song.title = c.item.title;
+                            song.artist = c.item.subtitle; song.artist_id = c.item.artist_id;
+                            song.duration = c.item.duration; song.cover_art = c.item.artwork_url;
+                            result.title = c.item.title;
+                            std::vector<subsonic::Song> one;
+                            one.push_back(std::move(song));
+                            accept_enqueue(std::move(one), result);
+                            break;
+                        }
+                        if (enqueue_job) { result.playback_error = "Vent til forrige kø-oppdatering er ferdig"; break; }
+                        // Same bounded, atomic assembly as Play all (Library::queue), on a
+                        // scratch Library: recent-context and detail caches stay untouched.
+                        PlayIntent intent;
+                        intent.context_id = c.item.id;
+                        intent.context = c.item.kind == Kind::Album ? View::AlbumTracks :
+                            c.item.kind == Kind::Playlist ? View::PlaylistTracks : View::ArtistAlbums;
+                        if (c.item.kind == Kind::Artist) intent.action = PlayAction::ArtistPlayAll;
+                        auto job = std::make_shared<std::atomic<bool>>(false);
+                        std::shared_ptr<const subsonic::Client> shared = client;
+                        const uint64_t generation = c.generation, token = c.request.token;
+                        if (jelly5::spawn_media([box, shared, intent, job, generation, token] {
+                                Library scratch;
+                                PlayQueue assembled;
+                                std::string error = "Kunne ikke laste spor til køen";
+                                const bool ok = scratch.queue(*shared, intent, assembled, [&] {
+                                    if (*job) return true;
+                                    std::lock_guard<std::mutex> lock(box->mutex);
+                                    return box->quit || generation != box->generation;
+                                }, &error);
+                                Command done; done.kind = Command::EnqueueReady; done.generation = generation;
+                                done.request.token = token; done.job = job;
+                                if (ok) done.songs = assembled.tracks();
+                                if (done.songs.empty()) done.error = error;
+                                // Bypasses send(): must not be refused by the UI's 16-command cap.
+                                std::lock_guard<std::mutex> lock(box->mutex);
+                                if (box->quit || generation != box->generation || *job) return;
+                                done.playback_revision = box->playback_revision;
+                                box->commands.push_back(std::move(done)); box->wake.notify_one();
+                            })) { enqueue_job = std::move(job); post = false; }
+                        else result.playback_error = "Kunne ikke starte arbeidet";
+                        break;
+                    }
+                    case Command::EnqueueReady:
+                        if (!c.job || c.job != enqueue_job) break; // Cancelled by Play/Stop/logout.
+                        enqueue_job.reset();
+                        post = true; result.kind = Command::Enqueue;
+                        if (c.songs.empty()) result.playback_error = c.error;
+                        else accept_enqueue(std::move(c.songs), result);
+                        break;
+                    case Command::QueueMove:
+                        if (edits.size() < 64) edits.push_back({QueueEdit::Move, {}, c.uid, c.anchor});
+                        break;
+                    case Command::QueueRemove:
+                        if (edits.size() < 64) edits.push_back({QueueEdit::Remove, {}, c.uid, 0});
+                        break;
                     case Command::Pause: player.pause(); break;
                     case Command::Resume: player.resume(); break;
                     case Command::Stop:
@@ -773,7 +893,7 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                             box->recent_contexts = client ? history.items() : std::vector<Item>{};
                             ++box->history_revision;
                         }
-                        if (c.kind == Command::Login || c.kind == Command::Play) box->results.push_back(std::move(result));
+                        if (post) box->results.push_back(std::move(result));
                     }
                 }
 #ifdef NAVI5_DEV_TOOLS
@@ -782,7 +902,10 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                 }
                 jf::trace_end();
 #endif
-                if (stale) { player.stop(); client.reset(); library = {}; queue = PlayQueue{}; advancing = false; title.clear(); start_error = {}; }
+                if (stale) {
+                    player.stop(); client.reset(); library = {}; queue = PlayQueue{}; advancing = false; title.clear(); start_error = {};
+                    edits.clear(); cancel_enqueue();
+                }
             }
             auto status = start_error.state == AudioState::error ? start_error : player.status();
             if (status.track != occurrence) seek_rejected = false;
@@ -817,7 +940,28 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                     ++occurrence;
                     title = queue.current()->title;
                 }
-                if (shuffle_request && status.state != AudioState::error && status.state != AudioState::ended) {
+                if (!edits.empty() && status.state != AudioState::error && status.state != AudioState::ended) {
+                    // Same admission rules as live shuffle. A changed immediate successor
+                    // must replace the prefetched producer (replace_next bumps next_revision,
+                    // so the stale one can never be promoted). An unchanged successor keeps
+                    // its prefetch, but only outside a handoff: the player may already have
+                    // promoted an entry this edit would otherwise slip in front of.
+                    auto candidate = queue;
+                    apply_edits(candidate);
+                    const bool same = candidate.successor_uid() == queue.successor_uid();
+                    auto index = candidate.successor_index();
+                    auto url = index ? client->stream_url(candidate.tracks()[*index].id) : std::string{};
+                    std::lock_guard<std::mutex> lock(box->mutex);
+                    if (!box->quit && active == box->generation && playback == box->playback_revision &&
+                        box->commands.empty() && occurrence == status.track) {
+                        bool admitted;
+                        if (same) {
+                            const auto now = player.status();
+                            admitted = now.track == occurrence && now.next_track == occurrence;
+                        } else admitted = player.replace_next(std::move(url), occurrence);
+                        if (admitted) { queue = std::move(candidate); edits.clear(); }
+                    }
+                } else if (shuffle_request && status.state != AudioState::error && status.state != AudioState::ended) {
                     // Reconcile committed PCM first. Admission and prefetch replacement
                     // share occurrence guards; failed handoff/seek retries next tick.
                     auto candidate = queue;
@@ -839,6 +983,21 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                     player.queue_next(index ? client->stream_url(future.tracks()[*index].id) : std::string{}, status.next_track);
                 }
                 if (status.state == AudioState::ended || status.state == AudioState::error) advancing = false;
+            }
+            if (current && client && !advancing && !edits.empty()) {
+                // Nothing is playing (stopped, finished or failed): no producer to
+                // protect. Play Next then starts playback at the first inserted entry.
+                const bool was_empty = !queue.current();
+                auto candidate = queue;
+                const bool inserted = apply_edits(candidate);
+                edits.clear();
+                if (!inserted) queue = std::move(candidate);
+                else if (was_empty || candidate.next()) {
+                    queue = std::move(candidate);
+                    pending_context.reset();
+                    start_track();
+                    status = player.status();
+                }
             }
             if (shuffle_request && (!advancing || !queue.current())) {
                 shuffle_request.reset(); shuffle_error = true;
@@ -866,6 +1025,22 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                     box->artwork_url = song ? song->cover_art : "";
                     const auto *next = queue.up_next();
                     box->next_title = next ? next->title : "";
+                    if (box->queue_watch && (poked || queue.revision() != published_revision ||
+                            box->queue_first != published_first || edits.empty() == published_pending)) {
+                        published_revision = queue.revision(); published_first = box->queue_first;
+                        published_pending = !edits.empty();
+                        auto &window = box->queue_window;
+                        window.serial = ++box->queue_serial;
+                        window.total = queue.size(); window.position = window.total ? queue.position() : 0;
+                        window.pending = published_pending;
+                        window.first = std::min(std::max(box->queue_first, window.position), window.total);
+                        window.rows.clear();
+                        const size_t end = std::min(window.total, window.first + QueueWindow::capacity);
+                        for (size_t i = window.first; i < end; ++i) {
+                            const auto &entry = queue.at(i);
+                            window.rows.push_back({queue.uid_at(i), entry.title, entry.artist, entry.duration});
+                        }
+                    }
                 }
             }
         }

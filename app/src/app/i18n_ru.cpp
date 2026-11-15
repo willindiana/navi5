@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &russian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Играть следующим"},
+        {"Spilles neste:", "Следующим будет:"},
+        {"Henter spor …", "Загрузка треков …"},
+        {"Kunne ikke laste spor til køen", "Не удалось загрузить треки в очередь"},
+        {"Køen er full (20000 spor)", "Очередь заполнена (20000 треков)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Дождитесь завершения предыдущего обновления очереди"},
+        {"Køen er tom", "Очередь пуста"},
+        {"Oppdaterer køen …", "Обновление очереди …"},
+        {"Slipp", "Отпустить"},
+        {"Flytt", "Переместить"},
+        {"Fjern", "Убрать"},
+        {"Logge ut?", "Выйти?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Воспроизведение остановится, а сохранённый вход будет удалён с консоли. Ключ API остаётся действительным на сервере, пока вы не удалите плеер «Navi5 (PS5)» в Navidrome. У Navi5 больше нет пароля, и отозвать ключ он не может."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Воспроизведение остановится, а сохранённый вход будет удалён с консоли."},
+        {"QR-paring er stoppet.", "QR-сопряжение остановлено."},
+        {"Skriv inn server manuelt", "Ввести сервер вручную"},
+        {"Logg inn på nytt", "Войти снова"},
+        {"Koble til", "Подключиться"},
+        {"Glem lagret innlogging", "Забыть сохранённый вход"},
+        {"Fullskjermspiller", "Полноэкранный плеер"},
         {"Hjem", "Главная"},
         {"Musikk", "Музыка"},
         {"Album", "Альбомы"},

@@ -29,6 +29,7 @@ static int test_clock_gettime(clockid_t id, struct timespec *out)
 #define clock_gettime test_clock_gettime
 #include "../../src/nuvio_input.c"
 #undef clock_gettime
+#include "../../src/ui/pad_route.h"
 
 enum { STANDARD_HANDLE = 10, REMOTE_HANDLE = 20, USER_REMOTE_HANDLE = 30 };
 static pad_data standard, remote, user_remote;
@@ -418,6 +419,70 @@ static void remote_key_regressions(void)
     nuvio_input_close();
 }
 
+/* v1.0 mapping, from a real pad press to the app's action (ui/pad_route.h). */
+static void v1_mapping_regressions(void)
+{
+    const ui_pad_context browse = {0, 0, 0, 0, 1}, search = {0, 0, 0, 1, 1}, player = {1, 0, 0, 0, 1},
+        queue = {1, 1, 0, 0, 1}, menu = {0, 0, 1, 0, 1};
+    reset(1, 0);
+    nuvio_input_open(7);
+#define PRESS(button) (standard.buttons = (button), poll().pressed)
+#define RELEASE() (standard.buttons = 0, (void)poll())
+    ui_pad_route r = ui_route_pad(PRESS(NUVIO_BTN_TRIANGLE), browse);
+    assert(r.play_next && !r.open_player && !r.menu && !r.pause_toggle && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_TRIANGLE), player); /* No longer opens or leaves the player. */
+    assert(!r.play_next && !r.open_player && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_TOUCHPAD), browse); /* Was Stop; now the fullscreen player. */
+    assert(r.open_player && !r.pause_toggle && !r.play_next && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_OPTIONS), browse);
+    assert(r.menu && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_OPTIONS), menu);    /* Reaches the menu, which closes. */
+    assert(!r.menu && r.rest == NUVIO_BTN_OPTIONS);
+    RELEASE();
+    /* Square conflict: search backspace, queue remove, otherwise pause/resume. */
+    r = ui_route_pad(PRESS(NUVIO_BTN_SQUARE), search);
+    assert(r.search_backspace && !r.pause_toggle && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_SQUARE), queue);
+    assert(!r.search_backspace && !r.pause_toggle && r.rest == NUVIO_BTN_SQUARE);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_SQUARE), browse);
+    assert(r.pause_toggle && !r.search_backspace && r.rest == 0);
+    RELEASE();
+    r = ui_route_pad(PRESS(NUVIO_BTN_SQUARE | NUVIO_BTN_TRIANGLE), search);
+    assert(r.search_backspace && r.play_next && !r.pause_toggle && r.rest == 0);
+    RELEASE();
+    /* A held Triangle or Touchpad acts once: they are not auto-repeating keys. */
+    assert(PRESS(NUVIO_BTN_TRIANGLE | NUVIO_BTN_TOUCHPAD) == (NUVIO_BTN_TRIANGLE | NUVIO_BTN_TOUCHPAD));
+    for (int i = 0; i < 40; ++i) {
+        test_time += 0.05;
+        r = ui_route_pad(poll().pressed, browse);
+        assert(!r.play_next && !r.open_player);
+    }
+    RELEASE();
+#undef PRESS
+#undef RELEASE
+    nuvio_input_close();
+    /* The remote's Play/Pause key pauses in every context, Options opens the menu. */
+    reset(1, 1);
+    nuvio_input_open(7);
+    set_remote_key(&remote, 22, 1);
+    r = ui_route_pad(poll().pressed, queue);
+    assert(r.pause_toggle && r.rest == 0);
+    set_remote_key(&remote, 0, 1);
+    (void)poll();
+    set_remote_key(&remote, 18, 1);
+    r = ui_route_pad(poll().pressed, player);
+    assert(r.menu);
+    set_remote_key(&remote, 0, 1);
+    (void)poll();
+    nuvio_input_close();
+}
+
 /* The Media Remote's keys (SDL's remote_key_map) and the user's own ports. */
 static void media_remote_regressions(void)
 {
@@ -478,6 +543,7 @@ int main(void)
 {
     queue_regressions();
     remote_key_regressions();
+    v1_mapping_regressions();
     media_remote_regressions();
     /* HDMI navigation shares the shell/player buttons and their repeat policy. */
     reset(1, 1);

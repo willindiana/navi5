@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &italian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Riproduci dopo"},
+        {"Spilles neste:", "In riproduzione dopo:"},
+        {"Henter spor …", "Caricamento brani …"},
+        {"Kunne ikke laste spor til køen", "Impossibile caricare i brani per la coda"},
+        {"Køen er full (20000 spor)", "La coda è piena (20000 brani)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Attendi il termine del precedente aggiornamento della coda"},
+        {"Køen er tom", "La coda è vuota"},
+        {"Oppdaterer køen …", "Aggiornamento della coda …"},
+        {"Slipp", "Rilascia"},
+        {"Flytt", "Sposta"},
+        {"Fjern", "Rimuovi"},
+        {"Logge ut?", "Disconnettersi?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "La riproduzione si interrompe e l’accesso salvato viene eliminato dalla console. La chiave API resta valida sul server finché non elimini il lettore «Navi5 (PS5)» in Navidrome. Navi5 non ha più la password e non può revocarla."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "La riproduzione si interrompe e l’accesso salvato viene eliminato dalla console."},
+        {"QR-paring er stoppet.", "L’abbinamento QR è stato interrotto."},
+        {"Skriv inn server manuelt", "Inserisci il server manualmente"},
+        {"Logg inn på nytt", "Accedi di nuovo"},
+        {"Koble til", "Connetti"},
+        {"Glem lagret innlogging", "Dimentica l’accesso salvato"},
+        {"Fullskjermspiller", "Lettore a schermo intero"},
         {"Kø", "Coda"},
         {"Stopp", "Interrompi"},
         {"Gjenta", "Ripeti"},

@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &dutch_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Hierna afspelen"},
+        {"Spilles neste:", "Speelt hierna:"},
+        {"Henter spor …", "Nummers laden …"},
+        {"Kunne ikke laste spor til køen", "Kan nummers voor de wachtrij niet laden"},
+        {"Køen er full (20000 spor)", "Wachtrij is vol (20000 nummers)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Wacht tot de vorige wachtrij-update klaar is"},
+        {"Køen er tom", "Wachtrij is leeg"},
+        {"Oppdaterer køen …", "Wachtrij bijwerken …"},
+        {"Slipp", "Neerzetten"},
+        {"Flytt", "Verplaatsen"},
+        {"Fjern", "Verwijderen"},
+        {"Logge ut?", "Uitloggen?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Het afspelen stopt en de opgeslagen login wordt van de console verwijderd. De API-sleutel blijft geldig op de server totdat je de speler ‘Navi5 (PS5)’ in Navidrome verwijdert. Navi5 heeft het wachtwoord niet meer en kan de sleutel niet intrekken."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Het afspelen stopt en de opgeslagen login wordt van de console verwijderd."},
+        {"QR-paring er stoppet.", "QR-koppeling is gestopt."},
+        {"Skriv inn server manuelt", "Server handmatig invoeren"},
+        {"Logg inn på nytt", "Opnieuw inloggen"},
+        {"Koble til", "Verbinden"},
+        {"Glem lagret innlogging", "Opgeslagen login vergeten"},
+        {"Fullskjermspiller", "Speler op volledig scherm"},
         {"Hjem", "Home"},
         {"Musikk", "Muziek"},
         {"Album", "Albums"},
