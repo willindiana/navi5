@@ -8,3 +8,7 @@ app/build-assets.mk
 toolkit/.deps/
 # Local research and working notes are not published.
 private/
+
+# Private agent notes (machine-specific, never published).
+CLAUDE.local.md
+__pycache__/
