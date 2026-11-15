@@ -1,3 +1,10 @@
 # Verbatim upstream licence texts: keep their whitespace byte-for-byte.
 app/licenses/*.txt -whitespace
 app/licenses/*.md -whitespace
+# Left out of every source archive (git archive and host-generated tag archives):
+# inherited art and screenshots without an established redistribution grant, and
+# bytecode. Must match the exclusions in scripts/assemble-source.py, so the tag
+# archive has exactly the files of the export validated at build time.
+docs/media export-ignore
+app/assets/brand export-ignore
+scripts/__pycache__ export-ignore

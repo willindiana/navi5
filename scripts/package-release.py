@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Package two public assets from validated delivery; never publish or rebuild."""
+"""Package two public assets from validated delivery; never publish or rebuild.
+
+Navi5-<version>.zip is the install folder. Navi5-<version>-third-party-source.zip
+holds what the tag's own source archive cannot: pinned third-party source
+tarballs, the recipient relink capture, the modified FriBidi, and the manifest
+and verification receipts. Navi5's own source is the host's automatic source
+archive of the release tag, which must point at the commit manifest.json records
+(scripts/verify-tag-source.py checks that before publication).
+"""
 import hashlib
 import json
 from pathlib import Path
@@ -27,7 +35,19 @@ def package(original, kit, output):
     require(all(p.is_file() and not p.is_symlink() for p in paths), 'nonregular source input')
     sums = ''.join(f'{digest(p.read_bytes())}  {p.name}\n' for p in paths if p.name != 'SHA256SUMS')
     require((kit / 'source/SHA256SUMS').read_text() == sums, 'source checksum coverage mismatch')
-    require(json.loads((kit / 'source/manifest.json').read_text())['revision'] == receipt['revision'], 'source revision mismatch')
+    revision = receipt['revision']
+    require(json.loads((kit / 'source/manifest.json').read_text())['revision'] == revision, 'source revision mismatch')
+    # The tag archive stands in for the repository export, so the commit must be exact.
+    require(isinstance(revision, str) and re.fullmatch(r'[0-9a-f]{40}', revision), 'revision is not a full commit hash')
+    # The validated kit must still contain the export it was checked against...
+    require((kit / 'source/navi5.tar').is_file(), 'validated repository export missing from kit')
+    export_digest = digest((kit / 'source/navi5.tar').read_bytes())
+    # ...and everything LGPL relinking and GPL third-party source coverage need.
+    names = {p.name for p in paths}
+    for needed in ('manifest.json', 'verification.json', 'relink.tar', 'modified-fribidi.a', 'modified-fribidi.c', 'SHA256SUMS'):
+        require(needed in names, 'source kit lacks ' + needed)
+    require(any(n.startswith('fribidi-') and '.tar' in n for n in names), 'source kit lacks third-party source tarballs')
+    shipped = [p for p in paths if p.name not in ('navi5.tar', 'SHA256SUMS')]
     with zipfile.ZipFile(original) as archive:
         require(archive.testzip() is None, 'original ZIP CRC failure')
         require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate ZIP member')
@@ -51,18 +71,26 @@ def package(original, kit, output):
             for member in members:
                 require(zipped.read(member.filename) == archive.read(member), 'title bytes changed')
     files = {'validation.json': (kit / 'validation.json').read_bytes(),
-             **{str(p.relative_to(kit)): p.read_bytes() for p in paths}}
+             **{str(p.relative_to(kit)): p.read_bytes() for p in shipped}}
+    # Same format as the kit's list, minus the repository export that is not shipped.
+    files['source/SHA256SUMS'] = ''.join(f'{digest(p.read_bytes())}  {p.name}\n' for p in shipped).encode()
     # Root checksums describe archive members, not separate install ZIP.
     files['DISTRIBUTION.md'] = (f'# Distribution identity\n\nBuild revision: {receipt["revision"]}.\n'
         f'Original build archive: {original.name}; {original.stat().st_size} bytes; SHA-256 {digest(original.read_bytes())}.\n'
         f'Distributed folder-only archive: {install.name}; {install.stat().st_size} bytes; SHA-256 {digest(install.read_bytes())}.\n'
         'Every title-folder byte and member metadata preserved. No rebuild during packaging.\n'
         'validation.json preserves original build hashes, not distributed ZIP identity.\n'
-        'Extract source/navi5.tar for source and build/relink instructions.\n'
-        'source/SHA256SUMS remains unchanged; root SHA256SUMS covers only this source archive.\n'
+        f'Navi5 source: the automatic source archive of the release tag at commit {revision}.\n'
+        'Download that tag archive first; it has the build, relink and install instructions.\n'
+        'source/manifest.json records the same commit. A tag at any other commit is not this release.\n'
+        f'The export checked during validation (git archive of that commit, SHA-256 {export_digest}) is not\n'
+        'shipped here; a host-generated tag archive has different container bytes but the same tracked files,\n'
+        'plus docs/media and app/assets/brand, which manifest.json lists as excluded from that export.\n'
+        'This archive adds third-party source tarballs, relink.tar, modified FriBidi and receipts.\n'
+        'source/SHA256SUMS covers the shipped source files; root SHA256SUMS covers this archive.\n'
         'This recipe checks rebuilds; binary identity across LLVM versions is not promised.\n').encode()
     files['SHA256SUMS'] = ''.join(f'{digest(data)}  {name}\n' for name, data in sorted(files.items())).encode()
-    source = output / f'Navi5-{param["contentVersion"]}-source.zip'
+    source = output / f'Navi5-{param["contentVersion"]}-third-party-source.zip'
     with zipfile.ZipFile(source, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zipped:
         for name, data in sorted(files.items()):
             info = zipfile.ZipInfo(name, (2026, 11, 10, 0, 0, 0))
@@ -72,10 +100,12 @@ def package(original, kit, output):
             zipped.writestr(info, data, compresslevel=9)
     with zipfile.ZipFile(source) as zipped:
         require(zipped.testzip() is None and set(zipped.namelist()) == set(files), 'source ZIP validation failed')
+        require('source/navi5.tar' not in zipped.namelist(), 'repository export must not be shipped twice')
         for name, data in files.items():
             require(zipped.read(name) == data, 'source ZIP bytes changed')
     require(set(output.iterdir()) == {install, source}, 'expected exactly two assets')
     print(f'Packaging PASS: revision {receipt["revision"]}; exactly two ZIPs; CRCs, bytes and checksum coverage verified', flush=True)
+    print(f'TAG SOURCE: release tag must be commit {revision}; check with scripts/verify-tag-source.py', flush=True)
     for path in (install, source):
         print(f'ASSET {path.name}: {path.stat().st_size} bytes; SHA-256 {digest(path.read_bytes())}', flush=True)
     return install

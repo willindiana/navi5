@@ -5,10 +5,17 @@ Target supported setup: ShadowMount 1.7beta11. No claim for other loader or firm
 
 ## Recipient modification
 
-1. Verify supplied SHA256SUMS and source revision. Extract reviewed recipient kit
-   into a new directory, enter `relink`, run `ld.lld @response.txt` with its recorded
-   version. Compare ELF hash with supplied baseline before editing anything.
-2. Rebuild LGPL FFmpeg/FriBidi/libiconv using supplied sources/recipes. Find intended
+1. Download the tag source archive from GitHub (the release page's "Source code"
+   link for the release tag) and extract it: that is Navi5's own source, with
+   these instructions and every build script. Download
+   `Navi5-<version>-third-party-source.zip` from the same release and verify its
+   root `SHA256SUMS`, then `source/SHA256SUMS` from `source/`. Its
+   `source/manifest.json` `revision` must be the commit the tag points at.
+   Extract `source/relink.tar` into a new directory, enter `relink`, run
+   `ld.lld @response.txt` with its recorded version. Compare ELF hash with
+   supplied baseline before editing anything.
+2. Rebuild LGPL FFmpeg/FriBidi/libiconv using the supplied source tarballs (in
+   the third-party source ZIP) and the recipes in the tag archive. Find intended
    archive using `llvm-nm` and response ordering; replace only that archive. Keep
    its basename/location. Run `ld.lld @response.txt` again. ABI changes may require
    rebuilding app objects from supplied source. Modification and reverse engineering
@@ -28,20 +35,44 @@ Target supported setup: ShadowMount 1.7beta11. No claim for other loader or firm
 
 ## Normal release download and CI packaging
 
-Download `Navi5-00.008.000.zip` for installation, not the `-source.zip`.
-Extract into a fresh directory; its only root is `NAVI00001/`. Follow installation
-and update precautions below; never replace a mounted title directory.
+Download `Navi5-01.000.000.zip` for installation, not the
+`-third-party-source.zip`. Extract into a fresh directory; its only root is
+`NAVI00001/`. Follow installation and update precautions below; never replace a
+mounted title directory.
 
-`Navi5-00.008.000-source.zip` contains source/relink material, not another install
-ZIP. Verify root `SHA256SUMS`, then `source/SHA256SUMS` from `source/`.
-Extract `source/navi5.tar` into a fresh source directory.
+To rebuild or relink, begin by downloading the tag source archive from GitHub:
+it is Navi5's complete corresponding source for that release (GPL-3.0-or-later),
+including build, conversion and packaging scripts. The release no longer
+attaches a second copy of the repository.
+
+`Navi5-01.000.000-third-party-source.zip` contains what the tag archive does
+not: the 77 pinned third-party source tarballs (FFmpeg, FriBidi, libiconv, SDK
+and the rest of `scripts/source-inputs.json`), `relink.tar` (application objects
+and link inputs for LGPL relinking), the modified FriBidi library and its
+changed source, `manifest.json`, `verification.json` and `SHA256SUMS`. It is not
+another install ZIP. Verify root `SHA256SUMS`, then `source/SHA256SUMS` from
+`source/`. `DISTRIBUTION.md` and `source/manifest.json` name the exact commit;
+the release tag must be that commit.
+
+The tag archive and the export validated during the build have the same files:
+`.gitattributes` `export-ignore` leaves out `docs/media`, `app/assets/brand` and
+`scripts/__pycache__` from every archive, matching `scripts/assemble-source.py`.
+Before publishing, the owner checks the tag against the asset:
+
+```sh
+python3 -B scripts/verify-tag-source.py Navi5-01.000.000-third-party-source.zip v1.0.0
+```
+
+It fails unless the tag is the recorded commit and `git archive` of it has the
+digest of the validated export. GitHub wraps the same files in its own
+tar.gz/zip container, so archive bytes differ from that digest by design.
 
 Trusted manual GitHub and Forgejo workflows run `scripts/ci-release.sh` against
 current checked-out HEAD. Full validated delivery remains in `build/ci-delivery`;
-`build/ci-release` contains exactly the normal and source ZIPs. Source gate and
+`build/ci-release` contains exactly the normal and third-party source ZIPs. Source gate and
 independent recipient replay run before packaging. CI logs final asset names,
 sizes and SHA-256 hashes even when `upload_artifacts=false` (default).
-`DISTRIBUTION.md` in new CI source ZIPs maps original mixed-root build ZIP to
+`DISTRIBUTION.md` in new CI third-party source ZIPs maps original mixed-root build ZIP to
 folder-only distributed ZIP; unchanged `validation.json` records original build
 hashes and actual CI revision. Existing published source kits use
 `SOURCE_IDENTITY.md` for their original/distributed mapping.
@@ -53,7 +84,13 @@ host toolchains are not promised. Offline packaging regression:
 
 ```sh
 python3 -B scripts/test-package-release.py
+python3 -B scripts/test-verify-tag-source.py
 ```
+
+The delivery gate is unchanged: `build/ci-delivery` still holds the full kit,
+including the repository export it was checked against. Only the public asset
+drops that duplicate. `docs/SHIP_OBLIGATIONS.md` remains the reference for what
+must be conveyed.
 
 ## Installation on supported setup
 
