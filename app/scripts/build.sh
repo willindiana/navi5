@@ -158,7 +158,10 @@ if [[ -z "${LOG_HOST}" && -n "${PS5_HOST}" ]]; then
 fi
 JELLY5_DEFS="-DNAVI5_CA_BUNDLE=\\\"/app0/assets/ca-bundle.pem\\\" -DJELLY5_VERSION=\\\"$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["contentVersion"])' "${PARAM}")\\\""
 (( AV1_ON )) && JELLY5_DEFS+=" -DJELLY5_AV1=1"
-BUILD_ID="$(git -C "${NUVIO_ROOT}" describe --always --dirty 2>/dev/null || echo unknown)"
+# On-screen label: v<major>.<minor>.<patch> from contentVersion plus the commit, so
+# it is right before a tag exists and never inherits an older tag's name.
+APP_VERSION="$(python3 -c 'import json,sys;print("v"+".".join(str(int(p)) for p in json.load(open(sys.argv[1]))["contentVersion"].split(".")))' "${PARAM}")"
+BUILD_ID="${APP_VERSION}-$(git -C "${NUVIO_ROOT}" describe --always --dirty --exclude='*' 2>/dev/null || echo unknown)"
 JELLY5_DEFS+=" -DNAVI5_BUILD_ID=\\\"${BUILD_ID}\\\""
 if [[ "${NAVI5_DEV_TOOLS:-0}" == 1 ]] && (( ! RELEASE )); then
     JELLY5_DEFS+=" -DNAVI5_DEV_TOOLS=1"

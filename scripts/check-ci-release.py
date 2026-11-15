@@ -13,7 +13,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'app/build'
-VERSION = 'v0.8.0-beta.1'
+VERSION = 'v1.0.0'
 
 
 def require(condition, message):

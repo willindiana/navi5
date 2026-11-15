@@ -84,8 +84,8 @@ def package(original, kit, output):
         'Download that tag archive first; it has the build, relink and install instructions.\n'
         'source/manifest.json records the same commit. A tag at any other commit is not this release.\n'
         f'The export checked during validation (git archive of that commit, SHA-256 {export_digest}) is not\n'
-        'shipped here; a host-generated tag archive has different container bytes but the same tracked files,\n'
-        'plus docs/media and app/assets/brand, which manifest.json lists as excluded from that export.\n'
+        'shipped here; a host-generated tag archive has different container bytes but the same files:\n'
+        '.gitattributes export-ignore applies the exclusions manifest.json lists (source_export_excludes).\n'
         'This archive adds third-party source tarballs, relink.tar, modified FriBidi and receipts.\n'
         'source/SHA256SUMS covers the shipped source files; root SHA256SUMS covers this archive.\n'
         'This recipe checks rebuilds; binary identity across LLVM versions is not promised.\n').encode()

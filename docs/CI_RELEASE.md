@@ -57,5 +57,12 @@ Offline checks: `python3 -B scripts/test-store-release.py`,
 `python3 -B scripts/test-ci-release.py`, `ruby scripts/test-workflow-policy.rb`,
 `bash -n scripts/ci-release.sh`, `git diff --check`.
 
+Successful packaging produces exactly two assets under `build/ci-release/`:
+`Navi5-<version>.zip` and `Navi5-<version>-third-party-source.zip`, with matching
+build/source identity and checksums. Navi5's own source is the release tag's
+automatic source archive; the third-party asset records the commit that tag must be.
+Run `scripts/verify-tag-source.py` after tagging, before publishing; see
+[RECIPIENT_RELINK.md](RECIPIENT_RELINK.md).
+
 See [source identity](SOURCE.md), [build](DEVELOPMENT.md) and
 [installation](RECIPIENT_RELINK.md#installation-on-supported-setup).

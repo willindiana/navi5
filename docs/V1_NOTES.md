@@ -1,0 +1,85 @@
+# v1.0.0 release notes (draft)
+
+Draft notes for v1.0.0. Platform `contentVersion` is `01.000.000`; the login
+screen shows `v1.0.0-<commit>`. Title identity is unchanged: `NAVI00001`
+"Navi5", Media (category 65536); development builds use the separate DEV title
+`NAVD00001`. Download links and checksums are added when the release is published.
+
+## Changes since v0.8.0-beta.1
+
+- **Login screen.** One screen, two ways in: the server, username and password
+  fields are on the left, and the pairing QR code is shown by default on the
+  right. Whichever is completed first is used. With two or three private
+  addresses the address picker appears in the QR area; with none, only the
+  fields are offered. Pairing sessions still last at most 300 seconds, restart
+  twice by themselves and then wait for Cross; the phone-form consent checkbox
+  and the HTTP warning are unchanged.
+- **Saved login.** A Navidrome API key is saved instead of the password when the
+  server can issue one (see [SAVED_LOGIN.md](SAVED_LOGIN.md); no stable Navidrome
+  release had API keys when this was written). When a saved login fails, the
+  screen offers Retry and "Forget saved login".
+- **Log out.** Options opens a menu with "Log out". After confirmation playback
+  stops, the saved login is deleted from the console and the login screen
+  returns. **Logging out cannot revoke an API key**: it stays valid on the server
+  until you delete the "Navi5 (PS5)" player in Navidrome.
+- **Play Next.** Triangle on a track, album, playlist or artist queues it after
+  the current track; several in a row play in the order added. If nothing is
+  playing, it starts playing.
+- **Queue view.** From the fullscreen player: the current track and what follows.
+  Pick up a track with Cross, move it, drop it; Square removes it. The current
+  track cannot be moved or removed.
+- **Buttons.** Triangle: Play Next. Touchpad: fullscreen player (was Stop). Stop
+  and Queue are controls in the fullscreen player. Options: menu (was immediate
+  logout). Square still pauses, and is backspace in Search. Full table:
+  [README](../README.md#controls).
+- **Languages.** The new texts exist in Norwegian, English and 25 other
+  languages. The 25 are machine-written and not reviewed by native speakers.
+  Most older Navi5-specific texts are still English outside Norwegian.
+
+## Limits (unchanged unless stated)
+
+- Audio only: no video, lyrics, playlist editing, WAV/PCM, Vorbis or ALAC.
+- The queue holds at most 20000 tracks; artist Play Next has the same limits as
+  artist Play all (256 albums, 60 seconds) and adds nothing if it fails.
+- A queue change made in the instant a track hands over to the next one is
+  applied a moment later ("Updating queue").
+- With shuffle on, manual reordering lasts until shuffle is turned off.
+- No promise about suspend or background audio. No broad firmware or loader
+  claim: ShadowMount 1.7beta11 is the setup confirmed during the beta.
+
+**Saved login is stored unencrypted at `/download0/navi5/login.json`: an API key
+when the server issues one, otherwise the password. Use a separate
+low-privilege account. QR pairing sends the login over unencrypted HTTP on your
+local network: trusted LAN only, never internet exposure or port forwarding.
+HTTPS to the music server does not secure that phone-to-console hop.** Logout
+and Forget remove the saved login, not recent listening history.
+
+## Downloads (when published)
+
+- `Navi5-01.000.000.zip`: the app folder, `NAVI00001/`. This is the one to install.
+- **Source code**: GitHub's automatic source archive for the release tag is
+  Navi5's complete source for this release.
+- `Navi5-01.000.000-third-party-source.zip`: source for the bundled third-party
+  components, the files needed to relink against modified LGPL libraries
+  (FFmpeg, FriBidi, libiconv), and checksums. Not needed to install. To rebuild
+  or relink, start by downloading the tag source archive from GitHub, then follow
+  [RECIPIENT_RELINK.md](RECIPIENT_RELINK.md).
+
+Before publishing, the tag must be the commit recorded in the third-party
+source asset: `python3 -B scripts/verify-tag-source.py <asset> <tag>`.
+
+## Install and update precautions
+
+Unchanged from the beta: see "Install and update precautions" in
+[BETA_NOTES.md](BETA_NOTES.md) and "Installation on supported setup" in
+[RECIPIENT_RELINK.md](RECIPIENT_RELINK.md). In short: close Navi5 with the PS
+button first, check for title collisions, update files in place, never use
+`PPSA99505`. An update over the beta keeps the same title and data directory;
+that it keeps a working saved login is on the hardware checklist, not verified.
+
+## Testing
+
+New behavior is covered by the host test suites under `app/tests/host/` and the
+release packaging checks under `scripts/`. Console behavior is checked against
+[V1_HARDWARE_CHECKLIST.md](V1_HARDWARE_CHECKLIST.md), on the DEV title first and
+then on the `--release` Media build, before the release is published.

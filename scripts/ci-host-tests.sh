@@ -34,6 +34,13 @@ step package_identity  python3 -B app/tests/host/smoke_package.py
 step deploy_guards     python3 -B scripts/test_deploy.py
 step stage_dev_login   python3 -B app/tests/host/stage_dev_login.py
 step workflow_policy   python3 -B scripts/test-workflow-policy.py
+# v1.0: queue model and worker edits (smoke_worker above), controls, login/QR view, packaging.
+step queue             bash app/tests/host/queue.sh
+step controls_ui       bash app/tests/host/music.sh
+step controller_map    bash app/tests/host/input.sh
+step pairing_view      bash app/tests/host/pairing_view.sh
+step release_package   python3 -B scripts/test-package-release.py
+step tag_source        python3 -B scripts/test-verify-tag-source.py
 if (( ${#failed[@]} )); then
     echo "FAILED: ${failed[*]}" >&2
     exit 1
