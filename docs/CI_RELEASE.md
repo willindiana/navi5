@@ -1,68 +1,94 @@
-# Master RELEASE validation
+# Release builds and publication
 
-Owner approved `master` as default, separate from private repository history.
-Existing `release/beta`, old branches, tags and frozen `v0.8.0-beta.1` assets stay
-unchanged. This approval covers workflow activation and native protections, not
-publication, artifact uploads, store submissions or infrastructure changes.
+Development and pull requests happen on the maintainer's self-hosted Forgejo.
+It push-mirrors every branch and tag to GitHub, which publishes releases. All
+workflows use SHA-pinned actions, `persist-credentials: false` and no stored
+secrets. The Forgejo repository is private and only the maintainer's own
+branches open PRs there; its runner never executes code from outside contributors.
 
-Development and pull requests happen on the maintainer's self-hosted Forgejo;
-GitHub is a push mirror of it. Forgejo runs full `scripts/ci-release.sh`
-(`.forgejo/workflows/release-build.yml`) on every PR and push to master, including
-docs changes, on an Ubuntu 24.04 runner with LLVM 18, SHA-pinned actions and
-`persist-credentials: false`. No secrets. The Forgejo repository is private and
-only the maintainer's own branches open PRs there; that runner never executes
-code from outside contributors. Manual dispatch targets master; artifact upload
-defaults to false and true needs separate owner approval.
+## Every pull request (Forgejo)
 
-Native master protections must require PRs, passing observed exact CI contexts,
-up-to-date branches, no direct/force pushes or deletion, no configured admin
-bypass. Solo owner requires zero mandatory second-reviewer approvals. Verify live
-settings and successful new-context runs separately; workflow files prove neither.
-Administrators can still edit repository settings.
+- `host-tests.yml`: the offline suites (`scripts/ci-host-tests.sh`).
+- `release-build.yml`: the full `scripts/ci-release.sh` RELEASE build with the
+  source delivery gate, on every PR and every push to `master`.
+- `pr-checks.yml`, skipped while the title starts with `WIP:`:
+  - **PS5 test note**: app-behavior changes need a console test with
+    `Result: pass` (see [AGENTS.md](../AGENTS.md)).
+  - **Release label**: exactly one of `release:major`, `release:minor`,
+    `release:patch`, `release:skip`. For the first three, `contentVersion` in
+    `app/sce_sys/param.json` must be the last released version bumped that way
+    and `docs/releases/vX.Y.Z.md` must exist. `release:skip` keeps the version
+    unchanged, and is refused while `master` carries an unreleased version.
 
-## Separate hardware and publication gate
+## Merge to master
 
-CI validates COMPLETE corresponding source/relink delivery and packages exactly
-two ZIPs; it does not establish hardware acceptance. No automatic publication.
-Before public publishing, owner must approve exact commit, unused tag, increasing
-numeric contentVersion, both ZIP names/hashes and hardware test receipt for exact
-install bytes. Promote those frozen bytes and matching COMPLETE source, never
-silently rebuild. Never clobber, overwrite or recreate existing tags/assets.
+1. **Tag (Forgejo, `tag-release.yml`)**: when `contentVersion` has no tag yet and
+   is above the last release (`scripts/release-version.py plan`), the merge commit
+   is tagged `vX.Y.Z` through the Forgejo API. The tag is created on Forgejo
+   because the push mirror makes GitHub an exact copy: a tag created only on
+   GitHub would be removed by the next sync.
+2. The push mirror brings the tag to GitHub (on push, and at least every 10 minutes).
+3. **Release (GitHub, `release.yml`)**, on the `v*` tag:
+   - **plan**: the tag must name its commit's `contentVersion`, be above every
+     other release and point at a commit on `master` (`release-version.py check-tag`).
+   - **build**: `scripts/ci-release.sh`, which must produce exactly
+     `Navi5-<contentVersion>.zip` and `Navi5-<contentVersion>-third-party-source.zip`.
+     Both are kept as the run artifact `Navi5-vX.Y.Z` for 30 days; their SHA-256
+     sums are in the run summary.
+   - **publish** waits for approval of the protected `release` environment. This
+     is the hardware gate: download the run artifact, install
+     `Navi5-<contentVersion>.zip` as `NAVI00001` (`scripts/deploy.py --prod`, after
+     closing the app), run the release lines of
+     [V1_HARDWARE_CHECKLIST.md](V1_HARDWARE_CHECKLIST.md), then approve. These exact
+     bytes are published; nothing is rebuilt. The job refuses an environment
+     without required reviewers and an existing release, checks the tag is the
+     built commit, runs `scripts/verify-tag-source.py`, and creates the GitHub
+     release on the existing tag with both ZIPs and `docs/releases/vX.Y.Z.md` as
+     notes (links pinned to the tag).
+   - **verify**: the published assets must hash to the tested artifact. A store
+     catalog check runs for information; "pending" is normal until the catalog
+     PR is merged.
 
-Ubuntu 24.04/LLVM 18 CI differs from local Clang/LLD 23.1.5. New outputs do not
-replace frozen TV-tested beta bytes. Artifact upload true needs separate approval;
-seven-day CI storage is not durable corresponding-source delivery.
+If the PS5 test fails, reject the deployment. The tag stays without a release,
+and the fix ships as the next patch version. Tags, releases and assets are never
+moved, replaced, deleted or clobbered. `scripts/test-workflow-policy.py` enforces
+these properties of both workflows.
+
+Repository settings this relies on:
+
+- Forgejo: `master` protected (no direct pushes, also for admins; PRs must be up
+  to date), required status checks from the workflows above, labels
+  `release:major|minor|patch|skip`, Actions enabled, a push mirror to GitHub.
+- GitHub: `master` and tags only receive the mirror (no force pushes or
+  deletion of `master`), environment `release` with the owner as required
+  reviewer and deployments limited to `v*` tags.
 
 ## Read-only deployed store verification
 
-Manual-only `.github/workflows/store-verify.yml` targets master. Supply exact tag,
-numeric contentVersion and install ZIP SHA-256 from independently approved frozen
-receipt, never from live catalog or latest release. Hosted runner uses read-only
-checkout, no secrets and no artifact download/upload. Equivalent local command:
+Manual-only `.github/workflows/store-verify.yml` and the local command check a
+store catalog against an exact tag, numeric contentVersion and install ZIP
+SHA-256 taken from the release, never from the live catalog:
 
 ```sh
-python3 -B scripts/check-store-release.py --tag "$APPROVED_TAG" \
-  --content-version "$APPROVED_CONTENT_VERSION" --sha256 "$APPROVED_INSTALL_SHA256" \
+python3 -B scripts/check-store-release.py --tag "$TAG" \
+  --content-version "$CONTENT_VERSION" --sha256 "$INSTALL_SHA256" \
   --attempts 20 --interval 60
 ```
 
-Optional `--install /path/to/Navi5-VERSION.zip` checks against expected hash. Exit
-0 means catalog identity verified, 2 means pending/unavailable/unsupported schema;
-invalid invocation fails. Check is not install/runtime acceptance. Pending never
-justifies republishing; rerun read-only later. No automatic store submission.
-RecompStore verification remains pending approval, disabled and nonblocking until
-approved public listing and supported version/install-asset contract exist.
+Exit 0 means the catalog identity is verified, 2 means pending, unavailable or an
+unsupported schema. Pending never justifies republishing: rerun later. Store
+submissions are separate, owner-approved catalog PRs.
 
-Offline checks: `python3 -B scripts/test-store-release.py`,
-`python3 -B scripts/test-ci-release.py`, `ruby scripts/test-workflow-policy.rb`,
-`bash -n scripts/ci-release.sh`, `git diff --check`.
+## Packaging and source
 
-Successful packaging produces exactly two assets under `build/ci-release/`:
-`Navi5-<version>.zip` and `Navi5-<version>-third-party-source.zip`, with matching
-build/source identity and checksums. Navi5's own source is the release tag's
-automatic source archive; the third-party asset records the commit that tag must be.
-Run `scripts/verify-tag-source.py` after tagging, before publishing; see
-[RECIPIENT_RELINK.md](RECIPIENT_RELINK.md).
+`build/ci-release/` holds exactly the two ZIPs, with matching build/source
+identity and checksums. Navi5's own source is the release tag's automatic source
+archive; the third-party asset records the commit that tag must be, which
+`scripts/verify-tag-source.py` checks before publishing. See
+[RECIPIENT_RELINK.md](RECIPIENT_RELINK.md), [source identity](SOURCE.md) and
+[build](DEVELOPMENT.md).
 
-See [source identity](SOURCE.md), [build](DEVELOPMENT.md) and
-[installation](RECIPIENT_RELINK.md#installation-on-supported-setup).
+Offline checks: `python3 -B scripts/test-release-version.py`,
+`python3 -B scripts/test-store-release.py`, `python3 -B scripts/test-ci-release.py`,
+`python3 -B scripts/test-workflow-policy.py`, `ruby scripts/test-workflow-policy.rb`,
+`bash -n scripts/ci-release.sh`.

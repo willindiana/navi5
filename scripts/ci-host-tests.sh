@@ -35,6 +35,7 @@ step deploy_guards     python3 -B scripts/test_deploy.py
 step stage_dev_login   python3 -B app/tests/host/stage_dev_login.py
 step workflow_policy   python3 -B scripts/test-workflow-policy.py
 step pr_test_note      python3 -B scripts/test-pr-test-note.py
+step release_version   python3 -B scripts/test-release-version.py
 # v1.0: queue model and worker edits (smoke_worker above), controls, login/QR view, packaging.
 step queue             bash app/tests/host/queue.sh
 step controls_ui       bash app/tests/host/music.sh

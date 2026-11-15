@@ -18,7 +18,23 @@ of logs, PR text and screenshots.
   before committing.
 - Never push, open PRs, deploy to a console or publish without the owner's
   approval for that action.
-- Every PR fills in the **PS5 test** section of the PR template (see below).
+- Every PR fills in the **PS5 test** section of the PR template (see below)
+  and carries exactly one release label (see "Releases").
+
+## Releases
+
+Merging to `master` releases automatically when the PR raised the version
+(details: [docs/CI_RELEASE.md](docs/CI_RELEASE.md)). The owner decides the label:
+
+- `release:major` / `release:minor` / `release:patch`: bump `contentVersion` in
+  `app/sce_sys/param.json` from the last release accordingly (`NN.NNN.NNN`,
+  e.g. `01.002.000` is v1.2.0) and add `docs/releases/vX.Y.Z.md` with the
+  viewer-facing notes for everything released since the last tag.
+- `release:skip`: no version change (docs, CI, internal refactors).
+
+Never create tags or GitHub releases by hand. On merge, Forgejo tags the new
+version; the mirror brings the tag to GitHub, which builds the ZIPs and publishes
+them after the owner's PS5 test and approval.
 
 ## Build and offline tests
 
