@@ -1,10 +1,14 @@
 name: Host checks
 # Offline login, saved-credential, key-issuance and DEV/PROD identity checks.
-# Trusted refs only: PR execution stays disabled until runner isolation is verified.
+# GitHub-hosted runners only: PRs run with read-only contents and no secrets.
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   host:
     runs-on: ubuntu-24.04

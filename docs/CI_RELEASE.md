@@ -10,9 +10,8 @@ master, including docs changes. GitHub-hosted Ubuntu 24.04 runners use LLVM 18,
 `contents: read`, SHA-pinned actions and `persist-credentials: false`. No secrets,
 publisher, release/tag event or scheduled release. Manual dispatch targets master;
 artifact upload defaults to false and true needs separate owner approval.
-Forgejo PR execution stays disabled: persistent privileged runners must not run
-untrusted PR code. Without verified safe pre-merge checks, Forgejo cannot claim
-passing CI before merge; post-merge builds do not supply that guarantee.
+Workflows run on GitHub only. The Forgejo copy is a pull mirror of this repository
+and runs none; its persistent privileged runner must never execute PR code.
 
 Native master protections must require PRs, passing observed exact CI contexts,
 up-to-date branches, no direct/force pushes or deletion, no configured admin
