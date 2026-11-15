@@ -864,6 +864,81 @@ void shuffle_worker()
     { std::lock_guard<std::mutex> l(box->mutex); assert(!box->shuffle_enabled && !box->shuffle_pending); box->quit = true; box->wake.notify_all(); box->browse_wake.notify_all(); }
 }
 }
+// Password login trades itself for an issued key only where that is possible;
+// every other outcome keeps the working password session and reports no key.
+void key_upgrade_worker()
+{
+    struct Run { bool ok = false; std::string api_key, username, browse_url; int sends = 0; };
+    auto run = [](const char *type, bool extension, int login_status, bool key_login, const char *token_user) {
+        auto box = std::make_shared<Mailbox>();
+        auto player = std::make_shared<FakePlayer>();
+        auto sends = std::make_shared<std::atomic<int>>(0);
+        auto browse = std::make_shared<std::string>();
+        auto guard = std::make_shared<std::mutex>();
+        const std::string ping = std::string(R"({"subsonic-response":{"status":"ok","openSubsonic":true,"type":")") + type + "\"}}";
+        const std::string extensions = extension
+            ? R"({"subsonic-response":{"status":"ok","openSubsonicExtensions":[{"name":"apiKeyAuthentication","versions":[1]}]}})"
+            : R"({"subsonic-response":{"status":"ok","openSubsonicExtensions":[{"name":"songLyrics","versions":[1]}]}})";
+        const std::string info = token_user
+            ? std::string(R"({"subsonic-response":{"status":"ok","tokenInfo":{"username":")") + token_user + "\"}}}"
+            : std::string(R"({"subsonic-response":{"status":"failed","error":{"code":70,"message":"x"}}})");
+        assert(start_worker(box, [=](const std::string &url) {
+            if (url.find("/rest/ping?") != std::string::npos) return subsonic::HttpResponse{200, ping, {}};
+            if (url.find("/rest/getOpenSubsonicExtensions?") != std::string::npos) return subsonic::HttpResponse{200, extensions, {}};
+            if (url.find("/rest/tokenInfo?") != std::string::npos) return subsonic::HttpResponse{200, info, {}};
+            { std::lock_guard<std::mutex> lock(*guard); if (browse->empty()) *browse = url; }
+            return subsonic::HttpResponse{200, R"({"subsonic-response":{"status":"ok","albumList2":{"album":[{"id":"album","name":"Album"}]}}})", {}};
+        }, player, [=](const std::string &, const std::string &url, const std::vector<std::string> &, const std::string &) {
+            ++*sends;
+            if (url.find("/auth/login") != std::string::npos)
+                return subsonic::HttpResponse{login_status, R"({"token":"session.token"})", {}};
+            return subsonic::HttpResponse{200, R"({"id":"player-1"})", {}};
+        }));
+        Command c; c.kind = Command::Login; c.generation = box->generation;
+        c.server = "https://example.invalid"; c.username = "fixture";
+        if (key_login) c.api_key = "supplied-key"; else c.password = "fixture-password";
+        assert(box->send(c));
+        Run out;
+        assert(eventually([&] {
+            std::lock_guard<std::mutex> lock(box->mutex);
+            if (box->results.empty()) return false;
+            out.ok = box->results.front().ok; out.api_key = box->results.front().api_key;
+            out.username = box->results.front().username; box->results.clear();
+            return true;
+        }));
+        c = {}; c.kind = Command::Browse; c.generation = box->generation; c.request.token = 1; assert(box->send(c));
+        assert(eventually([&] { std::lock_guard<std::mutex> lock(*guard); return !browse->empty(); }));
+        { std::lock_guard<std::mutex> lock(*guard); out.browse_url = *browse; }
+        out.sends = *sends;
+        { std::lock_guard<std::mutex> lock(box->mutex); box->quit = true; box->wake.notify_all(); box->browse_wake.notify_all(); }
+        return out;
+    };
+    auto by_key = [](const Run &r, const std::string &key) {
+        return r.browse_url.find("?apiKey=" + key + "&") != std::string::npos && r.browse_url.find("u=") == std::string::npos &&
+               r.browse_url.find("&t=") == std::string::npos && r.browse_url.find("fixture-password") == std::string::npos;
+    };
+    auto by_password = [](const Run &r) {
+        return r.browse_url.find("?u=fixture&t=") != std::string::npos && r.browse_url.find("apiKey=") == std::string::npos;
+    };
+    // Navidrome with the extension: session and saved secret become the issued key.
+    Run r = run("navidrome", true, 200, false, nullptr);
+    assert(r.ok && r.sends == 2 && r.api_key.size() == 26 && r.api_key.compare(0, 4, "nds_") == 0);
+    assert(r.username == "fixture" && by_key(r, r.api_key));
+    // No extension, or another server: no native-API request at all, password stays.
+    r = run("navidrome", false, 200, false, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key.empty() && r.username.empty() && by_password(r));
+    r = run("gonic", true, 200, false, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key.empty() && by_password(r));
+    // Issuance refused: login still succeeds on the password.
+    r = run("navidrome", true, 401, false, nullptr);
+    assert(r.ok && r.sends == 1 && r.api_key.empty() && by_password(r));
+    // Supplied key: never issue another; the account name comes from tokenInfo only.
+    r = run("navidrome", true, 200, true, "owner");
+    assert(r.ok && r.sends == 0 && r.api_key == "supplied-key" && r.username == "owner" && by_key(r, "supplied-key"));
+    r = run("navidrome", true, 200, true, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key == "supplied-key" && r.username.empty() && by_key(r, "supplied-key"));
+}
+
 int main()
 {
     { // Ranked snapshot cached once; optional failures retain albums; stale never cached.
@@ -924,6 +999,10 @@ int main()
     check_failure({403, "SECRET", "SECRET"}, F::Http403);
     check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":40,"message":"SECRET"}}})", {}}, F::Authentication);
     check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":41,"message":"SECRET"}}})", {}}, F::Authentication);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":44,"message":"SECRET"}}})", {}}, F::ApiKeyRejected);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":42,"message":"SECRET"}}})", {}}, F::ApiKeyUnsupported);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":43,"message":"SECRET"}}})", {}}, F::ApiKeyUnsupported);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":50,"message":"SECRET"}}})", {}}, F::Response);
     check_failure({200, "SECRET", {}}, F::Response);
     check_failure({404, "SECRET", "SECRET"}, F::Http);
     check_failure({0, {}, "SECRET"}, F::Transport);
@@ -1294,4 +1373,5 @@ int main()
     worker_races();
     previous_worker();
     shuffle_worker();
+    key_upgrade_worker();
 }

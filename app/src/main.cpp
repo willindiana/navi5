@@ -195,7 +195,7 @@ int main()
 
     using namespace app::smoke;
     auto mailbox = std::make_shared<Mailbox>();
-    const bool worker = start_worker(mailbox, subsonic::http_get_jf);
+    const bool worker = start_worker(mailbox, subsonic::http_get_jf, {}, subsonic::http_send_jf);
     uint64_t generation = mailbox->reset();
     PlaybackSnapshot playback;
     uint64_t history_seen = 0;
@@ -224,7 +224,9 @@ int main()
             work->done.store(true, std::memory_order_release);
         })) saved_work->done.store(true, std::memory_order_release);
     bool saved_loaded = false, startup_qr = true, saved_connect = false, saved_retry = false;
+    bool saved_key = false; // Saved file holds a server-side key: Forget explains revocation.
     app::saved_login::Login pending_login;
+    std::string saved_api_key; // Loaded key for saved connect/retry only. Never shown or logged.
     bool connected = false, connecting = false, consent = false, warning = false, nav = false;
     int field = 0;
     bool scheme_popup = false, choose_http = false, show_password = false;
@@ -282,9 +284,16 @@ int main()
     uint64_t play_serial = 0, play_wanted = 0;
     auto send = [&](Command c) { c.generation = generation; return worker && mailbox->send(std::move(c)); };
     auto submit_login = [&](Command c) {
-        pending_login = c.api_key.empty() && !c.password.empty()
-            ? app::saved_login::Login{c.server, c.username, c.password} : app::saved_login::Login{};
+        // Exactly one secret. Result may replace a password with an issued key before saving.
+        pending_login = !c.api_key.empty() ? app::saved_login::Login{c.server, c.username, "", c.api_key}
+            : !c.password.empty() ? app::saved_login::Login{c.server, c.username, c.password, ""}
+            : app::saved_login::Login{};
         return send(std::move(c));
+    };
+    auto saved_command = [&] {
+        Command c; c.kind = Command::Login; c.server = server; c.username = username;
+        if (saved_api_key.empty()) c.password = password; else c.api_key = saved_api_key;
+        return c;
     };
     auto persist = [&](SavedWork::Kind kind, app::saved_login::Login value = {}) {
         auto work = std::make_shared<SavedWork>();
@@ -298,7 +307,7 @@ int main()
     auto login = [&] {
         show_password = false;
         if (saved_work) { note = T("Vent til lagring er ferdig."); return; }
-        saved_connect = saved_retry = false;
+        saved_connect = saved_retry = false; saved_api_key.clear();
         if (!worker) { note = T("Arbeidstråd kunne ikke starte. Start appen på nytt."); return; }
         const auto input = prepare_server(server);
         if (input == ServerInput::NeedsScheme) { scheme_popup = true; choose_http = false; return; }
@@ -335,18 +344,22 @@ int main()
                 if (work->loaded == app::saved_login::Load::Ok) {
                     startup_qr = false;
                     server = std::move(work->login.server); username = std::move(work->login.user);
-                    password = std::move(work->login.password);
+                    password = std::move(work->login.password); saved_api_key = std::move(work->login.api_key);
+                    saved_key = !saved_api_key.empty();
                     consent = true; saved_connect = true;
-                    Command c; c.kind = Command::Login; c.server = server; c.username = username; c.password = password;
-                    connecting = submit_login(std::move(c));
+                    connecting = submit_login(saved_command());
                     saved_retry = !connecting;
                     note = connecting ? T("Kobler til med lagret innlogging …") : T("Kunne ikke starte arbeidet");
                 }
             } else if (work->kind == SavedWork::Save) {
                 if (!work->ok) note = T("Kunne ikke lagre innlogging. Økten fortsetter.");
             } else {
-                password.clear(); pending_login = {}; saved_connect = saved_retry = consent = false;
-                note = work->ok ? T("Lagret innlogging glemt.") : T("Kunne ikke glemme lagret innlogging.");
+                password.clear(); saved_api_key.clear(); pending_login = {}; saved_connect = saved_retry = consent = false;
+                // Forgetting cannot revoke: that needs the password this file no longer holds.
+                note = !work->ok ? T("Kunne ikke glemme lagret innlogging.")
+                    : saved_key ? T("Lagret innlogging glemt. Slett spilleren «Navi5 (PS5)» i Navidrome for å tilbakekalle nøkkelen.")
+                    : T("Lagret innlogging glemt.");
+                if (work->ok) saved_key = false;
                 field = 5;
             }
         }
@@ -364,16 +377,24 @@ int main()
                 note = result.ok ? "" : T(login_failure_key(result.failure));
                 diagnostic = result.diagnostic.line();
                 if (connected) {
-                    if (!pending_login.password.empty())
+                    if (!result.api_key.empty()) {
+                        // Key in use (supplied or just issued): it replaces any password on disk.
+                        pending_login.password.clear(); pending_login.api_key = std::move(result.api_key);
+                        if (!result.username.empty()) pending_login.user = username = std::move(result.username);
+                    }
+                    if (!pending_login.password.empty() || !pending_login.api_key.empty()) {
+                        saved_key = !pending_login.api_key.empty();
                         persist(SavedWork::Save, std::move(pending_login));
-                    pending_login = {}; saved_connect = saved_retry = false;
+                    }
+                    pending_login = {}; saved_api_key.clear(); saved_connect = saved_retry = false;
                     history_seen = playback.history_revision;
                     password.clear(); music = ui::MusicScreen{}; music.activate(); nav = false;
                 } else if (saved_connect) {
                     using F = subsonic::LoginFailure;
-                    const bool auth = result.failure == F::Authentication || result.failure == F::Http401 || result.failure == F::Http403;
+                    const bool auth = result.failure == F::Authentication || result.failure == F::Http401 || result.failure == F::Http403 ||
+                        result.failure == F::ApiKeyRejected || result.failure == F::ApiKeyUnsupported;
                     saved_retry = !auth;
-                    if (auth) { password.clear(); pending_login = {}; saved_connect = false; field = 2; }
+                    if (auth) { password.clear(); saved_api_key.clear(); pending_login = {}; saved_connect = false; field = 2; }
                 }
             } else if (result.kind == Command::Browse && connected) {
                 music.state().complete(result.token, std::move(result.page), result.ok);
@@ -408,11 +429,10 @@ int main()
             if (saved_retry) {
                 if (pressed & NUVIO_BTN_CIRCLE) {
                     saved_retry = saved_connect = false;
-                    password.clear(); pending_login = {}; field = 5;
+                    password.clear(); saved_api_key.clear(); pending_login = {}; field = 5;
                 } else if (pressed & NUVIO_BTN_CROSS) {
                     saved_retry = false;
-                    Command c; c.kind = Command::Login; c.server = server; c.username = username; c.password = password;
-                    connecting = submit_login(std::move(c));
+                    connecting = submit_login(saved_command());
                     saved_retry = !connecting;
                     note = connecting ? T("Kobler til med lagret innlogging …") : T("Kunne ikke starte arbeidet");
                 }
@@ -454,7 +474,7 @@ int main()
                             c.server = std::move(credentials.server); c.username = std::move(credentials.username);
                             c.password = std::move(credentials.password); c.api_key = std::move(credentials.api_key);
                             reset_session();
-                            password.clear(); show_password = false;
+                            password.clear(); saved_api_key.clear(); show_password = false;
                             server = c.server; username = c.username; saved_connect = saved_retry = false;
                             return submit_login(std::move(c));
                         });
@@ -488,7 +508,7 @@ int main()
                 // blocked inside a syscall: that worker stays busy until the syscall returns.
                 if (pressed & NUVIO_BTN_CIRCLE) {
                     reset_session(); connecting = false; saved_connect = saved_retry = false;
-                    password.clear(); pending_login = {}; show_password = false; note.clear();
+                    password.clear(); saved_api_key.clear(); pending_login = {}; show_password = false; note.clear();
                 }
             } else {
                 if (pressed & NUVIO_BTN_CIRCLE) show_password = false;
@@ -667,7 +687,7 @@ int main()
                 login_drop.to({410, 312.f + field * 62, 1100, 58}, field);
                 bool animating = false; login_drop.draw(dt, 1, &animating, 22);
                 for (int i = 0; i < 7; ++i) gfx::text(450, 355.f + i * 62, labels[i], {gfx::Medium, 30, 1020}, ui::kText);
-                gfx::text(960, 800, T("Innlogging lagres ukryptert på konsollen. HTTPS krever CA-fil."), {gfx::Medium, 24, 1100}, ui::kText2, 1);
+                gfx::text(960, 800, T("Lagres ukryptert på konsollen: API-nøkkel om mulig, ellers passord."), {gfx::Medium, 24, 1100}, ui::kText2, 1);
                 if (consent && server.compare(0, 7, "http://") == 0)
                     gfx::text(960, 840, T("HTTP sender innlogging og musikk ukryptert."), {gfx::Medium, 24, 1100}, ui::kText2, 1);
             }

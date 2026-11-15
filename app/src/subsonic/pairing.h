@@ -27,7 +27,7 @@ struct Diagnostic {
 struct Credentials {
     std::string server, username, password, api_key;
 };
-// No persistence. Caller must keep accepted credentials in session memory only.
+// No persistence here; the app saves one secret after login (docs/SAVED_LOGIN.md).
 // Transport must verify TLS, refuse redirects, bound responses/time, and never log URLs.
 // *failure (optional) gets a numeric reason; never untrusted server text.
 bool validate(const Credentials &credentials, const subsonic::HttpGet &http,

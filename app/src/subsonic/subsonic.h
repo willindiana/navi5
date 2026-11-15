@@ -24,7 +24,7 @@
 
 namespace subsonic {
 
-enum class LoginFailure { None, Http401, Http403, Authentication, Connection, Timeout, CaBundle, Untrusted, Tls, Initialization, Configuration, Redirect, Http, Response, Transport, ApiKeyUnsupported };
+enum class LoginFailure { None, Http401, Http403, Authentication, Connection, Timeout, CaBundle, Untrusted, Tls, Initialization, Configuration, Redirect, Http, Response, Transport, ApiKeyUnsupported, ApiKeyRejected };
 
 struct HttpResponse {
     int status = 0;          /* HTTP status; 0 when no response arrived */
@@ -36,6 +36,11 @@ struct HttpResponse {
 
 /* One HTTP GET; returns the status and body. Injected by the caller. */
 using HttpGet = std::function<HttpResponse(const std::string &url)>;
+/* One HTTP request with "Name: value" headers and an optional JSON body. Only
+ * API-key issuance (api_key.h) needs more than GET. Same rules: never log. */
+using HttpSend = std::function<HttpResponse(const std::string &method, const std::string &url,
+                                            const std::vector<std::string> &headers,
+                                            const std::string &body)>;
 
 struct Artist {
     std::string id, name, cover_art;
@@ -162,9 +167,13 @@ public:
      * A persisted token+salt pair is password-equivalent: replayable, not a
      * safer stored secret. Never log credential URLs; use HTTPS.
      * Each returns false and sets *error on transport, HTTP or API failure
-     * (e.g. "Wrong username or password", code 40). */
+     * (e.g. "Wrong username or password", code 40). Subsonic 40/41 map to
+     * Authentication, 44 (invalid/revoked key) to ApiKeyRejected and 42/43
+     * (mechanism refused) to ApiKeyUnsupported. */
     bool ping(ServerInfo *info, std::string *error, LoginFailure *failure = nullptr) const;
     bool get_extensions(std::vector<Extension> *out, std::string *error, LoginFailure *failure = nullptr) const;
+    /* apiKeyAuthentication tokenInfo: the account an API key belongs to. */
+    bool token_info(std::string *username, std::string *error, LoginFailure *failure = nullptr) const;
     bool get_artists(std::vector<Artist> *out, std::string *error) const;
     bool get_artist(const std::string &id, Artist *artist, std::vector<Album> *albums,
                     std::string *error) const;

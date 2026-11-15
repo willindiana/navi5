@@ -92,6 +92,7 @@ const char *reason(subsonic::LoginFailure failure)
     case F::Redirect: return "The server redirected. Enter its final address.";
     case F::Http: case F::Response: return "This doesn't look like a Subsonic server. Check the address and path.";
     case F::ApiKeyUnsupported: return "This server doesn't support API key sign-in. Use username and password.";
+    case F::ApiKeyRejected: return "The server rejected this API key. Check it, or use username and password.";
     case F::Configuration: return "Check the server address, then enter an API key or username and password.";
     default: return "Sign-in failed. Check the details and try again.";
     }
@@ -233,7 +234,7 @@ std::string form_page(int status, const std::string &path, const std::string &no
     return page(status, "<h2>Sign in to your music server</h2>" +
         (error.empty() ? std::string() : "<p class=err role=alert>" + error + "</p>") +
         "<p class=note>Trusted LAN only. HTTP sends secrets unencrypted. "
-        "Nonce prevents unsolicited use, not network sniffing. Successful password login is saved unencrypted on the console; API keys stay in memory only.</p>"
+        "Nonce prevents unsolicited use, not network sniffing. Sign-in is saved unencrypted on the console: an API key when you enter one or Navidrome can issue one, otherwise your password.</p>"
         "<p class=note>HTTP music servers send login and music unencrypted. Use only a trusted LAN. "
         "HTTPS verifies certificates; Navi5 never downgrades HTTPS to HTTP.</p>"
         "<form method=post action='" + path + "'><input type=hidden name=csrf value='" + nonce + "'>"

@@ -12,4 +12,4 @@ mkdir -p "$out"
     "$root/app/src/app/saved_login.cpp" "$root/app/tests/host/saved_login_test.cpp" \
     "$out/saved-login-cJSON.o" -o "$out/saved-login-test"
 "$out/saved-login-test"
-echo 'PASS: saved login roundtrip, 0600/0700, atomic replace, 8192 bound, junk/NUL/oversize/FIFO/symlink rejected, forget+tmp'
+echo 'PASS: saved login roundtrip, API-key-only file, 0600/0700, atomic replace, 8192 bound, junk/NUL/oversize/FIFO/symlink rejected, forget+tmp'

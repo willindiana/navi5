@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "app/smoke_session.h"
+#include "subsonic/api_key.h"
 #include "app/spawn.h"
 #include <algorithm>
 #include <chrono>
@@ -36,6 +37,8 @@ const char *login_failure_key(subsonic::LoginFailure failure)
     case F::Http401: return "HTTP 401: Serveren avviste innlogging. Kontroller konto og proxy.";
     case F::Http403: return "HTTP 403: Tilgang nektet. Kontroller kontotilgang og proxy.";
     case F::Authentication: return "Subsonic 40/41: Feil brukernavn eller passord. Skriv inn på nytt.";
+    case F::ApiKeyRejected: return "API-nøkkelen er ugyldig eller tilbakekalt. Logg inn på nytt.";
+    case F::ApiKeyUnsupported: return "Serveren godtar ikke API-nøkkel. Logg inn med brukernavn og passord.";
     case F::Connection: return "Ingen forbindelse. Kontroller serveradresse, port og PS5-nettverk.";
     case F::Timeout: return "Tilkoblingen tok for lang tid. Kontroller port og PS5-nettverk.";
     case F::CaBundle: return "HTTPS CA-fil mangler eller er ugyldig. Installer gyldig CA-fil.";
@@ -493,7 +496,7 @@ bool Mailbox::send(Command c)
     pending.push_back(std::move(c)); wake.notify_one(); browse_wake.notify_one(); return true;
 }
 bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
-                  std::shared_ptr<AudioPlayer> injected)
+                  std::shared_ptr<AudioPlayer> injected, subsonic::HttpSend send)
 {
     if (!jelly5::spawn_media([box] {
         Library library;
@@ -582,7 +585,7 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
             }
         }
     })) return false;
-    bool started = jelly5::spawn_media([box, http = std::move(http), injected = std::move(injected)] {
+    bool started = jelly5::spawn_media([box, http = std::move(http), injected = std::move(injected), send = std::move(send)] {
         auto owned = injected ? injected : std::make_shared<AudioPlayer>();
         AudioPlayer &player = *owned;
         std::shared_ptr<subsonic::Client> client;
@@ -652,10 +655,10 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                     playback = c.playback_revision;
                 }
                 if (c.kind == Command::Login && valid_server(c.server)) {
-                    const auto history_scope = c.api_key.empty() ? RecentContexts::scope(c.server, c.username) : std::string{};
-                    if (!c.api_key.empty()) c.password.clear();
-                    auto next = std::make_shared<subsonic::Client>(std::move(c.server), std::move(c.username), std::move(c.password), http);
-                    if (!c.api_key.empty()) next->set_api_key(std::move(c.api_key));
+                    const bool keyed = !c.api_key.empty();
+                    if (keyed) c.password.clear();
+                    auto next = std::make_shared<subsonic::Client>(c.server, c.username, c.password, http);
+                    if (keyed) next->set_api_key(c.api_key);
                     subsonic::ServerInfo info; std::string error;
                     jf::curl_diag = {};
                     result.ok = next->ping(&info, &error, &result.failure);
@@ -664,6 +667,26 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                     // No EVO logger or filesystem work between ping and mailbox delivery.
                     jf::trace_live(5, 4, 0, int(result.failure), int(result.ok), 0);
 #endif
+                    // Account identity for history: the typed username for a password,
+                    // tokenInfo's answer for a key (a typed name beside a key is unverified).
+                    std::string account = keyed ? std::string{} : c.username;
+                    if (result.ok && keyed) {
+                        result.api_key = c.api_key;
+                        if (next->token_info(&account, &error)) result.username = account;
+                        else account.clear();
+                    } else if (result.ok && send && info.open_subsonic) {
+                        // Trade the password for a revocable key. Any failure keeps the
+                        // working password session; the saved secret then stays a password.
+                        std::vector<subsonic::Extension> extensions;
+                        std::string key;
+                        if (next->get_extensions(&extensions, &error) && subsonic::can_issue_api_key(info, extensions) &&
+                                subsonic::issue_api_key(c.server, c.username, c.password, http, send, &key) == subsonic::IssueResult::Ok) {
+                            next = std::make_shared<subsonic::Client>(c.server, c.username, "", http);
+                            next->set_api_key(key);
+                            result.api_key = std::move(key); result.username = c.username;
+                        }
+                    }
+                    const auto history_scope = account.empty() ? std::string{} : RecentContexts::scope(c.server, account);
                     if (result.ok) { client = std::move(next); history = RecentContexts(history_scope); }
                 } else if (client && active == c.generation) {
                     switch (c.kind) {

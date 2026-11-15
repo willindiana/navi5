@@ -44,7 +44,8 @@ struct Command {
     uint64_t track = 0; // Seek occurrence from displayed AudioStatus, not song ID.
     double seconds = 0;
     bool shuffle_enabled = false; // Shuffle target, guarded by playback_revision.
-    // RAM only. API key wins; never retain a password fallback alongside it.
+    // API key wins; never retain a password fallback alongside it. With a key,
+    // username is only a hint: the worker trusts tokenInfo, not this field.
     std::string server, username, password, api_key;
     ui::music::PlayIntent play;
     ui::music::Request request;
@@ -58,6 +59,10 @@ struct Result {
     uint64_t token = 0;
     ui::music::Page page;
     std::string playback_error; // Local fixed diagnostics only; never transport/server text.
+    // Successful Login only. api_key: key now in use (issued from the password, or
+    // the one supplied); empty means the session still authenticates by password.
+    // username: the key's verified account, or empty. Secret: persist, never log.
+    std::string api_key, username;
 };
 // Audio admission epoch. reset() bumps value and cancels the admitted track under
 // this lock; worker checks value and starts under it after stopping unlocked. So
@@ -129,6 +134,8 @@ struct PlaybackSnapshot {
 };
 // Detached worker retains mailbox, never UI pointers. Player dies on worker.
 // Optional injected player for host worker regression tests; worker owns lifetime.
+// With `send`, a password login to a server that can issue API keys swaps to a
+// freshly issued key (subsonic/api_key.h); without it passwords are never upgraded.
 bool start_worker(const std::shared_ptr<Mailbox> &, subsonic::HttpGet,
-                  std::shared_ptr<AudioPlayer> player = {});
+                  std::shared_ptr<AudioPlayer> player = {}, subsonic::HttpSend send = {});
 } // namespace app::smoke

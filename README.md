@@ -49,7 +49,7 @@ For source builds, tests and private development setup, see
 
 QR pairing currently uses unencrypted HTTP on your local network. Use only a trusted LAN.
 
-For now, password login stores your password unencrypted on the console. Persistent API-key login is planned for a future release to avoid saving your navidrome account password.
+Saved login is stored unencrypted on the console. When your Navidrome server supports API keys (not yet in a stable release as of v0.64.2), Navi5 creates its own revocable key, shown in Navidrome as the player "Navi5 (PS5)", and saves that instead of your password. On other servers the password is saved. Deleting that player in Navidrome revokes the console's access.
 
 ## Reports
 

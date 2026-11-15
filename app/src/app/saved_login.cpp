@@ -21,11 +21,14 @@ namespace {
 
 constexpr size_t kMaxFile = 8192, kMaxField = 1024;
 
+bool text(const std::string &s) { return s.size() <= kMaxField && s.find('\0') == std::string::npos; }
+
 bool valid(const Login &l)
 {
-    return app::smoke::valid_server(l.server) && !l.user.empty() &&
-           l.user.size() <= kMaxField && l.password.size() <= kMaxField &&
-           l.user.find('\0') == std::string::npos && l.password.find('\0') == std::string::npos;
+    if (!app::smoke::valid_server(l.server) || !text(l.user) || !text(l.password) || !text(l.api_key)) return false;
+    if (l.api_key.empty()) return !l.user.empty();
+    for (unsigned char c : l.api_key) if (c <= 32 || c == 127) return false;
+    return l.password.empty();
 }
 
 void wipe(void *p, size_t n)
@@ -82,9 +85,11 @@ Load load(Login &out, const char *path)
                        !std::memchr(buf, 0, size_t(n));  // raw NUL truncates valuestring
     wipe(buf, sizeof buf);
     Login l;
+    // Exactly three members, so a file never carries both secrets.
     const bool ok = clean && cJSON_IsObject(j) && cJSON_GetArraySize(j) == 3 &&
                     field(j, "server", l.server) && field(j, "user", l.user) &&
-                    field(j, "password", l.password) && valid(l);
+                    (field(j, "api_key", l.api_key) ? !l.api_key.empty() : field(j, "password", l.password)) &&
+                    valid(l);
     cJSON_Delete(j);  // ponytail: cJSON's parsed copies are freed unwiped; plaintext file is the accepted ceiling.
     if (!ok) return Load::Invalid;
     out = std::move(l);
@@ -104,7 +109,8 @@ bool save(const Login &login, const char *path)
     cJSON *j = cJSON_CreateObject();
     cJSON_AddStringToObject(j, "server", login.server.c_str());
     cJSON_AddStringToObject(j, "user", login.user.c_str());
-    cJSON_AddStringToObject(j, "password", login.password.c_str());
+    if (login.api_key.empty()) cJSON_AddStringToObject(j, "password", login.password.c_str());
+    else cJSON_AddStringToObject(j, "api_key", login.api_key.c_str());
     char *text = cJSON_PrintUnformatted(j);
     cJSON_Delete(j);
     if (!text) return false;

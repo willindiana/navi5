@@ -9,5 +9,5 @@ clang -O1 -fsanitize=address,undefined -I "$root/app/engine/addons/include" -c "
     -I "$root/app/src" -I "$root/app/engine/addons/include" $(pkg-config --cflags libavutil) \
     "$root/app/tests/host/playback_test.cpp" "$root/app/src/app/smoke_session.cpp" "$root/app/src/app/recent_contexts.cpp" \
     "$root/app/src/app/play_queue.cpp" "$root/app/src/ui/music_state.cpp" \
-    "$root/app/src/subsonic/subsonic.cpp" "$out/cJSON.o" $(pkg-config --libs libavutil) -o "$out/playback-test"
+    "$root/app/src/subsonic/subsonic.cpp" "$root/app/src/subsonic/api_key.cpp" "$out/cJSON.o" $(pkg-config --libs libavutil) -o "$out/playback-test"
 "$out/playback-test"

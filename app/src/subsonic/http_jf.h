@@ -12,9 +12,10 @@ namespace subsonic {
 /* Console: jf_http_avio.cpp; host: tests/host/jf_http_curl.cpp.
  * No logging: URL contains credentials. Client receives generic transport
  * errors rather than forwarding diagnostics that might contain the URL. */
-inline HttpResponse http_get_jf(const std::string &url)
+inline HttpResponse http_send_jf(const std::string &method, const std::string &url,
+                                const std::vector<std::string> &headers, const std::string &body)
 {
-    const auto r = jf::http_request("GET", url, {}, "", 15);
+    const auto r = jf::http_request(method, url, headers, body, 15);
     LoginFailure failure = LoginFailure::None;
     switch (r.failure) {
     case jf::TransportFailure::None: break;
@@ -29,6 +30,11 @@ inline HttpResponse http_get_jf(const std::string &url)
     case jf::TransportFailure::Other: failure = LoginFailure::Transport; break;
     }
     return {r.status, r.body, r.error.empty() ? "" : "HTTP transport failed", failure};
+}
+
+inline HttpResponse http_get_jf(const std::string &url)
+{
+    return http_send_jf("GET", url, {}, "");
 }
 
 } // namespace subsonic

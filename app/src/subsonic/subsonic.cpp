@@ -242,6 +242,20 @@ Song to_song(const cJSON *t)
 
 } // namespace
 
+namespace {
+/* 40 wrong credentials, 41 token auth unsupported for this user; OpenSubsonic
+ * 42 mechanism unsupported, 43 conflicting mechanisms, 44 invalid API key. */
+LoginFailure api_failure(int code)
+{
+    switch (code) {
+    case 40: case 41: return LoginFailure::Authentication;
+    case 42: case 43: return LoginFailure::ApiKeyUnsupported;
+    case 44: return LoginFailure::ApiKeyRejected;
+    default: return LoginFailure::Response;
+    }
+}
+} // namespace
+
 std::string make_token(const std::string &password, const std::string &salt)
 {
     return md5_hex(password + salt);
@@ -381,7 +395,7 @@ bool Client::ping(ServerInfo *info, std::string *error, LoginFailure *failure) c
     if (!in) {
         const cJSON *inner = child(doc.root, "subsonic-response");
         const int code = int_of(child(inner, "error"), "code", -1);
-        *failure = code == 40 || code == 41 ? LoginFailure::Authentication : LoginFailure::Response;
+        *failure = api_failure(code);
         *error = "Subsonic login refused or invalid response";
         return false;
     }
@@ -428,7 +442,7 @@ bool fetch(const HttpGet &http, const std::string &url, Doc *doc, const cJSON **
     *inner = unwrap(*doc, error);
     if (!*inner) {
         const int code = int_of(child(child(doc->root, "subsonic-response"), "error"), "code", -1);
-        *failure = code == 40 || code == 41 ? LoginFailure::Authentication : LoginFailure::Response;
+        *failure = api_failure(code);
     }
     return *inner != nullptr;
 }
@@ -440,6 +454,19 @@ bool fetch(const HttpGet &http, const std::string &url, Doc *doc, const cJSON **
     const cJSON *inner = nullptr; \
     if (!fetch(http_, build_url(endpoint, extra), &doc, &inner, error)) \
         return false;
+
+bool Client::token_info(std::string *username, std::string *error, LoginFailure *failure) const
+{
+    Doc doc;
+    const cJSON *in = nullptr;
+    if (!fetch(http_, build_url("tokenInfo", ""), &doc, &in, error, failure))
+        return false;
+    *username = str_of(child(in, "tokenInfo"), "username");
+    if (!username->empty()) return true;
+    if (failure) *failure = LoginFailure::Response;
+    *error = "tokenInfo without username";
+    return false;
+}
 
 bool Client::get_extensions(std::vector<Extension> *out, std::string *error, LoginFailure *failure) const
 {
