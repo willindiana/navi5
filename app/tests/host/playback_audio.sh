@@ -16,7 +16,7 @@ clang -O1 -fsanitize=address,undefined -I "$root/app/engine/addons/include" \
     $(pkg-config --cflags libavformat libavcodec libswresample libavutil libcurl) \
     "$root/app/tests/host/playback_audio_test.cpp" "$root/app/src/app/smoke_session.cpp" "$root/app/src/app/recent_contexts.cpp" \
     "$root/app/src/app/audio_player.cpp" "$root/app/src/app/play_queue.cpp" \
-    "$root/app/src/ui/music_state.cpp" "$root/app/src/subsonic/subsonic.cpp" "$out/cJSON.o" \
+    "$root/app/src/ui/music_state.cpp" "$root/app/src/subsonic/subsonic.cpp" "$root/app/src/subsonic/api_key.cpp" "$out/cJSON.o" \
     $(pkg-config --libs libavformat libavcodec libswresample libavutil libcurl) \
     -o "$out/playback-audio-test"
 python3 "$root/app/tests/host/playback_audio_server.py" "$out"

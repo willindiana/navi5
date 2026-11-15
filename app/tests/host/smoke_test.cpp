@@ -55,13 +55,14 @@ struct FakePlayer : app::AudioPlayer {
     app::AudioStatus status() const override {
         auto &self = const_cast<FakePlayer &>(*this);
         std::lock_guard<std::mutex> l(self.m); app::AudioStatus s; s.state = state;
-        s.duration = duration; s.position = position; s.track = s.next_track = track; return s;
+        s.duration = duration; s.position = position; s.track = track; s.next_track = track + ahead; return s;
     }
     bool seek(double seconds, uint64_t expected) override {
         std::lock_guard<std::mutex> l(m); assert(seconds >= 0 && seconds < duration && expected == track);
         ++seeks; last_seek = seconds; return seek_ok;
     }
     bool replace_ok = true;
+    uint64_t ahead = 0; // 1: successor promoted but not yet audible (handoff window).
     std::vector<std::string> replacements;
     bool replace_next(std::string url, uint64_t expected) override {
         std::lock_guard<std::mutex> l(m);
@@ -864,6 +865,279 @@ void shuffle_worker()
     { std::lock_guard<std::mutex> l(box->mutex); assert(!box->shuffle_enabled && !box->shuffle_pending); box->quit = true; box->wake.notify_all(); box->browse_wake.notify_all(); }
 }
 }
+// Play Next and queue edits on the real worker: admission through replace_next,
+// insertion order, off-worker album/artist assembly, cancellation and idle start.
+void enqueue_worker()
+{
+    auto box = std::make_shared<Mailbox>();
+    auto player = std::make_shared<FakePlayer>();
+    Gate artist_gate;
+    assert(start_worker(box, [&](const std::string &url) {
+        std::string body = "\"x\":1";
+        const auto has = [&](const char *id) { return url.find(std::string("id=") + id) != std::string::npos; };
+        if (url.find("getArtist?") != std::string::npos) {
+            artist_gate.pass();
+            body = R"("artist":{"id":"artist","albumCount":2,"album":[{"id":"one","songCount":2},{"id":"two","songCount":1}]})";
+        } else if (url.find("getAlbum?") != std::string::npos) {
+            if (has("bad")) return subsonic::HttpResponse{500, {}, {}};
+            if (has("one")) body = R"("album":{"id":"one","songCount":2,"song":[{"id":"dup","title":"O1"},{"id":"dup","title":"O2"}]})";
+            else if (has("two")) body = R"("album":{"id":"two","songCount":1,"song":[{"id":"last","title":"O3"}]})";
+            else if (has("extra")) body = R"("album":{"id":"extra","song":[{"id":"e1","title":"E1"},{"id":"e2","title":"E2"}]})";
+            else body = "\"album\":{\"id\":\"al\",\"song\":[{\"id\":\"a\",\"title\":\"A\"},{\"id\":\"b\",\"title\":\"B\"},"
+                        "{\"id\":\"dup\",\"title\":\"D1\"},{\"id\":\"dup\",\"title\":\"D2\"},{\"id\":\"c\",\"title\":\"C\"}]}";
+        }
+        return subsonic::HttpResponse{200, "{\"subsonic-response\":{\"status\":\"ok\"," + body + "}}", {}};
+    }, player));
+    Command login; login.kind = Command::Login; login.generation = box->reset();
+    login.server = "https://example.invalid"; login.username = login.password = "fixture";
+    const auto g = login.generation;
+    assert(box->send(login));
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return !box->results.empty(); }));
+    { std::lock_guard<std::mutex> l(box->mutex); box->results.clear(); }
+    uint64_t token = 100;
+    auto enqueue = [&](Kind kind, const char *id, const char *title) {
+        Command c; c.kind = Command::Enqueue; c.generation = g; c.request.token = ++token;
+        c.item.kind = kind; c.item.id = id; c.item.title = title; c.item.subtitle = "Artist";
+        assert(box->send(c));
+        return token;
+    };
+    auto answer = [&](uint64_t wanted) {
+        Result found;
+        assert(eventually([&] {
+            std::lock_guard<std::mutex> l(box->mutex);
+            for (auto it = box->results.begin(); it != box->results.end(); ++it)
+                if (it->kind == Command::Enqueue && it->token == wanted) { found = *it; box->results.erase(it); return true; }
+            return false;
+        }));
+        return found;
+    };
+    using Titles = std::vector<std::string>;
+    auto titles = [&] {
+        std::lock_guard<std::mutex> l(box->mutex);
+        Titles out;
+        for (const auto &row : box->queue_window.rows) out.push_back(row.title);
+        return out;
+    };
+    auto window = [&] { std::lock_guard<std::mutex> l(box->mutex); return box->queue_window; };
+    auto shows = [&](const Titles &expected) { return eventually([&] { return titles() == expected && !window().pending; }); };
+    auto replaced = [&] { std::lock_guard<std::mutex> l(player->m); return player->replacements.size(); };
+    auto last_replacement = [&](const char *id) {
+        std::lock_guard<std::mutex> l(player->m);
+        return player->replacements.back().find(std::string("id=") + id) != std::string::npos;
+    };
+    auto edit = [&](Command::Kind kind, uint64_t uid, uint64_t anchor = 0) {
+        Command c; c.kind = kind; c.generation = g; c.uid = uid; c.anchor = anchor;
+        assert(box->send(c));
+    };
+    { Command internal; internal.kind = Command::EnqueueReady; internal.generation = g; assert(!box->send(internal)); }
+    box->watch_queue(true, 0, g);
+
+    // Nothing playing: Play Next starts playback of that item, without a Play command.
+    auto r = answer(enqueue(Kind::Track, "x", "X"));
+    assert(r.ok && r.count == 1 && r.title == "X" && r.playback_error.empty());
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "X" && box->artist == "Artist"; }));
+    assert(player->started() == 1 && replaced() == 0);
+    assert(answer(enqueue(Kind::Track, "y", "Y")).ok);
+    assert(shows({"X", "Y"}) && replaced() == 1 && last_replacement("y"));
+    { Command c; c.kind = Command::Stop; c.generation = g; assert(box->send(c)); }
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->song_id.empty(); }));
+
+    Command play; play.kind = Command::Play; play.generation = g; play.play.context_id = "al";
+    play.play.song_id = "b"; play.play.occurrence = 1; assert(box->send(play));
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "B" && box->next_title == "D1"; }));
+    assert(shows({"B", "D1", "D2", "C"}));
+    { const auto w = window(); assert(w.position == 1 && w.first == 1 && w.total == 5); }
+    const auto base = replaced();
+    // First Play Next changes the immediate successor: prefetch is replaced once.
+    assert(answer(enqueue(Kind::Track, "x", "X")).ok);
+    assert(shows({"B", "X", "D1", "D2", "C"}) && replaced() == base + 1 && last_replacement("x"));
+    { std::lock_guard<std::mutex> l(box->mutex); assert(box->next_title == "X" && box->title == "B"); }
+    // Second goes behind the first: successor unchanged, prefetch untouched.
+    assert(answer(enqueue(Kind::Track, "y", "Y")).ok);
+    assert(shows({"B", "X", "Y", "D1", "D2", "C"}) && replaced() == base + 1);
+    assert(player->started() == 2); // Current audio never restarted.
+
+    // Refused swap (seek/handoff): the edit waits, nothing is half-applied.
+    { std::lock_guard<std::mutex> l(player->m); player->replace_ok = false; }
+    edit(Command::QueueRemove, window().rows[1].uid);
+    assert(eventually([&] { return window().pending; }));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    assert((titles() == Titles{"B", "X", "Y", "D1", "D2", "C"}) && window().pending && replaced() == base + 1);
+    { std::lock_guard<std::mutex> l(box->mutex); assert(box->next_title == "X"); }
+    { std::lock_guard<std::mutex> l(player->m); player->replace_ok = true; }
+    assert(shows({"B", "Y", "D1", "D2", "C"}) && replaced() == base + 2 && last_replacement("y"));
+
+    // Reorder: onto the successor slot swaps the prefetch; deeper moves do not.
+    { const auto w = window(); edit(Command::QueueMove, w.rows[4].uid, w.rows[0].uid); }
+    assert(shows({"B", "C", "Y", "D1", "D2"}) && replaced() == base + 3 && last_replacement("c"));
+    { const auto w = window(); edit(Command::QueueMove, w.rows[4].uid, w.rows[2].uid); }
+    assert(shows({"B", "C", "Y", "D2", "D1"}) && replaced() == base + 3);
+    // Current entry and unknown uids are immovable and unremovable.
+    { const auto w = window();
+      edit(Command::QueueRemove, w.rows[0].uid); edit(Command::QueueMove, w.rows[0].uid, w.rows[3].uid);
+      edit(Command::QueueRemove, 0); edit(Command::QueueMove, w.rows[1].uid, 987654321); }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    assert(shows({"B", "C", "Y", "D2", "D1"}) && replaced() == base + 3);
+
+    // Handoff window: successor already promoted, so even a successor-neutral
+    // insert waits instead of slipping in front of the promoted entry.
+    { std::lock_guard<std::mutex> l(player->m); player->ahead = 1; }
+    assert(answer(enqueue(Kind::Track, "z", "Z")).ok);
+    assert(eventually([&] { return window().pending; }));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    assert((titles() == Titles{"B", "C", "Y", "D2", "D1"}) && window().pending);
+    { std::lock_guard<std::mutex> l(player->m); player->ahead = 0; }
+    assert(shows({"B", "C", "Y", "Z", "D2", "D1"}) && replaced() == base + 3);
+
+    // Album: assembled off the worker, appended behind earlier Play Next items.
+    r = answer(enqueue(Kind::Album, "extra", "Extra"));
+    assert(r.ok && r.count == 2 && r.title.empty());
+    assert(shows({"B", "C", "Y", "Z", "E1", "E2", "D2", "D1"}) && replaced() == base + 3);
+    // Failed assembly adds nothing.
+    r = answer(enqueue(Kind::Album, "bad", "Bad"));
+    assert(!r.ok && r.count == 0 && !r.playback_error.empty());
+    assert(window().total == 9 && shows({"B", "C", "Y", "Z", "E1", "E2", "D2", "D1"}));
+
+    // Next while an edit waits: the edit applies first, then playback moves on.
+    { std::lock_guard<std::mutex> l(player->m); player->replace_ok = false; }
+    edit(Command::QueueRemove, window().rows[1].uid);
+    assert(eventually([&] { return window().pending; }));
+    { Command c; c.kind = Command::Next; c.generation = g; assert(box->send(c)); }
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "Y"; }));
+    assert(shows({"Y", "Z", "E1", "E2", "D2", "D1"}) && player->started() == 3);
+    { std::lock_guard<std::mutex> l(player->m); player->replace_ok = true; }
+
+    // Artist assembly runs elsewhere: the worker keeps serving controls meanwhile,
+    // a second assembly is refused, and Stop cancels the first without a result.
+    artist_gate.arm();
+    const auto artist_token = enqueue(Kind::Artist, "artist", "Artist");
+    artist_gate.wait_entered();
+    { Command c; c.kind = Command::Pause; c.generation = g; assert(box->send(c)); }
+    assert(eventually([&] { std::lock_guard<std::mutex> l(player->m); return player->pauses == 1; }));
+    r = answer(enqueue(Kind::Album, "extra", "Extra"));
+    assert(!r.ok && r.playback_error == "Vent til forrige kø-oppdatering er ferdig");
+    assert(answer(enqueue(Kind::Track, "t", "T")).ok); // Single tracks never wait for assembly.
+    assert(shows({"Y", "Z", "E1", "E2", "T", "D2", "D1"}));
+    { Command c; c.kind = Command::Stop; c.generation = g; assert(box->send(c)); }
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->song_id.empty(); }));
+    artist_gate.release();
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    { std::lock_guard<std::mutex> l(box->mutex);
+      for (const auto &result : box->results) assert(result.token != artist_token);
+      assert(box->song_id.empty() && box->queue_window.total == 0); }
+    assert(player->started() == 3);
+
+    // Stopped: the whole artist context starts playing; duplicates stay distinct.
+    r = answer(enqueue(Kind::Artist, "artist", "Artist"));
+    assert(r.ok && r.count == 3);
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "O1" && box->next_title == "O2"; }));
+    assert(shows({"O1", "O2", "O3"}) && player->started() == 4);
+    { const auto w = window(); assert(w.rows[0].uid != w.rows[1].uid); }
+
+    // Finished queue: Play Next continues after it instead of doing nothing.
+    { Command c; c.kind = Command::Next; c.generation = g; assert(box->send(c)); }
+    { Command c; c.kind = Command::Next; c.generation = g; assert(box->send(c)); }
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "O3"; }));
+    player->set(app::AudioState::ended);
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->audio.state == app::AudioState::ended; }));
+    std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Worker has seen the end.
+    const auto before_idle = player->started();
+    assert(answer(enqueue(Kind::Track, "x", "X")).ok);
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->title == "X" && box->audio.state == app::AudioState::playing; }));
+    assert(player->started() == before_idle + 1);
+    { std::lock_guard<std::mutex> l(player->m); assert(player->urls.back().find("id=x") != std::string::npos); }
+    assert(shows({"X"}));
+
+    // Scrolling re-publishes only the requested window; closing stops publication.
+    box->watch_queue(true, 1000, g);
+    assert(eventually([&] { const auto w = window(); return w.first == w.total && w.rows.empty(); }));
+    box->watch_queue(false, 0, g);
+    const auto serial = window().serial;
+    assert(answer(enqueue(Kind::Track, "y", "Y")).ok);
+    assert(eventually([&] { std::lock_guard<std::mutex> l(box->mutex); return box->next_title == "Y"; }));
+    assert(window().serial == serial);
+    // Logout drops queue, edits and the view.
+    box->reset();
+    { std::lock_guard<std::mutex> l(box->mutex);
+      assert(!box->queue_watch && box->queue_window.rows.empty() && box->queue_window.serial != serial);
+      box->quit = true; box->wake.notify_all(); box->browse_wake.notify_all(); }
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+}
+// Password login trades itself for an issued key only where that is possible;
+// every other outcome keeps the working password session and reports no key.
+void key_upgrade_worker()
+{
+    struct Run { bool ok = false; std::string api_key, username, browse_url; int sends = 0; };
+    auto run = [](const char *type, bool extension, int login_status, bool key_login, const char *token_user) {
+        auto box = std::make_shared<Mailbox>();
+        auto player = std::make_shared<FakePlayer>();
+        auto sends = std::make_shared<std::atomic<int>>(0);
+        auto browse = std::make_shared<std::string>();
+        auto guard = std::make_shared<std::mutex>();
+        const std::string ping = std::string(R"({"subsonic-response":{"status":"ok","openSubsonic":true,"type":")") + type + "\"}}";
+        const std::string extensions = extension
+            ? R"({"subsonic-response":{"status":"ok","openSubsonicExtensions":[{"name":"apiKeyAuthentication","versions":[1]}]}})"
+            : R"({"subsonic-response":{"status":"ok","openSubsonicExtensions":[{"name":"songLyrics","versions":[1]}]}})";
+        const std::string info = token_user
+            ? std::string(R"({"subsonic-response":{"status":"ok","tokenInfo":{"username":")") + token_user + "\"}}}"
+            : std::string(R"({"subsonic-response":{"status":"failed","error":{"code":70,"message":"x"}}})");
+        assert(start_worker(box, [=](const std::string &url) {
+            if (url.find("/rest/ping?") != std::string::npos) return subsonic::HttpResponse{200, ping, {}};
+            if (url.find("/rest/getOpenSubsonicExtensions?") != std::string::npos) return subsonic::HttpResponse{200, extensions, {}};
+            if (url.find("/rest/tokenInfo?") != std::string::npos) return subsonic::HttpResponse{200, info, {}};
+            { std::lock_guard<std::mutex> lock(*guard); if (browse->empty()) *browse = url; }
+            return subsonic::HttpResponse{200, R"({"subsonic-response":{"status":"ok","albumList2":{"album":[{"id":"album","name":"Album"}]}}})", {}};
+        }, player, [=](const std::string &, const std::string &url, const std::vector<std::string> &, const std::string &) {
+            ++*sends;
+            if (url.find("/auth/login") != std::string::npos)
+                return subsonic::HttpResponse{login_status, R"({"token":"session.token"})", {}};
+            return subsonic::HttpResponse{200, R"({"id":"player-1"})", {}};
+        }));
+        Command c; c.kind = Command::Login; c.generation = box->generation;
+        c.server = "https://example.invalid"; c.username = "fixture";
+        if (key_login) c.api_key = "supplied-key"; else c.password = "fixture-password";
+        assert(box->send(c));
+        Run out;
+        assert(eventually([&] {
+            std::lock_guard<std::mutex> lock(box->mutex);
+            if (box->results.empty()) return false;
+            out.ok = box->results.front().ok; out.api_key = box->results.front().api_key;
+            out.username = box->results.front().username; box->results.clear();
+            return true;
+        }));
+        c = {}; c.kind = Command::Browse; c.generation = box->generation; c.request.token = 1; assert(box->send(c));
+        assert(eventually([&] { std::lock_guard<std::mutex> lock(*guard); return !browse->empty(); }));
+        { std::lock_guard<std::mutex> lock(*guard); out.browse_url = *browse; }
+        out.sends = *sends;
+        { std::lock_guard<std::mutex> lock(box->mutex); box->quit = true; box->wake.notify_all(); box->browse_wake.notify_all(); }
+        return out;
+    };
+    auto by_key = [](const Run &r, const std::string &key) {
+        return r.browse_url.find("?apiKey=" + key + "&") != std::string::npos && r.browse_url.find("u=") == std::string::npos &&
+               r.browse_url.find("&t=") == std::string::npos && r.browse_url.find("fixture-password") == std::string::npos;
+    };
+    auto by_password = [](const Run &r) {
+        return r.browse_url.find("?u=fixture&t=") != std::string::npos && r.browse_url.find("apiKey=") == std::string::npos;
+    };
+    // Navidrome with the extension: session and saved secret become the issued key.
+    Run r = run("navidrome", true, 200, false, nullptr);
+    assert(r.ok && r.sends == 2 && r.api_key.size() == 26 && r.api_key.compare(0, 4, "nds_") == 0);
+    assert(r.username == "fixture" && by_key(r, r.api_key));
+    // No extension, or another server: no native-API request at all, password stays.
+    r = run("navidrome", false, 200, false, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key.empty() && r.username.empty() && by_password(r));
+    r = run("gonic", true, 200, false, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key.empty() && by_password(r));
+    // Issuance refused: login still succeeds on the password.
+    r = run("navidrome", true, 401, false, nullptr);
+    assert(r.ok && r.sends == 1 && r.api_key.empty() && by_password(r));
+    // Supplied key: never issue another; the account name comes from tokenInfo only.
+    r = run("navidrome", true, 200, true, "owner");
+    assert(r.ok && r.sends == 0 && r.api_key == "supplied-key" && r.username == "owner" && by_key(r, "supplied-key"));
+    r = run("navidrome", true, 200, true, nullptr);
+    assert(r.ok && r.sends == 0 && r.api_key == "supplied-key" && r.username.empty() && by_key(r, "supplied-key"));
+}
+
 int main()
 {
     { // Ranked snapshot cached once; optional failures retain albums; stale never cached.
@@ -924,6 +1198,10 @@ int main()
     check_failure({403, "SECRET", "SECRET"}, F::Http403);
     check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":40,"message":"SECRET"}}})", {}}, F::Authentication);
     check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":41,"message":"SECRET"}}})", {}}, F::Authentication);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":44,"message":"SECRET"}}})", {}}, F::ApiKeyRejected);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":42,"message":"SECRET"}}})", {}}, F::ApiKeyUnsupported);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":43,"message":"SECRET"}}})", {}}, F::ApiKeyUnsupported);
+    check_failure({200, R"({"subsonic-response":{"status":"failed","error":{"code":50,"message":"SECRET"}}})", {}}, F::Response);
     check_failure({200, "SECRET", {}}, F::Response);
     check_failure({404, "SECRET", "SECRET"}, F::Http);
     check_failure({0, {}, "SECRET"}, F::Transport);
@@ -1294,4 +1572,6 @@ int main()
     worker_races();
     previous_worker();
     shuffle_worker();
+    enqueue_worker();
+    key_upgrade_worker();
 }

@@ -15,12 +15,14 @@
 
 namespace {
 std::vector<std::string> texts;
+std::vector<int> text_lines;
 unsigned white = 0, black = 0;
 }
 const char *T(const char *key) { return key; }
 namespace gfx {
-float text(float, float, const std::string &s, const TextStyle &, uint32_t, int)
-{ texts.push_back(s); return 0; }
+float text(float, float, const std::string &s, const TextStyle &style, uint32_t, int)
+{ texts.push_back(s); text_lines.push_back(style.max_lines); return 0; }
+float text_width(const std::string &s, const TextStyle &style) { return s.size() * style.size * .5f; }
 void fill(const Rect &r, uint32_t color, float)
 {
     assert(r.w > 0 && r.h > 0);
@@ -54,8 +56,18 @@ int main()
     for (const auto &s : texts) assert(s.find("http://") == std::string::npos);
     assert(std::find(texts.begin(), texts.end(), "HTTP-paring er ukryptert. Bruk kun et betrodd lokalnett.") != texts.end());
     white = black = 0;
+    texts.clear(); text_lines.clear();
     v.draw(120, 0.016f);
     assert(v.state() == V::State::Expired && white == 0 && black == 0);
+    // Wrapped rasters left-align their lines: a status that fits one line must be
+    // drawn as one line or it sits left of the QR area's centre (seen on hardware).
+    {
+        const auto at = std::find(texts.begin(), texts.end(), "Paring utløpt.");
+        assert(at != texts.end() && text_lines[at - texts.begin()] == 1);
+        const std::string wide(200, 'x');
+        gfx::text_centered(960, 0, wide, {gfx::Medium, 22, 700, 3}, 0);
+        assert(texts.back() == wide && text_lines.back() == 3); // Long text still wraps.
+    }
     assert(v.input(NUVIO_BTN_CROSS, 120) == V::Action::Cancel); // Expiry cancel drains first.
     assert(v.input(NUVIO_BTN_CROSS, 120) == V::Action::Retry);  // No TV consent step.
     assert(v.state() == V::State::Starting);

@@ -10,6 +10,7 @@
 #include "../curl_sockopt.h"
 
 #include <curl/curl.h>
+#include <cstdint>
 #include <strings.h>
 #include <cstdlib>
 #include <cstring>

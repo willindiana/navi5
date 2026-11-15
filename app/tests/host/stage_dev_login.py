@@ -14,7 +14,7 @@ spec.loader.exec_module(m)
 
 class FTP:
     def __init__(self):
-        self.files = {m.BASE + '/sce_sys/param.json': json.dumps({'titleId': 'NAVI00001', 'contentId': m.CONTENT_ID}).encode()}
+        self.files = {m.BASE + '/sce_sys/param.json': json.dumps({'titleId': m.identity.DEV['titleId'], 'contentId': m.CONTENT_ID}).encode()}
         self.writes = []
 
     def retrbinary(self, cmd, cb):

@@ -15,12 +15,14 @@ struct PlaybackPresentation {
     double target = 0;
     bool shuffle_enabled = false, shuffle_pending = false, shuffle_error = false;
 };
-enum class MusicIcon { Previous, Play, Pause, Next, Shuffle };
+enum class MusicIcon { Previous, Play, Pause, Next, Shuffle, Stop, Queue };
 // GPU geometry, centered at (x, y); caller owns focus and localized action hints.
 void draw_music_icon(MusicIcon icon, float x, float y, uint32_t color);
 // Localized semantic labels for icon-only fullscreen controls (focus 3 = seek).
 const char *player_control_label(const PlaybackPresentation &playback, int focus);
 void draw_mini_player_progress(double position, double duration);
+// Header gear (opens the menu with Log out), centered at (cx, cy).
+void draw_gear_icon(float cx, float cy, uint32_t color);
 void draw_music_player(const PlaybackPresentation &playback, int focus, float controls_alpha,
                        float dt, Drop &transport_drop);
 class MusicScreen final : public Screen {
@@ -43,9 +45,17 @@ public:
     }
     // Presentation/resume only: never creates a replacement Play intent.
     bool take_player_open() { bool value = open_player_; open_player_ = false; return value; }
+    // Gear at the far right of the header: Cross asks the parent for its menu.
+    bool take_menu_open() { bool value = open_menu_; open_menu_ = false; return value; }
+    bool settings_focused() const { return m_focused && tabs_focused_ && settings_button_; }
+    bool searching() const { return state_.request().view == music::View::Search; }
+    // Triangle (Play Next): the focused track, album, playlist or artist; the
+    // detail page's own Play button stands for that album, playlist or artist.
+    // Empty on tabs, keys, retry rows and anything not playable. No I/O.
+    std::optional<music::Item> play_next_target() const;
 private:
     music::State state_;
-    bool live_ = false, paused_ = false, open_player_ = false;
+    bool live_ = false, paused_ = false, open_player_ = false, open_menu_ = false;
     std::string session_title_, session_artist_, session_art_;
     int home_row_ = 0; // -1: live hero; 0/1: bounded shelves, including empty/error.
     size_t home_column_ = 0;
@@ -56,7 +66,7 @@ private:
     Anim scroll_;
     uint64_t drawn_token_ = 0; // State::context(), not request token.
     bool snap_ = false;
-    bool search_button_ = false, search_results_ = false;
+    bool search_button_ = false, search_results_ = false, settings_button_ = false;
     int search_key_ = 0;
     bool search_symbols_ = false;
     double search_now_ = 0;

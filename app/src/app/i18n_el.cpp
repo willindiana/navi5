@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &greek_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Αναπαραγωγή στη συνέχεια"},
+        {"Spilles neste:", "Παίζει στη συνέχεια:"},
+        {"Henter spor …", "Φόρτωση κομματιών …"},
+        {"Kunne ikke laste spor til køen", "Δεν ήταν δυνατή η φόρτωση κομματιών στην ουρά"},
+        {"Køen er full (20000 spor)", "Η ουρά είναι γεμάτη (20000 κομμάτια)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Περιμένετε να ολοκληρωθεί η προηγούμενη ενημέρωση της ουράς"},
+        {"Køen er tom", "Η ουρά είναι άδεια"},
+        {"Oppdaterer køen …", "Ενημέρωση ουράς …"},
+        {"Slipp", "Άφησε"},
+        {"Flytt", "Μετακίνηση"},
+        {"Fjern", "Αφαίρεση"},
+        {"Logge ut?", "Αποσύνδεση;"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Η αναπαραγωγή σταματά και η αποθηκευμένη σύνδεση διαγράφεται από την κονσόλα. Το κλειδί API παραμένει έγκυρο στον διακομιστή μέχρι να διαγράψετε το πρόγραμμα αναπαραγωγής «Navi5 (PS5)» στο Navidrome. Το Navi5 δεν έχει πλέον τον κωδικό και δεν μπορεί να το ανακαλέσει."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Η αναπαραγωγή σταματά και η αποθηκευμένη σύνδεση διαγράφεται από την κονσόλα."},
+        {"QR-paring er stoppet.", "Η σύζευξη QR έχει σταματήσει."},
+        {"Skriv inn server manuelt", "Χειροκίνητη εισαγωγή διακομιστή"},
+        {"Logg inn på nytt", "Σύνδεση ξανά"},
+        {"Koble til", "Σύνδεση"},
+        {"Glem lagret innlogging", "Διαγραφή αποθηκευμένης σύνδεσης"},
+        {"Fullskjermspiller", "Αναπαραγωγή πλήρους οθόνης"},
         {"Hjem", "Αρχική"},
         {"Musikk", "Μουσική"},
         {"Album", "Άλμπουμ"},

@@ -972,10 +972,11 @@ int main()
         assert(panels.empty()); // Never narrow invalid duration into Up Next's int.
     }
     panels.clear(); gfx::placed.clear(); screen.draw(0, .05f);
-    // Toolbar pill plus separate magnifier glass, right of and outside pill.
-    assert(panels.size() == 2 && panels[0].y == 58 && panels[0].h == 76);
+    // Toolbar pill, separate magnifier glass right of the pill, gear at the far right.
+    assert(panels.size() == 3 && panels[0].y == 58 && panels[0].h == 76);
     assert(panels[1].y == 58 && panels[1].w == 76 && panels[1].x >= panels[0].x + panels[0].w + 8);
-    assert(panels[1].x + panels[1].w <= 1824); // TV safe area.
+    assert(panels[2].y == 58 && panels[2].w == 76 && panels[2].x > panels[1].x + panels[1].w + 200);
+    assert(panels[2].x + panels[2].w <= 1824); // TV safe area.
     {   // Header: wordmark left of pill, same line, gap, inside 5% TV safe area.
         const auto brand = std::find_if(gfx::placed.begin(), gfx::placed.end(), [](const auto &p) { return p.text == "Navi5"; });
         assert(brand != gfx::placed.end());
@@ -1020,7 +1021,7 @@ int main()
     panels.clear(); drawn_text.clear(); tabs.draw(0, .05f);
     for (const char *pager : {"Neste side", "Forrige side"})
         assert(std::find(drawn_text.begin(), drawn_text.end(), pager) == drawn_text.end());
-    assert(panels.size() == 2 && panels[0].y == 58 && panels[1].y == 58); // Pill + magnifier; no pager panels.
+    assert(panels.size() == 3 && panels[0].y == 58 && panels[1].y == 58 && panels[2].y == 58); // Pill, magnifier, gear; no pager panels.
     tabs.input(NUVIO_BTN_R1); // Shoulder changes top-level view.
     assert(tabs.state().tab_index() == 2 && tabs.state().request().view == View::Albums);
     complete(tabs.state(), {});
@@ -1087,7 +1088,151 @@ int main()
         assert(focus.x == 100 + 4 * 286 && focus.y >= clip.y && focus.y + focus.h <= clip.y + clip.h);
         assert(!grid.state().take_request());
     }
+    {
+        // Triangle is Play Next: MusicScreen no longer acts on it (no top-nav jump),
+        // and names its target for main: focused card/row, or the detail page's context.
+        const auto has_hint = [] {
+            return std::any_of(hints.begin(), hints.end(), [](const ui::PadHint &h) { return h.button == ui::PadButton::Triangle; });
+        };
+        ui::MusicScreen next;
+        auto &st = next.state();
+        next.activate();
+        complete(st, {{item(Kind::Album, "album"), item(Kind::Playlist, "list")}, ""});
+        assert(!next.play_next_target());                       // Tabs focused.
+        next.draw(0, .05f); assert(!has_hint());
+        next.input(NUVIO_BTN_DOWN);
+        auto target = next.play_next_target();
+        assert(target && target->kind == Kind::Album && target->id == "album");
+        next.draw(0, .05f); assert(has_hint());
+        const auto before = st.request().token;
+        assert(next.input(NUVIO_BTN_TRIANGLE).kind == ui::Action::None);
+        assert(st.request().token == before && !st.take_play_intent() && !st.take_request());
+        assert(next.play_next_target()->id == "album");        // Focus unchanged by Triangle.
+        next.input(NUVIO_BTN_RIGHT);
+        target = next.play_next_target();
+        assert(target && target->kind == Kind::Playlist && target->id == "list");
+        next.input(NUVIO_BTN_LEFT);
+        next.input(NUVIO_BTN_CROSS);                            // Album detail, Play button focused.
+        assert(!next.play_next_target());                       // Loading: nothing to enqueue.
+        Page detail{{item(Kind::Track, "one"), item(Kind::Track, "two")}, ""};
+        detail.detail.title = "Album title";
+        complete(st, detail);
+        target = next.play_next_target();
+        assert(target && target->kind == Kind::Album && target->id == "album" && target->title == "Album title");
+        next.input(NUVIO_BTN_DOWN); next.input(NUVIO_BTN_DOWN);
+        target = next.play_next_target();
+        assert(target && target->kind == Kind::Track && target->id == "two");
+        next.set_focused(false);
+        assert(!next.play_next_target());
+        next.set_focused(true);
+        // Artist page: Play/Shuffle stand for the artist, ranked rows for tracks,
+        // "More" for nothing, album cards for albums.
+        ui::MusicScreen artist;
+        auto &as = artist.state();
+        artist.activate();
+        complete(as, {{item(Kind::Album, "home")}, ""});
+        artist.input(NUVIO_BTN_R1);
+        complete(as, {{item(Kind::Artist, "artist")}, ""});
+        artist.input(NUVIO_BTN_DOWN);
+        assert(artist.play_next_target()->kind == Kind::Artist && artist.play_next_target()->id == "artist");
+        artist.input(NUVIO_BTN_CROSS);
+        Page albums{{item(Kind::Album, "a1")}, ""};
+        for (int i = 0; i < 7; ++i) albums.top_songs.push_back(item(Kind::Track, i == 0 ? "top0" : "top"));
+        albums.top_songs_ok = true;
+        complete(as, albums);
+        target = artist.play_next_target();
+        assert(target && target->kind == Kind::Artist && target->id == "artist");
+        artist.input(NUVIO_BTN_RIGHT);
+        assert(artist.play_next_target()->kind == Kind::Artist); // Shuffle button: same context.
+        artist.input(NUVIO_BTN_DOWN);
+        target = artist.play_next_target();
+        assert(target && target->kind == Kind::Track && target->id == "top0");
+        for (int i = 0; i < 5; ++i) artist.input(NUVIO_BTN_DOWN); // Onto "More".
+        assert(!artist.play_next_target());
+        artist.input(NUVIO_BTN_DOWN);
+        target = artist.play_next_target();
+        assert(target && target->kind == Kind::Album && target->id == "a1");
+        // Search: keys are not a target (Square stays backspace there); results are.
+        ui::MusicScreen search;
+        auto &ss = search.state();
+        search.activate();
+        complete(ss, {{item(Kind::Album, "home")}, ""});
+        for (int i = 0; i < 4; ++i) search.input(NUVIO_BTN_R1);
+        assert(search.searching());
+        search.input(NUVIO_BTN_DOWN);
+        search.draw(0, .05f);
+        search.input(NUVIO_BTN_CROSS); search.input(NUVIO_BTN_RIGHT); search.input(NUVIO_BTN_CROSS); // "ab"
+        assert(ss.query() == "ab" && !search.play_next_target());
+        assert(search.search_backspace() && ss.query() == "a");
+        assert(search.input(NUVIO_BTN_TRIANGLE).kind == ui::Action::None && ss.query() == "a");
+        search.input(NUVIO_BTN_CROSS);
+        search.draw(1, .05f); ss.tick(2); search.draw(2, .05f);
+        complete(ss, {{item(Kind::Track, "hit"), item(Kind::Artist, "who")}, ""});
+        assert(!search.play_next_target());                     // Still on the keyboard.
+        search.draw(2, .05f); assert(!has_hint());
+        for (int i = 0; i < 7; ++i) search.input(NUVIO_BTN_RIGHT);
+        target = search.play_next_target();
+        assert(target && target->kind == Kind::Track && target->id == "hit");
+        search.draw(2, .05f); assert(has_hint());
+        assert(!search.search_backspace(true));                 // Fullscreen owns Square.
+    }
+    {
+        // Header gear: Right past Search, Cross asks for the menu (Log out); it is drawn
+        // at the far right of the header and Left/Circle/Down leave it predictably.
+        ui::MusicScreen gear;
+        auto &gs = gear.state();
+        gear.activate();
+        complete(gs, {{item(Kind::Album, "album")}, ""});
+        assert(!gear.settings_focused() && !gear.take_menu_open());
+        for (int i = 0; i < 3; ++i) gear.input(NUVIO_BTN_RIGHT);       // Home -> Playlists
+        gear.input(NUVIO_BTN_RIGHT);                                    // Search button
+        assert(!gear.settings_focused());
+        while (gs.take_request()) {}                                    // Tab switches load pages.
+        gear.input(NUVIO_BTN_RIGHT);                                    // Gear
+        assert(gear.settings_focused() && !gs.take_request());           // Focus alone loads nothing.
+        gear.input(NUVIO_BTN_RIGHT);                                    // Rightmost: stays.
+        assert(gear.settings_focused());
+        drops.clear(); panels.clear(); fills.clear();
+        gear.draw(0, .05f);
+        assert(std::any_of(panels.begin(), panels.end(), [](gfx::Rect r) { return r.x == 1744 && r.y == 58 && r.w == 76 && r.x + r.w <= 1920 - 96; }));
+        assert(std::any_of(drops.begin(), drops.end(), [](gfx::Rect r) { return r.x == 1750 && r.y == 64; }));
+        assert(gear.input(NUVIO_BTN_CROSS).kind == ui::Action::None && gear.take_menu_open() && !gear.take_menu_open());
+        assert(gs.request().view == View::Playlists && !gs.take_request()); // Menu, not a view change.
+        gear.input(NUVIO_BTN_LEFT);                                     // Back to Search button.
+        assert(!gear.settings_focused());
+        gear.input(NUVIO_BTN_RIGHT);
+        gear.input(NUVIO_BTN_CIRCLE);                                   // Circle leaves the gear for the tabs.
+        assert(!gear.settings_focused() && !gear.take_menu_open());
+        gear.input(NUVIO_BTN_RIGHT); gear.input(NUVIO_BTN_RIGHT);       // Search, gear again.
+        assert(gear.settings_focused());
+        gear.input(NUVIO_BTN_DOWN);                                     // Down returns to content.
+        assert(!gear.settings_focused() && gs.request().view == View::Playlists);
+        gear.input(NUVIO_BTN_UP); gear.input(NUVIO_BTN_RIGHT); gear.input(NUVIO_BTN_RIGHT);
+        assert(gear.settings_focused());
+        gear.input(NUVIO_BTN_R1);                                       // Shoulders clear it (Playlists -> Search).
+        assert(!gear.settings_focused() && gear.searching());
+        // Even while Search is open, the gear is reachable and Down returns to Search.
+        gear.input(NUVIO_BTN_RIGHT);
+        assert(gear.settings_focused() && gear.searching());
+        gear.input(NUVIO_BTN_DOWN);
+        assert(!gear.settings_focused() && gear.searching());
+    }
+    // Fullscreen row: Stop and Queue sit right of shuffle and are named while focused.
+    {
+        ui::PlaybackPresentation playing;
+        playing.title = "Playback"; playing.position = 30; playing.duration = 120; playing.playing = true;
+        ui::Drop row;
+        for (int focus : {5, 6}) {
+            drops.clear(); drawn_text.clear();
+            ui::draw_music_player(playing, focus, 1, .05f, row);
+            assert(!drops.empty() && drops.back().x == 120 + (focus - 1) * 112.f && drops.back().y == 838);
+            assert(std::find(drawn_text.begin(), drawn_text.end(), std::string(focus == 5 ? T("Stopp") : T("Kø"))) != drawn_text.end());
+        }
+        i18n::set_choice(i18n::Choice::English);
+        assert(std::string(ui::player_control_label(playing, 5)) == "Stop" && std::string(ui::player_control_label(playing, 6)) == "Queue");
+    }
     i18n::set_choice(i18n::Choice::English);
     assert(std::string(T("Fullskjermspiller")) == "Fullscreen player");
+    assert(std::string(T("Spill neste")) == "Play next" && std::string(T("Logg ut")) == "Log out");
     std::cout << "PASS: MusicScreen cards, detail Play/rows/tabs/Back, empty and stale metadata; Home retry activation\n";
 }

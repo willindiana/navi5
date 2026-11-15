@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &german_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Als Nächstes spielen"},
+        {"Spilles neste:", "Als Nächstes:"},
+        {"Henter spor …", "Titel werden geladen …"},
+        {"Kunne ikke laste spor til køen", "Titel für die Warteschlange konnten nicht geladen werden"},
+        {"Køen er full (20000 spor)", "Warteschlange ist voll (20000 Titel)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Warte, bis die vorherige Aktualisierung der Warteschlange fertig ist"},
+        {"Køen er tom", "Warteschlange ist leer"},
+        {"Oppdaterer køen …", "Warteschlange wird aktualisiert …"},
+        {"Slipp", "Ablegen"},
+        {"Flytt", "Verschieben"},
+        {"Fjern", "Entfernen"},
+        {"Logge ut?", "Abmelden?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Die Wiedergabe stoppt und die gespeicherte Anmeldung wird von der Konsole gelöscht. Der API-Schlüssel bleibt auf dem Server gültig, bis du den Player „Navi5 (PS5)“ in Navidrome löschst. Navi5 hat das Passwort nicht mehr und kann ihn nicht widerrufen."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Die Wiedergabe stoppt und die gespeicherte Anmeldung wird von der Konsole gelöscht."},
+        {"QR-paring er stoppet.", "QR-Kopplung ist gestoppt."},
+        {"Skriv inn server manuelt", "Server manuell eingeben"},
+        {"Logg inn på nytt", "Erneut anmelden"},
+        {"Koble til", "Verbinden"},
+        {"Glem lagret innlogging", "Gespeicherte Anmeldung vergessen"},
+        {"Fullskjermspiller", "Vollbild-Player"},
         {"Kø", "Warteschlange"},
         {"Stopp", "Stopp"},
         {"Gjenta", "Wiederholen"},

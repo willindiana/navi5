@@ -337,6 +337,30 @@ int main()
         CHECK(failure == subsonic::LoginFailure::Authentication);
         CHECK(err == "Subsonic login refused or invalid response");
     }
+    /* API key errors and tokenInfo */
+    {
+        auto reply = [](const char *body) {
+            return [body](const std::string &) { subsonic::HttpResponse r; r.status = 200; r.body = body; return r; };
+        };
+        subsonic::ServerInfo tmp;
+        subsonic::LoginFailure failure;
+        std::string user = "untouched";
+        subsonic::Client revoked("https://x", "", "", reply(
+            R"({"subsonic-response":{"status":"failed","error":{"code":44,"message":"Invalid API key"}}})"));
+        revoked.set_api_key("nds_0123456789abcdefghijkl");
+        CHECK(!revoked.ping(&tmp, &err, &failure));
+        CHECK(failure == subsonic::LoginFailure::ApiKeyRejected);
+        CHECK(!revoked.token_info(&user, &err, &failure));
+        CHECK(failure == subsonic::LoginFailure::ApiKeyRejected);
+        subsonic::Client owner("https://x", "", "", reply(
+            R"({"subsonic-response":{"status":"ok","tokenInfo":{"username":"alice"}}})"));
+        owner.set_api_key("nds_0123456789abcdefghijkl");
+        CHECK(owner.token_info(&user, &err, &failure) && user == "alice");
+        subsonic::Client nameless("https://x", "", "", reply(R"({"subsonic-response":{"status":"ok"}})"));
+        nameless.set_api_key("k");
+        CHECK(!nameless.token_info(&user, &err, &failure));
+        CHECK(failure == subsonic::LoginFailure::Response);
+    }
     /* transport failure */
     {
         subsonic::Client dead("https://x", "u", "p",

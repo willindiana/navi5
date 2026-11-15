@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &finnish_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Toista seuraavaksi"},
+        {"Spilles neste:", "Toistetaan seuraavaksi:"},
+        {"Henter spor …", "Haetaan kappaleita …"},
+        {"Kunne ikke laste spor til køen", "Kappaleita ei voitu ladata jonoon"},
+        {"Køen er full (20000 spor)", "Jono on täynnä (20000 kappaletta)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Odota, että edellinen jonon päivitys valmistuu"},
+        {"Køen er tom", "Jono on tyhjä"},
+        {"Oppdaterer køen …", "Päivitetään jonoa …"},
+        {"Slipp", "Pudota"},
+        {"Flytt", "Siirrä"},
+        {"Fjern", "Poista"},
+        {"Logge ut?", "Kirjaudutaanko ulos?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Toisto pysähtyy ja tallennettu kirjautuminen poistetaan konsolista. API-avain on edelleen voimassa palvelimella, kunnes poistat soittimen ”Navi5 (PS5)” Navidromesta. Navi5:llä ei ole enää salasanaa, eikä se voi mitätöidä avainta."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Toisto pysähtyy ja tallennettu kirjautuminen poistetaan konsolista."},
+        {"QR-paring er stoppet.", "QR-paritus on pysäytetty."},
+        {"Skriv inn server manuelt", "Anna palvelin käsin"},
+        {"Logg inn på nytt", "Kirjaudu uudelleen"},
+        {"Koble til", "Yhdistä"},
+        {"Glem lagret innlogging", "Unohda tallennettu kirjautuminen"},
+        {"Fullskjermspiller", "Koko näytön soitin"},
         {"Hjem", "Koti"},
         {"Musikk", "Musiikki"},
         {"Album", "Albumit"},

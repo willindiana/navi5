@@ -10,6 +10,6 @@ build=$(mktemp -d "${TMPDIR:-/tmp}/jelly5-input.XXXXXX")
 trap 'rm -rf -- "$build"' EXIT
 "${CC:-cc}" -std=gnu11 -Wall -Wextra -Werror -g -O1 \
     -fsanitize=address,undefined -fno-omit-frame-pointer \
-    -I "$root/app/engine/include" "$root/app/tests/host/input_test.c" \
+    -I "$root/app/engine/include" -I "$root/app/src" "$root/app/tests/host/input_test.c" \
     -pthread -lm -o "$build/input-test"
 "$build/input-test"

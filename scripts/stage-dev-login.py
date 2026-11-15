@@ -2,7 +2,8 @@
 # Navi5 — explicitly approved, loose runtime FTP input; never package secrets.
 # SPDX-License-Identifier: GPL-3.0-or-later
 """FTP is plaintext. Close Navi5 through PS button before staging or cleanup.
-Only NAVI00001 is supported. No app launch or connection is triggered.
+Only the DEV title (scripts/identity.py) is supported, never the published app.
+No app launch or connection is triggered.
 """
 import argparse
 import ftplib
@@ -13,11 +14,12 @@ from pathlib import Path
 import stat
 from urllib.parse import urlsplit
 import deploy
+import identity
 
-BASE = '/data/homebrew/NAVI00001'
+BASE = '/data/homebrew/' + identity.DEV['titleId']
 PATHS = (BASE + '/.navi5-dev-password.tmp', BASE + '/.navi5-dev-login.tmp')
 SUPPORT = Path.home() / 'Library/Application Support/Navi5'
-CONTENT_ID = 'UP9000-NAVI00001_00-NAVI500000000000'
+CONTENT_ID = identity.DEV['contentId']
 
 
 def private(path, limit):
@@ -58,7 +60,7 @@ def inputs(config):
 
 def guard(ftp):
     obj = json.loads(deploy.read_remote(ftp, BASE + '/sce_sys/param.json', 65536))
-    if not isinstance(obj, dict) or obj.get('titleId') != 'NAVI00001' or obj.get('contentId') != CONTENT_ID:
+    if not isinstance(obj, dict) or obj.get('titleId') != identity.DEV['titleId'] or obj.get('contentId') != CONTENT_ID:
         raise ValueError('title guard failed')
 
 

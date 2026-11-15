@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &portuguese_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Reproduzir a seguir"},
+        {"Spilles neste:", "A seguir:"},
+        {"Henter spor …", "A carregar faixas …"},
+        {"Kunne ikke laste spor til køen", "Não foi possível carregar as faixas para a fila"},
+        {"Køen er full (20000 spor)", "A fila está cheia (20000 faixas)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Aguarde o fim da atualização anterior da fila"},
+        {"Køen er tom", "A fila está vazia"},
+        {"Oppdaterer køen …", "A atualizar a fila …"},
+        {"Slipp", "Largar"},
+        {"Flytt", "Mover"},
+        {"Fjern", "Remover"},
+        {"Logge ut?", "Terminar sessão?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "A reprodução para e o início de sessão guardado é apagado da consola. A chave de API continua válida no servidor até eliminar o leitor «Navi5 (PS5)» no Navidrome. O Navi5 já não tem a palavra-passe e não a pode revogar."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "A reprodução para e o início de sessão guardado é apagado da consola."},
+        {"QR-paring er stoppet.", "O emparelhamento por QR está parado."},
+        {"Skriv inn server manuelt", "Introduzir servidor manualmente"},
+        {"Logg inn på nytt", "Iniciar sessão novamente"},
+        {"Koble til", "Ligar"},
+        {"Glem lagret innlogging", "Esquecer início de sessão guardado"},
+        {"Fullskjermspiller", "Leitor em ecrã inteiro"},
         {"Kø", "Fila"},
         {"Stopp", "Parar"},
         {"Gjenta", "Repetir"},

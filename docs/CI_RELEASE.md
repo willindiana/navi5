@@ -10,9 +10,8 @@ master, including docs changes. GitHub-hosted Ubuntu 24.04 runners use LLVM 18,
 `contents: read`, SHA-pinned actions and `persist-credentials: false`. No secrets,
 publisher, release/tag event or scheduled release. Manual dispatch targets master;
 artifact upload defaults to false and true needs separate owner approval.
-Forgejo PR execution stays disabled: persistent privileged runners must not run
-untrusted PR code. Without verified safe pre-merge checks, Forgejo cannot claim
-passing CI before merge; post-merge builds do not supply that guarantee.
+Workflows run on GitHub only. The Forgejo copy is a pull mirror of this repository
+and runs none; its persistent privileged runner must never execute PR code.
 
 Native master protections must require PRs, passing observed exact CI contexts,
 up-to-date branches, no direct/force pushes or deletion, no configured admin
@@ -56,6 +55,13 @@ approved public listing and supported version/install-asset contract exist.
 Offline checks: `python3 -B scripts/test-store-release.py`,
 `python3 -B scripts/test-ci-release.py`, `ruby scripts/test-workflow-policy.rb`,
 `bash -n scripts/ci-release.sh`, `git diff --check`.
+
+Successful packaging produces exactly two assets under `build/ci-release/`:
+`Navi5-<version>.zip` and `Navi5-<version>-third-party-source.zip`, with matching
+build/source identity and checksums. Navi5's own source is the release tag's
+automatic source archive; the third-party asset records the commit that tag must be.
+Run `scripts/verify-tag-source.py` after tagging, before publishing; see
+[RECIPIENT_RELINK.md](RECIPIENT_RELINK.md).
 
 See [source identity](SOURCE.md), [build](DEVELOPMENT.md) and
 [installation](RECIPIENT_RELINK.md#installation-on-supported-setup).

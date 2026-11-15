@@ -185,4 +185,122 @@ int main() {
     assert(*tail.current_index() == 1 && !tail.successor_index());
     tail.set_live_shuffle(false, rng);
     assert(*tail.current_index() == 1 && !tail.successor_index());
+
+    // Play Next keeps insertion order behind earlier played-next entries, with
+    // and without shuffle; the cursor is consumed as playback advances.
+    const auto ids = [](const PlayQueue &q) {
+        std::vector<std::string> out;
+        for (std::size_t i = q.position(); i < q.size(); ++i) out.push_back(q.at(i).id);
+        return out;
+    };
+    using Ids = std::vector<std::string>;
+    for (bool shuffle : {false, true}) {
+        PlayQueue q({song("a"), song("b"), song("c"), song("d")});
+        assert(q.next());
+        if (shuffle) q.set_live_shuffle(true, rng);
+        const auto before = q.revision();
+        assert(!q.play_next({}) && q.revision() == before);
+        assert(q.play_next({song("x")}) && q.revision() != before);
+        assert(q.play_next({song("y1"), song("y2")}));
+        assert(q.play_next({song("z")}));
+        assert(q.pinned() == 4);
+        auto upcoming = ids(q);
+        upcoming.resize(5);
+        assert((upcoming == Ids{"b", "x", "y1", "y2", "z"}));
+        assert(q.successor_uid() == q.uid_at(q.position() + 1));
+        // Toggling shuffle never scatters what was asked to play next.
+        q.set_live_shuffle(!shuffle, rng);
+        upcoming = ids(q); upcoming.resize(5);
+        assert((upcoming == Ids{"b", "x", "y1", "y2", "z"}));
+        assert(q.next() && q.next() && q.current()->id == "y1" && q.pinned() == 2);
+        assert(q.play_next({song("w")}));
+        upcoming = ids(q); upcoming.resize(4);
+        assert((upcoming == Ids{"y1", "y2", "z", "w"}));
+        // Advancing past the block resets the cursor: next insert is immediate.
+        for (int i = 0; i < 3; ++i) assert(q.next());
+        assert(q.current()->id == "w" && q.pinned() == 0);
+        assert(q.play_next({song("v")}) && q.at(q.position() + 1).id == "v");
+        // Going back forgets the cursor.
+        assert(q.previous() && q.pinned() == 0);
+        assert(q.play_next({song("u")}) && q.at(q.position() + 1).id == "u");
+        std::size_t seen = 1;
+        while (q.next()) ++seen;
+        assert(seen + q.position() + 1 - seen == q.size() && q.size() == 4 + 7);
+    }
+    {
+        // Unshuffled Play Next keeps canonical order equal to play order.
+        PlayQueue q({song("a"), song("b"), song("c")});
+        assert(q.play_next({song("x"), song("y")}) && q.play_next({song("z")}));
+        const Ids expected{"a", "x", "y", "z", "b", "c"};
+        for (std::size_t i = 0; i < expected.size(); ++i) assert(q.tracks()[i].id == expected[i]);
+        assert(ids(q) == expected);
+        PlayQueue fresh;
+        assert(fresh.play_next({song("p"), song("q")}));
+        assert(fresh.current()->id == "p" && fresh.pinned() == 1 && fresh.up_next()->id == "q");
+        assert(fresh.play_next({song("r")}) && (ids(fresh) == Ids{"p", "q", "r"}));
+    }
+    {
+        // Cap: failures add nothing.
+        std::vector<subsonic::Song> many(PlayQueue::max_tracks - 1, song("m"));
+        PlayQueue q(std::move(many));
+        const auto revision = q.revision();
+        assert(!q.play_next({song("one"), song("two")}) && q.size() == PlayQueue::max_tracks - 1);
+        assert(q.revision() == revision && q.pinned() == 0);
+        assert(q.play_next({song("one")}) && q.size() == PlayQueue::max_tracks);
+        assert(!q.play_next({song("two")}));
+        // Reorder and remove stay cheap at the cap.
+        const auto last = q.uid_at(q.size() - 1);
+        assert(q.move_after(last, q.uid_at(0)) && q.uid_at(1) == last);
+        assert(q.remove(last) && q.size() == PlayQueue::max_tracks - 1);
+    }
+    for (bool shuffle : {false, true}) {
+        // Move/remove touch upcoming entries only; duplicate IDs are told apart by uid.
+        PlayQueue q({song("a"), song("dup"), song("dup"), song("b"), song("c")});
+        assert(q.next());
+        if (shuffle) q.set_live_shuffle(true, rng);
+        const auto current = q.uid_at(q.position()), played = q.uid_at(0);
+        const auto first = q.uid_at(2), second = q.uid_at(3), third = q.uid_at(4);
+        assert(!q.move_after(current, third) && !q.remove(current));     // Current is fixed.
+        assert(!q.move_after(played, third) && !q.remove(played));       // So is history.
+        assert(!q.move_after(first, played) && !q.move_after(first, first));
+        assert(!q.move_after(first, 0) && !q.remove(0));
+        assert(q.move_after(third, current));
+        assert(q.uid_at(2) == third && q.uid_at(3) == first && q.uid_at(4) == second);
+        assert(q.successor_uid() == third);
+        assert(q.move_after(third, second));                              // Down past two.
+        assert(q.uid_at(2) == first && q.uid_at(3) == second && q.uid_at(4) == third);
+        assert(q.move_after(second, first));                              // No-op move succeeds.
+        assert(q.uid_at(3) == second);
+        assert(q.remove(first) && q.size() == 4 && q.uid_at(2) == second);
+        assert(q.uid_at(q.position()) == current && q.current()->id == "dup");
+        if (!shuffle) for (std::size_t i = 0; i < q.size(); ++i) assert(q.uid_at(i) == q.uid_at(i) && &q.at(i) == &q.tracks()[i]);
+        std::size_t rest = 0;
+        while (q.next()) ++rest;
+        assert(rest == 2);
+    }
+    {
+        // Pinned block follows manual edits: removing a pinned entry shrinks it,
+        // moving one out releases it, dropping one inside joins it.
+        PlayQueue q({song("a"), song("b"), song("c")});
+        assert(q.play_next({song("x"), song("y")}));
+        const auto x = q.uid_at(1), y = q.uid_at(2), b = q.uid_at(3), c = q.uid_at(4);
+        assert(q.remove(x) && q.pinned() == 1);
+        assert(q.move_after(y, c) && q.pinned() == 0);
+        assert(q.play_next({song("n1"), song("n2")}) && q.pinned() == 2);
+        assert(q.move_after(b, q.uid_at(1)) && q.pinned() == 3);
+        assert((ids(q) == Ids{"a", "n1", "b", "n2", "c", "y"}));
+        assert(q.play_next({song("n3")}) && (ids(q) == Ids{"a", "n1", "b", "n2", "n3", "c", "y"}));
+        // Unshuffled manual order is canonical: a shuffle round trip keeps it.
+        q.set_live_shuffle(true, rng); q.set_live_shuffle(false, rng);
+        assert((ids(q) == Ids{"a", "n1", "b", "n2", "n3", "c", "y"}));
+    }
+    {
+        // A copy is the same queue (same revision and uids); any edit diverges.
+        PlayQueue q({song("a"), song("b")});
+        auto copy = q;
+        assert(copy.revision() == q.revision() && copy.uid_at(1) == q.uid_at(1));
+        assert(copy.play_next({song("x")}) && copy.revision() != q.revision());
+        PlayQueue other({song("a"), song("b")});
+        assert(other.uid_at(0) != q.uid_at(0) && other.revision() != q.revision());
+    }
 }

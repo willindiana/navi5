@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &vietnamese_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Phát tiếp theo"},
+        {"Spilles neste:", "Phát tiếp theo:"},
+        {"Henter spor …", "Đang tải bài hát …"},
+        {"Kunne ikke laste spor til køen", "Không thể tải bài hát vào hàng đợi"},
+        {"Køen er full (20000 spor)", "Hàng đợi đã đầy (20000 bài)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Hãy chờ lần cập nhật hàng đợi trước hoàn tất"},
+        {"Køen er tom", "Hàng đợi trống"},
+        {"Oppdaterer køen …", "Đang cập nhật hàng đợi …"},
+        {"Slipp", "Thả"},
+        {"Flytt", "Di chuyển"},
+        {"Fjern", "Xóa khỏi hàng đợi"},
+        {"Logge ut?", "Đăng xuất?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Việc phát sẽ dừng và thông tin đăng nhập đã lưu sẽ bị xóa khỏi máy. Khóa API vẫn có hiệu lực trên máy chủ cho đến khi bạn xóa trình phát “Navi5 (PS5)” trong Navidrome. Navi5 không còn giữ mật khẩu nên không thể thu hồi khóa."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Việc phát sẽ dừng và thông tin đăng nhập đã lưu sẽ bị xóa khỏi máy."},
+        {"QR-paring er stoppet.", "Ghép nối QR đã dừng."},
+        {"Skriv inn server manuelt", "Nhập máy chủ thủ công"},
+        {"Logg inn på nytt", "Đăng nhập lại"},
+        {"Koble til", "Kết nối"},
+        {"Glem lagret innlogging", "Quên thông tin đăng nhập đã lưu"},
+        {"Fullskjermspiller", "Trình phát toàn màn hình"},
         {"Hjem", "Trang chủ"},
         {"Musikk", "Nhạc"},
         {"Album", "Album"},

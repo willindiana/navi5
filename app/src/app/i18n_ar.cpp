@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &arabic_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "تشغيل تاليًا"},
+        {"Spilles neste:", "التالي:"},
+        {"Henter spor …", "جارٍ تحميل المقاطع …"},
+        {"Kunne ikke laste spor til køen", "تعذّر تحميل المقاطع إلى قائمة الانتظار"},
+        {"Køen er full (20000 spor)", "قائمة الانتظار ممتلئة (20000 مقطع)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "انتظر حتى ينتهي التحديث السابق لقائمة الانتظار"},
+        {"Køen er tom", "قائمة الانتظار فارغة"},
+        {"Oppdaterer køen …", "جارٍ تحديث قائمة الانتظار …"},
+        {"Slipp", "إفلات"},
+        {"Flytt", "نقل"},
+        {"Fjern", "إزالة"},
+        {"Logge ut?", "تسجيل الخروج؟"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "سيتوقف التشغيل ويُحذف تسجيل الدخول المحفوظ من الجهاز. يبقى مفتاح API صالحًا على الخادم إلى أن تحذف المشغّل «Navi5 (PS5)» في Navidrome. لم يعد Navi5 يملك كلمة المرور ولا يستطيع إبطال المفتاح."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "سيتوقف التشغيل ويُحذف تسجيل الدخول المحفوظ من الجهاز."},
+        {"QR-paring er stoppet.", "تم إيقاف الاقتران عبر QR."},
+        {"Skriv inn server manuelt", "إدخال الخادم يدويًا"},
+        {"Logg inn på nytt", "تسجيل الدخول مجددًا"},
+        {"Koble til", "اتصال"},
+        {"Glem lagret innlogging", "نسيان تسجيل الدخول المحفوظ"},
+        {"Fullskjermspiller", "المشغّل بملء الشاشة"},
         {"Hjem", "الرئيسية"},
         {"Musikk", "الموسيقى"},
         {"Album", "الألبومات"},

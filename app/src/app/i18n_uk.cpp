@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &ukrainian_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Відтворити наступним"},
+        {"Spilles neste:", "Наступним буде:"},
+        {"Henter spor …", "Завантаження треків …"},
+        {"Kunne ikke laste spor til køen", "Не вдалося завантажити треки до черги"},
+        {"Køen er full (20000 spor)", "Чергу заповнено (20000 треків)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Зачекайте завершення попереднього оновлення черги"},
+        {"Køen er tom", "Черга порожня"},
+        {"Oppdaterer køen …", "Оновлення черги …"},
+        {"Slipp", "Відпустити"},
+        {"Flytt", "Перемістити"},
+        {"Fjern", "Прибрати"},
+        {"Logge ut?", "Вийти?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Відтворення зупиниться, а збережений вхід буде видалено з консолі. Ключ API залишається дійсним на сервері, доки ви не видалите програвач «Navi5 (PS5)» у Navidrome. Navi5 більше не має пароля і не може відкликати ключ."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Відтворення зупиниться, а збережений вхід буде видалено з консолі."},
+        {"QR-paring er stoppet.", "QR-сполучення зупинено."},
+        {"Skriv inn server manuelt", "Ввести сервер вручну"},
+        {"Logg inn på nytt", "Увійти знову"},
+        {"Koble til", "Підключитися"},
+        {"Glem lagret innlogging", "Забути збережений вхід"},
+        {"Fullskjermspiller", "Повноекранний програвач"},
         {"Hjem", "Головна"},
         {"Musikk", "Музика"},
         {"Album", "Альбоми"},

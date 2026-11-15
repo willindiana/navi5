@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &korean_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "다음에 재생"},
+        {"Spilles neste:", "다음 재생:"},
+        {"Henter spor …", "트랙 불러오는 중 …"},
+        {"Kunne ikke laste spor til køen", "대기열에 트랙을 불러오지 못했습니다"},
+        {"Køen er full (20000 spor)", "대기열이 가득 찼습니다(20000곡)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "이전 대기열 업데이트가 끝날 때까지 기다리세요"},
+        {"Køen er tom", "대기열이 비어 있습니다"},
+        {"Oppdaterer køen …", "대기열 업데이트 중 …"},
+        {"Slipp", "놓기"},
+        {"Flytt", "이동"},
+        {"Fjern", "제거"},
+        {"Logge ut?", "로그아웃할까요?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "재생이 중지되고 저장된 로그인이 콘솔에서 삭제됩니다. API 키는 Navidrome에서 ‘Navi5 (PS5)’ 플레이어를 삭제할 때까지 서버에서 유효합니다. Navi5에는 더 이상 비밀번호가 없어 키를 취소할 수 없습니다."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "재생이 중지되고 저장된 로그인이 콘솔에서 삭제됩니다."},
+        {"QR-paring er stoppet.", "QR 페어링이 중지되었습니다."},
+        {"Skriv inn server manuelt", "서버 직접 입력"},
+        {"Logg inn på nytt", "다시 로그인"},
+        {"Koble til", "연결"},
+        {"Glem lagret innlogging", "저장된 로그인 삭제"},
+        {"Fullskjermspiller", "전체 화면 플레이어"},
         {"Hjem", "홈"},
         {"Musikk", "음악"},
         {"Album", "앨범"},

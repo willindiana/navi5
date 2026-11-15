@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &chinese_simplified_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "下一首播放"},
+        {"Spilles neste:", "下一首播放："},
+        {"Henter spor …", "正在加载曲目 …"},
+        {"Kunne ikke laste spor til køen", "无法将曲目加载到队列"},
+        {"Køen er full (20000 spor)", "队列已满（20000 首）"},
+        {"Vent til forrige kø-oppdatering er ferdig", "请等待上一次队列更新完成"},
+        {"Køen er tom", "队列为空"},
+        {"Oppdaterer køen …", "正在更新队列 …"},
+        {"Slipp", "放下"},
+        {"Flytt", "移动"},
+        {"Fjern", "移除"},
+        {"Logge ut?", "要退出登录吗？"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "播放将停止，保存的登录信息将从主机删除。在你于 Navidrome 中删除播放器“Navi5 (PS5)”之前，API 密钥在服务器上仍然有效。Navi5 已不再保存密码，无法撤销该密钥。"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "播放将停止，保存的登录信息将从主机删除。"},
+        {"QR-paring er stoppet.", "二维码配对已停止。"},
+        {"Skriv inn server manuelt", "手动输入服务器"},
+        {"Logg inn på nytt", "重新登录"},
+        {"Koble til", "连接"},
+        {"Glem lagret innlogging", "忘记保存的登录信息"},
+        {"Fullskjermspiller", "全屏播放器"},
         {"Hjem", "首页"},
         {"Musikk", "音乐"},
         {"Album", "专辑"},

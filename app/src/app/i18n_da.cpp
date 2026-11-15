@@ -11,6 +11,27 @@ namespace i18n {
 const std::unordered_map<std::string, const char *> &danish_table()
 {
     static const std::unordered_map<std::string, const char *> t = {
+        /* v1.0: Play Next, queue view, logout, QR-first login */
+        {"Spill neste", "Afspil næste"},
+        {"Spilles neste:", "Afspilles næste:"},
+        {"Henter spor …", "Henter numre …"},
+        {"Kunne ikke laste spor til køen", "Kunne ikke indlæse numre til køen"},
+        {"Køen er full (20000 spor)", "Køen er fuld (20000 numre)"},
+        {"Vent til forrige kø-oppdatering er ferdig", "Vent, til den forrige køopdatering er færdig"},
+        {"Køen er tom", "Køen er tom"},
+        {"Oppdaterer køen …", "Opdaterer køen …"},
+        {"Slipp", "Slip"},
+        {"Flytt", "Flyt"},
+        {"Fjern", "Fjern"},
+        {"Logge ut?", "Log ud?"},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Afspilningen stopper, og det gemte login slettes fra konsollen. API-nøglen er stadig gyldig på serveren, indtil du sletter afspilleren »Navi5 (PS5)« i Navidrome. Navi5 har ikke længere adgangskoden og kan ikke tilbagekalde den."},
+        {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Afspilningen stopper, og det gemte login slettes fra konsollen."},
+        {"QR-paring er stoppet.", "QR-parring er stoppet."},
+        {"Skriv inn server manuelt", "Indtast server manuelt"},
+        {"Logg inn på nytt", "Log ind igen"},
+        {"Koble til", "Forbind"},
+        {"Glem lagret innlogging", "Glem gemt login"},
+        {"Fullskjermspiller", "Fuldskærmsafspiller"},
         {"Hjem", "Hjem"},
         {"Musikk", "Musik"},
         {"Album", "Albummer"},

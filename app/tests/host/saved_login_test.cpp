@@ -32,12 +32,12 @@ int main()
     char tmpl[] = "/tmp/navi5-saved-login-XXXXXX";
     assert(mkdtemp(tmpl));
     const std::string dir = std::string(tmpl) + "/navi5", path = dir + "/login.json";
-    Login out{"x", "x", "x"};
+    Login out{"x", "x", "x", ""};
 
     assert(load(out, path.c_str()) == Load::Missing);
     assert(forget(path.c_str()));  // absent is fine
 
-    const Login a{"http://192.0.2.1:4533", "alice", "p\"w\\\xc3\xa6"};
+    const Login a{"http://192.0.2.1:4533", "alice", "p\"w\\\xc3\xa6", ""};
     assert(save(a, path.c_str()));
     assert(mode(dir) == 0700 && mode(path) == 0600);
     assert(access((path + ".tmp").c_str(), F_OK) != 0);
@@ -46,7 +46,7 @@ int main()
 
     // Atomic replace: new content, same mode, stale temp/symlink temp tolerated.
     put(path + ".tmp", "junk");
-    const Login b{"https://music.example.test/sub", "bob", ""};
+    const Login b{"https://music.example.test/sub", "bob", "", ""};
     assert(save(b, path.c_str()));
     assert(mode(path) == 0600 && load(out, path.c_str()) == Load::Ok && out.user == "bob" && out.password.empty());
     assert(symlink("/nonexistent-target", (path + ".tmp").c_str()) == 0);
@@ -54,10 +54,30 @@ int main()
 
     // Invalid input never written.
     for (const char *u : {"ftp://h", "http://u:p@h", "http://h/?q", "http://h/#f", "http://", "h"})
-        assert(!save({u, "alice", "pw"}, path.c_str()));
-    assert(!save({"http://h", "", "pw"}, path.c_str()));
-    assert(!save({"http://h", std::string(2000, 'u'), "pw"}, path.c_str()));
+        assert(!save({u, "alice", "pw", ""}, path.c_str()));
+    assert(!save({"http://h", "", "pw", ""}, path.c_str()));
+    assert(!save({"http://h", std::string(2000, 'u'), "pw", ""}, path.c_str()));
+    // One secret only: a key never travels with a password, and must be printable.
+    assert(!save({"http://h", "alice", "pw", "nds_0123456789abcdefghijkl"}, path.c_str()));
+    assert(!save({"http://h", "alice", "", "nds bad"}, path.c_str()));
+    assert(!save({"http://h", "alice", "", std::string(2000, 'k')}, path.c_str()));
     assert(load(out, path.c_str()) == Load::Ok && out.user == "alice");
+
+    // API key replaces the password on disk: no "password" member, user optional.
+    const Login k{"https://music.example.test", "alice", "", "nds_0123456789abcdefghijkl"};
+    assert(save(k, path.c_str()) && mode(path) == 0600);
+    {
+        FILE *f = std::fopen(path.c_str(), "rb");
+        char raw[512] = {0};
+        assert(f && std::fread(raw, 1, sizeof raw - 1, f) > 0);
+        std::fclose(f);
+        assert(std::string(raw).find("password") == std::string::npos);
+        assert(std::string(raw).find("\"api_key\":\"nds_0123456789abcdefghijkl\"") != std::string::npos);
+    }
+    assert(load(out, path.c_str()) == Load::Ok && out.api_key == k.api_key && out.password.empty() && out.user == "alice");
+    assert(save({"http://h", "", "", "opaque-key"}, path.c_str()));
+    assert(load(out, path.c_str()) == Load::Ok && out.user.empty() && out.api_key == "opaque-key");
+    assert(save(a, path.c_str()) && load(out, path.c_str()) == Load::Ok && out.api_key.empty() && out.password == a.password);
 
     // Rejected files leave out untouched.
     const Login keep = out;
@@ -66,6 +86,11 @@ int main()
         R"({"server":"http://h","user":"u"})",
         R"({"server":"http://h","user":"u","password":1})",
         R"({"server":"http://h","user":"u","password":"p","token":"t"})",
+        R"({"server":"http://h","user":"u","password":"p","api_key":"k"})",
+        R"({"server":"http://h","user":"u","api_key":""})",
+        R"({"server":"http://h","user":"u","api_key":1})",
+        R"({"server":"http://h","api_key":"k","password":"p"})",
+        R"({"server":"http://h","user":"u","api_key":"k k"})",
         R"({"server":"http://u@h","user":"u","password":"p"})",
         R"({"server":"http://h?x","user":"u","password":"p"})",
         R"({"server":"gopher://h","user":"u","password":"p"})",

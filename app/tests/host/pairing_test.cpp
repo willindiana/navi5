@@ -35,7 +35,7 @@ int main()
     const auto page = s.handle(request(false), good);
     assert(page.find("HTTP music servers send login and music unencrypted.") < page.find("<form"));
     assert(page.find("HTTP or HTTPS server") != std::string::npos);
-    assert(page.find("Successful password login is saved unencrypted on the console; API keys stay in memory only.") < page.find("<form"));
+    assert(page.find("Sign-in is saved unencrypted on the console: an API key when you enter one or Navidrome can issue one, otherwise your password.") < page.find("<form"));
     assert(page.find("Credentials stay in memory only.") == std::string::npos);
     assert(page.find("Referrer-Policy: same-origin\r\n") != std::string::npos);
     assert(page.find("style-src 'unsafe-inline'") != std::string::npos);

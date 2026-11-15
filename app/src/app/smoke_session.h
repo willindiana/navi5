@@ -39,15 +39,27 @@ private:
 // at or below it goes to previous entry. First entry always restarts.
 constexpr double previous_restart_seconds = 3.0;
 struct Command {
-    enum Kind { Login, Browse, Play, Pause, Resume, Stop, Next, Previous, Seek, ShuffleToggle, Logout } kind = Logout;
+    // EnqueueReady is worker-internal (assembled album/artist); send() refuses it.
+    enum Kind { Login, Browse, Play, Pause, Resume, Stop, Next, Previous, Seek, ShuffleToggle, Logout,
+                Enqueue, QueueMove, QueueRemove, EnqueueReady } kind = Logout;
     uint64_t generation = 0, playback_revision = 0;
     uint64_t track = 0; // Seek occurrence from displayed AudioStatus, not song ID.
     double seconds = 0;
     bool shuffle_enabled = false; // Shuffle target, guarded by playback_revision.
-    // RAM only. API key wins; never retain a password fallback alongside it.
+    // API key wins; never retain a password fallback alongside it. With a key,
+    // username is only a hint: the worker trusts tokenInfo, not this field.
     std::string server, username, password, api_key;
     ui::music::PlayIntent play;
     ui::music::Request request;
+    // Enqueue (Play Next): focused track, album, playlist or artist; request.token echoes.
+    ui::music::Item item;
+    // QueueMove puts entry `uid` directly after entry `anchor`; QueueRemove drops `uid`.
+    // PlayQueue uids: a stale one matches nothing, so no revision guard is needed.
+    uint64_t uid = 0, anchor = 0;
+    // EnqueueReady only.
+    std::vector<subsonic::Song> songs;
+    std::shared_ptr<std::atomic<bool>> job;
+    std::string error;
 };
 struct Result {
     uint64_t generation = 0;
@@ -58,6 +70,13 @@ struct Result {
     uint64_t token = 0;
     ui::music::Page page;
     std::string playback_error; // Local fixed diagnostics only; never transport/server text.
+    // Successful Login only. api_key: key now in use (issued from the password, or
+    // the one supplied); empty means the session still authenticates by password.
+    // username: the key's verified account, or empty. Secret: persist, never log.
+    std::string api_key, username;
+    // Enqueue only: accepted occurrences, and the title when it was one track.
+    size_t count = 0;
+    std::string title;
 };
 // Audio admission epoch. reset() bumps value and cancels the admitted track under
 // this lock; worker checks value and starts under it after stopping unlocked. So
@@ -68,6 +87,8 @@ struct AudioEpoch {
     uint64_t value = 0;
     std::shared_ptr<std::atomic<bool>> cancel;
 };
+using ui::music::QueueRow;
+using ui::music::QueueWindow;
 struct Mailbox {
     std::mutex mutex;
     std::condition_variable wake, browse_wake;
@@ -96,6 +117,13 @@ struct Mailbox {
     std::string artist_id, portrait_url;
     int duration = 0;
     bool shuffle_enabled = false, shuffle_pending = false, shuffle_error = false;
+    // Published only while watched; worker rebuilds on change, never per frame.
+    QueueWindow queue_window;
+    uint64_t queue_serial = 0;
+    size_t queue_first = 0;
+    bool queue_watch = false, queue_poke = false;
+    // UI only. Open/scroll the queue view; first is a play-order position.
+    void watch_queue(bool open, size_t first, uint64_t current);
     // UI only. Invalidates pending/in-flight account results immediately.
     uint64_t reset();
     bool send(Command command);
@@ -108,6 +136,7 @@ struct PlaybackSnapshot {
     std::string song_id, title, artist, artwork_url, portrait_url, next_title;
     int duration = 0;
     bool shuffle_enabled = false, shuffle_pending = false, shuffle_error = false;
+    QueueWindow queue;
 
     void invalidate(uint64_t current) {
         if (generation != current) *this = {};
@@ -124,11 +153,14 @@ struct PlaybackSnapshot {
         artist = box.artist; artwork_url = box.artwork_url; portrait_url = box.portrait_url;
         next_title = box.next_title; duration = box.duration;
         shuffle_enabled = box.shuffle_enabled; shuffle_pending = box.shuffle_pending; shuffle_error = box.shuffle_error;
+        if (queue.serial != box.queue_window.serial) queue = box.queue_window; // Rows copied on change only.
         return true;
     }
 };
 // Detached worker retains mailbox, never UI pointers. Player dies on worker.
 // Optional injected player for host worker regression tests; worker owns lifetime.
+// With `send`, a password login to a server that can issue API keys swaps to a
+// freshly issued key (subsonic/api_key.h); without it passwords are never upgraded.
 bool start_worker(const std::shared_ptr<Mailbox> &, subsonic::HttpGet,
-                  std::shared_ptr<AudioPlayer> player = {});
+                  std::shared_ptr<AudioPlayer> player = {}, subsonic::HttpSend send = {});
 } // namespace app::smoke
