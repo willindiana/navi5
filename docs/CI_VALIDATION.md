@@ -1,13 +1,14 @@
 # CI validation: login, saved credentials and identity
 
-Two GitHub workflows (`.github/workflows`). Neither uses secrets or touches a
-console; pull requests run on GitHub-hosted runners with read-only contents.
+Pull requests live on the maintainer's Forgejo (GitHub is a push mirror), so PR
+checks are Forgejo workflows (`.forgejo/workflows`); scheduled and manual checks
+stay on GitHub (`.github/workflows`). None uses secrets or touches a console.
 The RELEASE build workflow is separate: [CI_RELEASE.md](CI_RELEASE.md).
 
 | Workflow | Runs on | Purpose |
 |---|---|---|
-| `host-tests.yml` | PR to `master`, push to `master`, manual | Gate: offline checks must pass |
-| `navidrome-live.yml` | Mondays 06:17 UTC, manual | Early warning: real Navidrome servers |
+| `host-tests.yml` (Forgejo) | PR to `master`, push to `master`, manual | Gate: offline checks must pass |
+| `navidrome-live.yml` (GitHub) | Mondays 06:17 UTC, manual | Early warning: real Navidrome servers |
 
 ## Host checks (`scripts/ci-host-tests.sh`)
 

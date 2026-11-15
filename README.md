@@ -72,7 +72,9 @@ Saved login is stored unencrypted on the console. When your Navidrome server sup
 
 ## Reports
 
-Please report bugs and request features through GitHub Issues.
+Please report bugs and request features through GitHub Issues. Development happens
+in a self-hosted repository that GitHub mirrors, so pull requests opened here are
+brought over by hand.
 
 ## Credits and license
 

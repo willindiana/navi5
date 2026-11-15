@@ -23,7 +23,7 @@ assert ci.index(staging) < ci.index('bash scripts/build.sh --release')
 assert 'source "${APP_ROOT}/scripts/sdk-link-inputs.sh"' in app
 assert 'for archive in "${SDK_HOMEBREW_ARCHIVES[@]}"' in app
 assert '"${CXX_RUNTIME[@]}"' in app and '"${LIBC_ARCHIVE}"' in app
-for workflow in ['.github/workflows/release-build.yml']:
+for workflow in ['.forgejo/workflows/release-build.yml']:
     text = (ROOT / workflow).read_text()
     assert 'ca-certificates' in text and 'xz-utils' in text
 

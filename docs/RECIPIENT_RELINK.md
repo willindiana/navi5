@@ -67,7 +67,7 @@ It fails unless the tag is the recorded commit and `git archive` of it has the
 digest of the validated export. GitHub wraps the same files in its own
 tar.gz/zip container, so archive bytes differ from that digest by design.
 
-Trusted GitHub workflows run `scripts/ci-release.sh` against
+Trusted Forgejo workflows run `scripts/ci-release.sh` against
 current checked-out HEAD. Full validated delivery remains in `build/ci-delivery`;
 `build/ci-release` contains exactly the normal and third-party source ZIPs. Source gate and
 independent recipient replay run before packaging. CI logs final asset names,

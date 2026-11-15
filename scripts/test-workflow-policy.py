@@ -2,14 +2,15 @@
 # Navi5 — CI workflow policy, offline. SPDX-License-Identifier: GPL-3.0-or-later
 """Every workflow: no pull_request_target or tag triggers, read-only contents for
 pull-request workflows, actions pinned to a commit, checkout without persisted
-credentials, no secrets, a job timeout. Workflows live on GitHub only; the Forgejo
-copy of the repository is a pull mirror and runs none."""
+credentials, no secrets, a job timeout. Pull requests live on Forgejo, so the PR
+checks are Forgejo workflows; GitHub is a push mirror and runs no PR workflows."""
 from pathlib import Path
 import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-HOSTS = (".github/workflows",)
+HOSTS = (".forgejo/workflows", ".github/workflows")
+PR_CHECKS = ("host-tests.yml", "release-build.yml")
 errors = []
 
 
@@ -32,8 +33,12 @@ for host in HOSTS:
             require(re.search(r"@[0-9a-f]{40}$", action), f"{name}: action not pinned to a commit: {action}")
         if "checkout@" in code:
             require("persist-credentials: false" in code, f"{name}: checkout keeps credentials")
-require(not (ROOT / ".forgejo/workflows").exists(), ".forgejo/workflows: Forgejo is a pull mirror and must not run workflows")
-live = (ROOT / HOSTS[0] / "navidrome-live.yml").read_text()
+for name in PR_CHECKS:
+    path = ROOT / HOSTS[0] / name
+    require(path.is_file() and re.search(r"^  pull_request:", path.read_text(), re.M), f"{HOSTS[0]}/{name}: must check pull requests")
+for path in sorted((ROOT / HOSTS[1]).glob("*.yml")):
+    require(not re.search(r"\bpull_request\b", path.read_text()), f"{HOSTS[1]}/{path.name}: PRs are checked on Forgejo, not GitHub")
+live = (ROOT / HOSTS[1] / "navidrome-live.yml").read_text()
 require("push:" not in live, "navidrome-live.yml: must not gate pushes on a moving upstream image")
 if errors:
     sys.exit("\n".join(errors))

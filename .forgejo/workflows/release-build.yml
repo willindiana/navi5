@@ -10,8 +10,6 @@ on:
         description: Store complete artifacts on this CI host (separate approval required)
         required: true
         default: 'false'
-        type: choice
-        options: ['false', 'true']
 permissions:
   contents: read
 jobs:
@@ -20,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+      - uses: https://github.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -33,7 +31,8 @@ jobs:
           LLVM_CONFIG: llvm-config-18
         run: bash scripts/ci-release.sh
       # Never upload on failure, and never create a release or tag.
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      # Forgejo-patched v4 uses Forgejo's artifact service, not GitHub's.
+      - uses: https://code.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e # patched v4
         if: success() && github.event_name == 'workflow_dispatch' && inputs.upload_artifacts == 'true'
         with:
           name: Navi5-${{ github.sha }}
