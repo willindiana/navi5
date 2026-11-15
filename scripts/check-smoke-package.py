@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import identity
+
 ROOT = Path(__file__).resolve().parents[1]
 CA_SHA = "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285"
 
@@ -18,20 +21,23 @@ def check_ca(path):
 DEV_MARKER = "NAVI5_DEV_BUILD"  # empty file at package root, DEV builds only
 
 def mark_dev(path):
-    """DEV only: game category 0 so Remote Play captures frames; marks package."""
+    """DEV only: separate title, game category 0 so Remote Play captures frames; marks package."""
     file = path / "sce_sys/param.json"
     param = json.loads(file.read_text())
-    param["applicationCategoryType"] = 0
+    param.update(identity.DEV)
+    for value in param["localizedParameters"].values():
+        if isinstance(value, dict):
+            value["titleName"] = identity.DEV_NAME
     file.write_text(json.dumps(param, indent=2, ensure_ascii=False) + "\n")
     (path / DEV_MARKER).write_bytes(b"")
 
 def check_package(path):
     param = json.loads((path / "sce_sys/param.json").read_text())
-    # Release (no marker) must stay media 65536; only marked DEV packages use 0.
-    category = 0 if (path / DEV_MARKER).is_file() else 65536
-    if (param["titleId"] != "NAVI00001" or
-            param["contentId"] != "UP9000-NAVI00001_00-NAVI500000000000" or
-            param["applicationCategoryType"] != category or param["attribute"] != 536870912):
+    # Release (no marker) is the Media PROD title; a marked package is the DEV title.
+    # Neither may borrow the other's ID, category or folder.
+    want = identity.DEV if (path / DEV_MARKER).is_file() else identity.PROD
+    if (not identity.matches(param, want) or path.resolve().name != want["titleId"] or
+            param["attribute"] != 536870912):
         raise SystemExit("unexpected smoke identity/category/attribute")
     for name in ("eboot.bin", "sce_module/libc.prx", "assets/CA-BUNDLE.md", "assets/ca-bundle-MPL-2.0.txt"):
         if not (path / name).is_file() or not (path / name).stat().st_size:
@@ -55,10 +61,13 @@ def check_package(path):
 if __name__ == "__main__":
     if sys.argv[1:] == ["--ca-only"]:
         check_ca(ROOT / "app/assets/ca-bundle.pem")
+    elif sys.argv[1:] == ["--dev-title-id"]:
+        print(identity.DEV["titleId"])
+        raise SystemExit(0)
     elif len(sys.argv) == 3 and sys.argv[1] == "--mark-dev":
         mark_dev(Path(sys.argv[2]))
-        print("DEV package: applicationCategoryType 0")
+        print(f"DEV package: {identity.DEV['titleId']}, applicationCategoryType 0")
         raise SystemExit(0)
     else:
-        check_package(Path(sys.argv[1]) if len(sys.argv) == 2 else ROOT / "app/build/app/NAVI00001")
+        check_package(Path(sys.argv[1]) if len(sys.argv) == 2 else ROOT / "app/build/app" / identity.PROD["titleId"])
     print("smoke package check passed")

@@ -2,13 +2,17 @@
 # Jelly5 — upload the built app to the PS5 over FTP (ftpsrv / etaHEN).
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Private Navi5 smoke install/update only; no launch, retry or removal.
+Private Navi5 install/update only; no launch, retry or removal.
     scripts/deploy.py --check
     scripts/deploy.py --confirm-closed --confirm-title-unused
     scripts/deploy.py --update --confirm-closed
-Update requires remote /data/homebrew/NAVI00001 param.json with matching
+Targets the DEV title (NAVD00001, "Navi5 Dev") built by a non-release build.
+It installs beside the published Media title NAVI00001 and never writes to it.
+Add --prod to target NAVI00001 from a --release build instead; never by default.
+Update requires remote /data/homebrew/<title> param.json with matching
 titleId/contentId; files are promoted in place via temp names, then read back.
-Confirm app closed through PS button and NAVI00001 unused in title database,
+Confirm that app closed through PS button and, for a first install, its title
+unused in title database,
 all internal/external storage and ShadowMount scan roots before installation.
 FTP checks cannot prove lifecycle or inspect every title registration.
 Existing titles/staging and unreadable homebrew metadata refuse installation.
@@ -23,6 +27,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import identity
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -118,7 +125,8 @@ def upload_tree(ftp, local, remote):
     print(f"  {total / 1e6:.1f} MB in {dt:.1f} s ({total / 1e6 / max(dt, 0.01):.1f} MB/s)")
 
 
-KNOWN = {"--check", "--confirm-closed", "--confirm-title-unused", "--update"}
+KNOWN = {"--check", "--confirm-closed", "--confirm-title-unused", "--update", "--prod"}
+TITLES = (identity.PROD["titleId"], identity.DEV["titleId"])
 
 
 ENGINE = os.environ.get("PS5UPLOAD_ENGINE", "http://127.0.0.1:19113")
@@ -184,8 +192,8 @@ def update_remote(ftp, tid, local):
     """In-place update of existing private smoke title; never deletes."""
     with open(os.path.join(local, "sce_sys/param.json")) as fh:
         mine = json.load(fh)
-    if mine.get("titleId") != tid or tid != "NAVI00001":
-        sys.exit("local candidate is not NAVI00001; nothing sent")
+    if mine.get("titleId") != tid or tid not in TITLES:
+        sys.exit(f"local candidate is not {tid}; nothing sent")
     remote = f"/data/homebrew/{tid}"
     try:
         theirs = json.loads(read_remote(ftp, f"{remote}/sce_sys/param.json", 65536))
@@ -193,7 +201,7 @@ def update_remote(ftp, tid, local):
         sys.exit(f"remote {remote} param.json missing/unreadable ({e}); nothing sent")
     if not isinstance(theirs, dict) or theirs.get("titleId") != tid or \
             theirs.get("contentId") != mine["contentId"]:
-        sys.exit(f"remote {remote} is not this smoke title; nothing sent")
+        sys.exit(f"remote {remote} is not this title; nothing sent")
     guard_duplicates(ftp, tid, skip=tid)
     files = local_files(local, remote)
     temps = []
@@ -246,7 +254,7 @@ def main():
     elif not update and not {"--confirm-closed", "--confirm-title-unused"} <= set(args):
         sys.exit("Close Navi5 through PS button; verify title unused across console/storage. "
                  "Then pass --confirm-closed --confirm-title-unused. Nothing sent.")
-    tid = "NAVI00001"
+    tid = (identity.PROD if "--prod" in args else identity.DEV)["titleId"]
     local = os.path.join(ROOT, "app/build/app", tid)
     if "--check" not in args:
         import subprocess
@@ -262,7 +270,7 @@ def main():
             return
         if update:
             update_remote(ftp, tid, local)
-            print("Updated private smoke candidate in place. Launch manually after lifecycle check.")
+            print(f"Updated {tid} in place. Launch manually after lifecycle check.")
             return
         guard_remote(ftp, tid, host)
         staging_root = "/data/navi5-staging"
@@ -277,7 +285,7 @@ def main():
         # Recheck before registration; no launch, deletion or automatic retry.
         guard_remote(ftp, tid, host)
         ftp.rename(staging, f"/data/homebrew/{tid}")
-        print("Installed private smoke candidate. Launch manually once only after lifecycle check.")
+        print(f"Installed {tid}. Launch manually once only after lifecycle check.")
     finally:
         ftp.quit()
 

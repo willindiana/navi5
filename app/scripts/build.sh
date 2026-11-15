@@ -12,7 +12,7 @@
 #
 #   ./scripts/build.sh            # development build (in the container when
 #                                 # NUVIO_BUILD_IMAGE is set)
-#   ./scripts/build.sh --ffpfsc   # also pack NAVI00001.ffpfsc
+#   ./scripts/build.sh --ffpfsc   # also pack <title>.ffpfsc
 #   ./scripts/build.sh --release  # for sharing: no .env.local server, no log
 #                                 # target, packed as .ffpfsc and .zip
 #   JELLY5_AV1=0 ./scripts/build.sh  # without AV1: the sysroot's FFmpeg 7.0,
@@ -20,7 +20,8 @@
 #                                 # FFmpeg 7.1 + libdav1d from
 #                                 # toolchain/av1-prefix, scripts/build-av1.sh)
 #
-# Output: build/app/NAVI00001/{eboot.bin, sce_sys/, sce_module/libc.prx}
+# Output: build/app/<title>/{eboot.bin, sce_sys/, sce_module/libc.prx}
+#   <title> is NAVD00001 (DEV, default) or NAVI00001 (--release, Media).
 # The packaging steps follow the toolkit's app packaging (player mode);
 # the loader constants and PRX stub rules there are hardware-validated.
 # =============================================================================
@@ -117,6 +118,9 @@ fi
 BUILD="${APP_ROOT}/build"
 PARAM="${APP_ROOT}/sce_sys/param.json"
 TITLE_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["titleId"])' "${PARAM}")"
+# Only --release is the published Media title. Every other build is the separate
+# DEV title (scripts/identity.py) so it installs beside the real app.
+(( RELEASE )) || TITLE_ID="$(python3 "${NUVIO_ROOT}/scripts/check-smoke-package.py" --dev-title-id)"
 APPDIR="${BUILD}/app/${TITLE_ID}"
 mkdir -p "${BUILD}/obj" "${BUILD}/host" "${BUILD}/stubs"
 
@@ -351,8 +355,9 @@ mkdir -p "${LIC}"
 cp "${NUVIO_ROOT}/LICENSE" "${NUVIO_ROOT}/THIRD_PARTY_NOTICES.md" "${LIC}/"
 cp "${APP_ROOT}"/assets/fonts/*.txt "${APP_ROOT}"/licenses/* "${LIC}/"
 cp "${APP_ROOT}/src/app/CLDR-LICENSE.txt" "${LIC}/"
-# Template stays media 65536 (release). DEV only: game category 0 for Remote Play.
-if [[ "${NAVI5_DEV_TOOLS:-0}" == 1 ]] && (( ! RELEASE )); then
+# Template stays PROD media 65536 (release). Non-release: DEV title, game category 0
+# for Remote Play. NAVI5_DEV_TOOLS only adds diagnostics; it does not pick identity.
+if (( ! RELEASE )); then
     python3 "${NUVIO_ROOT}/scripts/check-smoke-package.py" --mark-dev "${APPDIR}"
 fi
 python3 "${NUVIO_ROOT}/scripts/check-smoke-package.py" "${APPDIR}"

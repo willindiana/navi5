@@ -101,8 +101,8 @@ package = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(package)
 package.check_ca(ROOT / "app/assets/ca-bundle.pem")
 with tempfile.TemporaryDirectory() as tmp:
-    path = Path(tmp)
-    (path / "sce_sys").mkdir()
+    path = Path(tmp) / "NAVI00001"  # Folder name is part of the identity.
+    (path / "sce_sys").mkdir(parents=True)
     (path / "sce_sys/param.json").write_text((ROOT / "app/sce_sys/param.json").read_text())
     refused(lambda: package.check_package(path))
     for name in ("eboot.bin", "sce_module/libc.prx", "assets/CA-BUNDLE.md", "assets/ca-bundle-MPL-2.0.txt"):
@@ -123,15 +123,29 @@ with tempfile.TemporaryDirectory() as tmp:
     refused(lambda: package.check_package(path))  # existing but stale notice
     (lic / "curl-COPYING.txt").write_bytes((ROOT / "app/licenses/curl-COPYING.txt").read_bytes())
     package.check_package(path)
-    # Release (template) stays media 65536; marked DEV gets 0 and nothing else changes.
+    # Release (template) stays the Media PROD title. Marked DEV becomes a separate
+    # title (own ID, content/concept ID, name, game category 0); nothing else changes.
     template = json.loads((ROOT / "app/sce_sys/param.json").read_text())
-    assert template["applicationCategoryType"] == 65536
+    ident = package.identity
+    assert ident.matches(template, ident.PROD) and template["applicationCategoryType"] == 65536
+    assert all(ident.PROD[k] != ident.DEV[k] for k in ident.KEYS)
     package.mark_dev(path)
     dev = json.loads((path / "sce_sys/param.json").read_text())
-    assert dev == {**template, "applicationCategoryType": 0}
+    names = {k: ({**v, "titleName": "Navi5 Dev"} if isinstance(v, dict) else v)
+             for k, v in template["localizedParameters"].items()}
+    assert dev == {**template, **ident.DEV, "localizedParameters": names}
+    refused(lambda: package.check_package(path))  # DEV package in the PROD folder
+    path = path.rename(path.parent / ident.DEV["titleId"])
     package.check_package(path)
     (path / package.DEV_MARKER).unlink()
-    refused(lambda: package.check_package(path))  # category 0 without DEV marker
+    refused(lambda: package.check_package(path))  # DEV identity without DEV marker
+    (path / "sce_sys/param.json").write_text(json.dumps(template))
+    refused(lambda: package.check_package(path))  # PROD identity in the DEV folder
+    (path / package.DEV_MARKER).write_bytes(b"")
+    refused(lambda: package.check_package(path))  # PROD identity marked DEV
+    (path / package.DEV_MARKER).unlink()
+    path = path.rename(path.parent / ident.PROD["titleId"])
+    package.check_package(path)
     (path / "sce_sys/param.json").write_text(json.dumps(template))
     package.check_package(path)
     (path / package.DEV_MARKER).write_bytes(b"")
