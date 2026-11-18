@@ -14,6 +14,14 @@ only the maintainer's own branches open PRs there; that runner never executes
 code from outside contributors. Manual dispatch targets master; artifact upload
 defaults to false and true needs separate owner approval.
 
+Both workflows run their heavy job in a CI image (`ci/Dockerfile`: the runner's
+default job image plus the build and test packages). Its tag is a hash of `ci/`.
+A short `image` job (`scripts/ci-image.sh`) reuses the published tag from the
+Forgejo container registry, or builds and pushes it when `ci/` changed, with the
+job's automatic token (`packages: write` on that job only). The registry is the
+running Forgejo instance, taken from the job's server URL. Add a dependency in
+`ci/Dockerfile`, never as an install step in a workflow.
+
 Native master protections must require PRs, passing observed exact CI contexts,
 up-to-date branches, no direct/force pushes or deletion, no configured admin
 bypass. Solo owner requires zero mandatory second-reviewer approvals. Verify live
