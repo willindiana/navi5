@@ -5,13 +5,14 @@ Existing `release/beta`, old branches, tags and frozen `v0.8.0-beta.1` assets st
 unchanged. This approval covers workflow activation and native protections, not
 publication, artifact uploads, store submissions or infrastructure changes.
 
-GitHub runs full `scripts/ci-release.sh` on every master push/merge and PR targeting
-master, including docs changes. GitHub-hosted Ubuntu 24.04 runners use LLVM 18,
-`contents: read`, SHA-pinned actions and `persist-credentials: false`. No secrets,
-publisher, release/tag event or scheduled release. Manual dispatch targets master;
-artifact upload defaults to false and true needs separate owner approval.
-Workflows run on GitHub only. The Forgejo copy is a pull mirror of this repository
-and runs none; its persistent privileged runner must never execute PR code.
+Development and pull requests happen on the maintainer's self-hosted Forgejo;
+GitHub is a push mirror of it. Forgejo runs full `scripts/ci-release.sh`
+(`.forgejo/workflows/release-build.yml`) on every PR and push to master, including
+docs changes, on an Ubuntu 24.04 runner with LLVM 18, SHA-pinned actions and
+`persist-credentials: false`. No secrets. The Forgejo repository is private and
+only the maintainer's own branches open PRs there; that runner never executes
+code from outside contributors. Manual dispatch targets master; artifact upload
+defaults to false and true needs separate owner approval.
 
 Native master protections must require PRs, passing observed exact CI contexts,
 up-to-date branches, no direct/force pushes or deletion, no configured admin

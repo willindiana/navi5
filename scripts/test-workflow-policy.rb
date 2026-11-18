@@ -4,9 +4,9 @@
 require 'yaml'
 root = File.expand_path('..', __dir__)
 load_workflow = ->(path) { YAML.load_file(File.join(root, path)) }
-github = load_workflow.call('.github/workflows/release-build.yml')
+build = load_workflow.call('.forgejo/workflows/release-build.yml')
 store = load_workflow.call('.github/workflows/store-verify.yml')
-[github, store].each do |workflow|
+[build, store].each do |workflow|
   events = workflow.fetch('on', workflow[true]) # Psych YAML 1.1 reads on as true.
   raise 'unexpected event' unless (events.keys - %w[push pull_request workflow_dispatch]).empty?
   raise 'manual dispatch missing' unless events.key?('workflow_dispatch')
@@ -22,10 +22,9 @@ store = load_workflow.call('.github/workflows/store-verify.yml')
     raise 'master guard missing' unless job.fetch('if').include?('refs/heads/master')
   end
 end
-raise 'GitHub PR missing' unless github.fetch('on', github[true]).key?('pull_request')
-raise 'Forgejo workflows present' if File.exist?(File.join(root, '.forgejo/workflows'))
+raise 'Forgejo PR check missing' unless build.fetch('on', build[true]).key?('pull_request')
 raise 'store not manual-only' unless store.fetch('on', store[true]).keys == ['workflow_dispatch']
-[github, store].each do |workflow|
-  raise 'GitHub write permission' unless workflow.fetch('permissions') == {'contents' => 'read'}
+[build, store].each do |workflow|
+  raise 'write permission' unless workflow.fetch('permissions') == {'contents' => 'read'}
 end
-puts 'Master triggers, manual store gate, hosted read-only checkout and no Forgejo workflows passed'
+puts 'Master triggers, Forgejo PR build, manual store gate and read-only checkout passed'
