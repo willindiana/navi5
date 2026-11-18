@@ -15,6 +15,9 @@
 #include <strings.h>
 #include <cstdlib>
 #include <cstring>
+#ifdef NAVI5_DEV_TOOLS
+#include <atomic>
+#endif
 
 // Provision separately; never fall back to an absent PS5 system trust store.
 #ifndef NAVI5_CA_BUNDLE
@@ -121,8 +124,33 @@ HttpResponse http_request(const std::string &method, const std::string &url,
     trace_begin();
 #endif
     curl_slist *pinned = nullptr;
+#ifdef NAVI5_DEV_TOOLS
+    static std::atomic<int> inflight{0};
+    RequestLog::Row row;
+    row.tag = request_tag;
+    RequestLog::endpoint(url, row.endpoint);
+    row.start = request_log.now_ms();
+    row.inflight = ++inflight;
+#endif
     CURLcode rc = configured ? pin_resolve(c, url, &pinned) : CURLE_BAD_FUNCTION_ARGUMENT;
+#ifdef NAVI5_DEV_TOOLS
+    row.resolve = request_log.now_ms() - row.start;
+#endif
     if (rc == CURLE_OK) rc = curl_easy_perform(c);
+#ifdef NAVI5_DEV_TOOLS
+    --inflight;
+    {
+        curl_off_t connect = -1, tls = -1, first = -1;
+        if (curl_easy_getinfo(c, CURLINFO_CONNECT_TIME_T, &connect) == CURLE_OK) row.connect = long(connect / 1000);
+        if (curl_easy_getinfo(c, CURLINFO_APPCONNECT_TIME_T, &tls) == CURLE_OK) row.tls = long(tls / 1000);
+        if (curl_easy_getinfo(c, CURLINFO_STARTTRANSFER_TIME_T, &first) == CURLE_OK) row.first = long(first / 1000);
+        long http = -1;
+        if (curl_easy_getinfo(c, CURLINFO_RESPONSE_CODE, &http) == CURLE_OK) row.http = http;
+        row.code = int(rc);
+        row.total = request_log.now_ms() - row.start;
+        request_log.record(row);
+    }
+#endif
 #ifdef NAVI5_DEV_TOOLS
     trace_live(5, 1, 0, 0, static_cast<int>(rc), 0);
     curl_diag.sockets = socket_trace;
