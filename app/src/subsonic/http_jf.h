@@ -32,9 +32,22 @@ inline HttpResponse http_send_jf(const std::string &method, const std::string &u
     return {r.status, r.body, r.error.empty() ? "" : "HTTP transport failed", failure};
 }
 
+/* A server waking from idle can take longer than one request's timeout:
+ * hardware, 2026-11-18, the first request after a quiet spell took 8-15 s
+ * behind an HTTPS proxy (a Mac saw 8.3 s, later ones 0.03 s), so the first
+ * library page or saved login after launch failed. Read-only requests are tried
+ * once more after a timeout; the first attempt wakes the server. */
+template <class Get>
+HttpResponse retry_after_timeout(const Get &once)
+{
+    HttpResponse r = once();
+    if (r.failure == LoginFailure::Timeout) r = once();
+    return r;
+}
+
 inline HttpResponse http_get_jf(const std::string &url)
 {
-    return http_send_jf("GET", url, {}, "");
+    return retry_after_timeout([&] { return http_send_jf("GET", url, {}, ""); });
 }
 
 } // namespace subsonic
