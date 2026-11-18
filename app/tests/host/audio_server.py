@@ -10,6 +10,9 @@ os.chdir(sys.argv[1])
 assert os.path.getsize('large.flac') > 16 * 1024 * 1024
 
 
+drop_ranges = []
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *_):
         pass
@@ -36,6 +39,35 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Length', str(len(data)))
                 self.end_headers()
                 self.wfile.write(data)
+            elif self.path == '/drop':
+                # First request: a full-length 200 whose connection drops halfway,
+                # as a proxy does to a long-paused transfer. Ranged requests are
+                # answered properly, so the player can resume.
+                with open('tone.flac', 'rb') as f:
+                    data = f.read()
+                wanted = self.headers.get('Range')
+                if wanted:
+                    start = int(wanted.removeprefix('bytes=').split('-')[0])
+                    drop_ranges.append(start)
+                    self.send_response(206)
+                    self.send_header('Content-Range', f'bytes {start}-{len(data) - 1}/{len(data)}')
+                    self.send_header('Content-Length', str(len(data) - start))
+                    self.end_headers()
+                    self.wfile.write(data[start:])
+                else:
+                    self.send_response(200)
+                    self.send_header('Content-Length', str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data[:len(data) // 2])
+                    self.wfile.flush()
+                    self.close_connection = True
+                    self.connection.shutdown(2)
+            elif self.path == '/drop-ranges':
+                body = ','.join(map(str, drop_ranges)).encode()
+                self.send_response(200)
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
             elif self.path == '/partial':
                 self.send_response(200)
                 self.send_header('Content-Length', str(10000000))
