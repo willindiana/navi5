@@ -17,6 +17,7 @@
 #include <vector>
 #include <curl/curl.h>
 #include "../curl_sockopt.h"
+#include "../curl_resolve.h"
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -73,6 +74,7 @@ void require(bool ok, const char *message) {
 struct Stream {
     CURL *easy = nullptr;
     CURLM *multi = nullptr;
+    curl_slist *pinned = nullptr; // CURLOPT_RESOLVE entry; outlives easy.
     std::atomic<bool> &cancel;
     std::array<unsigned char, 256 * 1024> bytes{};
     size_t used = 0;
@@ -155,6 +157,7 @@ struct Stream {
         if (multi && easy) curl_multi_remove_handle(multi, easy);
         if (easy) curl_easy_cleanup(easy);
         if (multi) curl_multi_cleanup(multi);
+        curl_slist_free_all(pinned);
     }
     static size_t body(char *p, size_t size, size_t count, void *opaque) {
         auto &s = *static_cast<Stream *>(opaque);
@@ -196,6 +199,7 @@ struct Stream {
             check_easy(curl_easy_setopt(easy, key, value), "HTTP configuration failed");
         };
         opt(CURLOPT_URL, url.c_str());
+        check_easy(jf::pin_resolve(easy, url, &pinned), "Server name not resolved");
         opt(CURLOPT_PROTOCOLS_STR, "http,https");
         opt(CURLOPT_REDIR_PROTOCOLS_STR, "https");
         opt(CURLOPT_FOLLOWLOCATION, 0L);
