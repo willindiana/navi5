@@ -18,6 +18,7 @@
 #include "ui/pad_route.h"
 #include "ui/queue_view.h"
 #include "ui/player_state.h"
+#include "ui/toast.h"
 #include <cmath>
 #include <limits>
 #include "app/settings.h"
@@ -245,6 +246,7 @@ int main()
     uint64_t enqueue_serial = 0;
     std::string toast; // Short confirmation, e.g. Play Next. Fixed local text plus titles only.
     double toast_until = 0;
+    ui::Anim toast_alpha;
     ui::MusicScreen music;
     ui::PairingView pairing_view;
     std::shared_ptr<PairingWork> pairing_work;
@@ -751,8 +753,17 @@ int main()
                 ui::draw_pad_hints(1750, 1018, {{ui::PadButton::Touchpad, T("Fullskjermspiller")}}, 2, 26);
                 ui::draw_mini_player_progress(audio.position, audio.duration);
             }
-            if (!toast.empty() && now < toast_until)
-                gfx::text(1820, 100, toast, {gfx::Medium, 24, 760}, ui::kText, 2);
+            // Glass pill under the header row (never over tabs, Search or the gear);
+            // the menu drops into the same corner, so it hides the pill while open.
+            toast_alpha.to(!toast.empty() && now < toast_until && !menu.open() ? 1.f : 0.f);
+            toast_alpha.step(dt);
+            if (!toast.empty() && toast_alpha.value > 0.01f) {
+                const gfx::TextStyle style{gfx::Medium, 24, ui::kToastMaxText};
+                const auto box = ui::toast_box(gfx::text_width(toast, style), player_view.visible);
+                const float a = toast_alpha.value, lift = 12.f * (1.f - a);
+                ui::glass_panel({box.x, box.y - lift, box.w, box.h}, box.h / 2, a);
+                gfx::text(box.x + box.w - ui::kToastPad, box.y - lift + 36, toast, style, ui::alpha(ui::kText, a), 2);
+            }
             if (menu.state == ui::OptionsMenu::State::Menu) {
                 // Drops down under the header gear (x 1744..1820).
                 ui::glass_panel({1400, 146, 420, 104}, 28);
