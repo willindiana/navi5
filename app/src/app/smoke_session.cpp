@@ -507,6 +507,9 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                   std::shared_ptr<AudioPlayer> injected, subsonic::HttpSend send)
 {
     if (!jelly5::spawn_media([box] {
+#ifdef NAVI5_DEV_TOOLS
+        jf::request_tag = 'B';
+#endif
         Library library;
         uint64_t active = 0;
         std::shared_ptr<const subsonic::Client> account;
@@ -594,6 +597,9 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
         }
     })) return false;
     bool started = jelly5::spawn_media([box, http = std::move(http), injected = std::move(injected), send = std::move(send)] {
+#ifdef NAVI5_DEV_TOOLS
+        jf::request_tag = 'P';
+#endif
         auto owned = injected ? injected : std::make_shared<AudioPlayer>();
         AudioPlayer &player = *owned;
         std::shared_ptr<subsonic::Client> client;

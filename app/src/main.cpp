@@ -831,6 +831,20 @@ int main()
         if (!connected) gfx::text(960, 1020, import_line, {gfx::Medium, 20, 1800}, ui::kText2, 1);
         if (!connected) gfx::text(960, 1050, jf::live_progress.line(), {gfx::Medium, 20, 1800}, ui::kText2, 1);
         if (!connected) gfx::text(960, 1076, jf::live_progress.ring_line(), {gfx::Medium, 18, 1880}, ui::kText2, 1);
+        // Recent requests (all threads) while a library page loads or failed to.
+        bool library_trouble = music.state().status() != ui::music::Status::Ready;
+        for (const auto &section : music.state().page().sections) library_trouble = library_trouble || !section.ok;
+        if (connected && !player_view.visible && library_trouble) {
+            const std::string rows = jf::request_log.lines();
+            float y = 700;
+            for (size_t at = 0; at < rows.size();) {
+                const size_t end = rows.find('\n', at);
+                gfx::text(140, y, rows.substr(at, end - at), {gfx::Medium, 20, 1700}, ui::kText2);
+                y += 28;
+                if (end == std::string::npos) break;
+                at = end + 1;
+            }
+        }
 #endif
         gfx::collect(); gfx::end_frame();
     }

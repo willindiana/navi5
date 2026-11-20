@@ -172,6 +172,27 @@ static subsonic::Client make_client()
 
 int main()
 {
+    // A timed-out GET is tried once more; other failures and successes are not.
+    {
+        int calls = 0;
+        auto first_slow = [&] {
+            ++calls;
+            subsonic::HttpResponse r;
+            if (calls == 1) r.failure = subsonic::LoginFailure::Timeout;
+            else r.status = 200;
+            return r;
+        };
+        assert(subsonic::retry_after_timeout(first_slow).status == 200 && calls == 2);
+        calls = 0;
+        auto always_slow = [&] { ++calls; subsonic::HttpResponse r; r.failure = subsonic::LoginFailure::Timeout; return r; };
+        assert(subsonic::retry_after_timeout(always_slow).failure == subsonic::LoginFailure::Timeout && calls == 2);
+        calls = 0;
+        auto refused = [&] { ++calls; subsonic::HttpResponse r; r.failure = subsonic::LoginFailure::Connection; return r; };
+        assert(subsonic::retry_after_timeout(refused).failure == subsonic::LoginFailure::Connection && calls == 1);
+        calls = 0;
+        auto ok = [&] { ++calls; subsonic::HttpResponse r; r.status = 200; return r; };
+        assert(subsonic::retry_after_timeout(ok).status == 200 && calls == 1);
+    }
     { // Top songs: NAME query, fixed bound, singleton/empty/error/malformed.
         std::string body, url, error;
         subsonic::Client top("https://example.invalid", "u", "p", [&](const std::string &u) {
