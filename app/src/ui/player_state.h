@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #pragma once
+#include "app/audio_player.h"
 #include <cmath>
 #include <algorithm>
 #include <cstdint>
@@ -62,5 +63,13 @@ struct PlayerState {
 inline bool show_up_next(double position, int duration, bool has_next, bool repeat_one, bool playing) {
     return playing && has_next && !repeat_one && duration > 0 && std::isfinite(position) &&
         position >= 0 && position >= duration - 10.0 && position < duration;
+}
+// Browse now-playing bar and Home hero: a song of this session that is opening,
+// playing, paused or failed. A failed track keeps the bar (with its error status)
+// so the queue stays one press away; Stop and the end of the queue hide it.
+inline bool show_session_bar(bool current_generation, bool has_song, app::AudioState state) {
+    using S = app::AudioState;
+    return current_generation && has_song &&
+        (state == S::opening || state == S::playing || state == S::paused || state == S::error);
 }
 } // namespace ui

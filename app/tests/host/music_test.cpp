@@ -285,6 +285,13 @@ int main()
     assert(!ui::show_up_next(90, 0, true, false, true));
     assert(!ui::show_up_next(90, 100, true, false, false));
     assert(!ui::show_up_next(NAN, 100, true, false, true));
+    // Now-playing bar: a failed track keeps it (and the queue) reachable; Stop,
+    // the end of the queue, an empty queue or an old session hide it.
+    using AS = app::AudioState;
+    assert(ui::show_session_bar(true, true, AS::playing) && ui::show_session_bar(true, true, AS::paused));
+    assert(ui::show_session_bar(true, true, AS::opening) && ui::show_session_bar(true, true, AS::error));
+    assert(!ui::show_session_bar(true, true, AS::stopped) && !ui::show_session_bar(true, true, AS::ended));
+    assert(!ui::show_session_bar(true, false, AS::error) && !ui::show_session_bar(false, true, AS::playing));
 
     // Search: trust boundary, debounce, stale cancellation, grouped play context, Back restore.
     assert(Request::valid_query("Bjørk 東京") && !Request::valid_query("a\nb") && !Request::valid_query("\xc0\xaf") &&

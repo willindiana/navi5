@@ -462,6 +462,7 @@ int main()
         const bool seek_active = audio_generation == generation &&
             (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused);
         player_view.sync(playback_revision, audio.track, seek_active);
+        const bool session_bar = ui::show_session_bar(audio_generation == generation, !song_id.empty(), audio.state);
         const bool can_seek = ui::PlayerState::seekable(audio.duration, audio.position, seek_active,
             audio.seeking || audio.track != audio.next_track);
         uint32_t pressed = keyboard || ime::active() || (!connected && saved_work) ? 0 : in.pressed;
@@ -593,8 +594,7 @@ int main()
                 qr_needed_was = needs_pad;
             } else qr_needed_was = false;
         } else {
-            music.session(audio_generation == generation && !song_id.empty() && (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused),
-                          audio.state == app::AudioState::paused, track, artist, artwork);
+            music.session(session_bar, audio.state == app::AudioState::paused, track, artist, artwork);
             if (queue_view.visible() && (!player_view.visible || !seek_active)) queue_view.close();
             // One table for the global buttons (ui/pad_route.h); the rest goes to the focused view.
             const ui_pad_context pad{player_view.visible, queue_view.visible(), menu.open(), music.searching(), !song_id.empty()};
@@ -670,8 +670,7 @@ int main()
                     if (pressed & (NUVIO_BTN_DOWN | NUVIO_BTN_CROSS | NUVIO_BTN_CIRCLE)) { nav = false; music.enter_from_top(); }
                 } else if (music.input(pressed).kind == ui::Action::ToNav) nav = true;
                 if (music.take_menu_open()) menu.show(); // Header gear; Options is the shortcut.
-                if (music.take_player_open() && audio_generation == generation && !song_id.empty() &&
-                        (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused)) {
+                if (music.take_player_open() && session_bar) {
                     if (audio.state == app::AudioState::paused) {
                         Command c; c.kind = Command::Resume;
                         if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet");
