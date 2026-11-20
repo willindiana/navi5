@@ -9,6 +9,7 @@ The RELEASE build workflow is separate: [CI_RELEASE.md](CI_RELEASE.md).
 |---|---|---|
 | `host-tests.yml` (Forgejo) | PR to `master`, push to `master`, manual | Gate: offline checks must pass |
 | `navidrome-live.yml` (GitHub) | Mondays 06:17 UTC, manual | Early warning: real Navidrome servers |
+| `pr-checks.yml` (Forgejo) | PR to `master` (not `WIP:`), on edit too | Gate: the PR's PS5 test note (`scripts/check-pr-test-note.py`, rules in AGENTS.md) |
 
 ## Host checks (`scripts/ci-host-tests.sh`)
 
