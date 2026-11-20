@@ -102,8 +102,14 @@ int main(int argc, char **argv) {
             check("localhost", path, 302, 8)
         assert len(hits) == count + len(redirect), "redirect followed"
         assert not any("/sink" in path for _, path in hits), "credential destination reached"
+        # Names are resolved before curl runs (curl_resolve.h); one that does not
+        # resolve is a connection failure, never an initialization error.
+        count = len(hits)
+        check("navi5-unresolvable.invalid", "/ok", 0, 3)
+        assert len(hits) == count, "unresolvable name reached a server"
         print("PASS: trusted TLS, hostname/untrusted/missing/invalid CA refusal; "
-              "downgrade/cross-origin/relative redirects refused; sanitized errors")
+              "downgrade/cross-origin/relative redirects refused; unresolvable name "
+              "is a connection failure; sanitized errors")
     finally:
         for server in servers:
             server.shutdown()

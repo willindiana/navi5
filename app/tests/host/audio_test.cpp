@@ -69,6 +69,17 @@ int main(int argc, char **argv) {
         assert(sink.blocks >= 5 && sink.peak > .01);
         assert(sink.opens == sink.closes);
     }
+    // A body cut off halfway after a valid 200 resumes with a ranged request and
+    // plays to the end, as through a proxy that dropped a long-paused stream.
+    {
+        sink.blocks = 0; sink.peak = 0;
+        assert(p.start(base + "/drop"));
+        auto s = finish(p);
+        if (s.state != app::AudioState::ended) std::cerr << "/drop: " << s.error << " curl=" << s.curl_result << '\n';
+        assert(s.state == app::AudioState::ended && s.error_code == app::AudioError::none);
+        assert(s.position > .20 && s.position < .40 && sink.peak > .01);
+        assert(sink.opens == sink.closes);
+    }
     for (auto path : {"/bad", "/redirect", "/denied", "/unauthorized", "/partial", "/missing"}) {
         assert(p.start(base + path));
         auto s = finish(p);

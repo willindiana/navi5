@@ -8,6 +8,7 @@
 #include "jf_http.h"
 #include "curl_diag.h"
 #include "../curl_sockopt.h"
+#include "../curl_resolve.h"
 
 #include <curl/curl.h>
 #include <cstdint>
@@ -119,7 +120,9 @@ HttpResponse http_request(const std::string &method, const std::string &url,
 #ifdef NAVI5_DEV_TOOLS
     trace_begin();
 #endif
-    const CURLcode rc = configured ? curl_easy_perform(c) : CURLE_BAD_FUNCTION_ARGUMENT;
+    curl_slist *pinned = nullptr;
+    CURLcode rc = configured ? pin_resolve(c, url, &pinned) : CURLE_BAD_FUNCTION_ARGUMENT;
+    if (rc == CURLE_OK) rc = curl_easy_perform(c);
 #ifdef NAVI5_DEV_TOOLS
     trace_live(5, 1, 0, 0, static_cast<int>(rc), 0);
     curl_diag.sockets = socket_trace;
@@ -151,13 +154,14 @@ HttpResponse http_request(const std::string &method, const std::string &url,
         case CURLE_SSL_CACERT_BADFILE: res.failure = TransportFailure::CaBundle; break;
         case CURLE_PEER_FAILED_VERIFICATION: res.failure = TransportFailure::Untrusted; break;
         case CURLE_SSL_CONNECT_ERROR: res.failure = TransportFailure::Tls; break;
-        case CURLE_BAD_FUNCTION_ARGUMENT: res.failure = TransportFailure::Configuration; break;
+        case CURLE_BAD_FUNCTION_ARGUMENT: case CURLE_URL_MALFORMAT: res.failure = TransportFailure::Configuration; break;
         default: res.failure = TransportFailure::Other; break;
         }
         res.error = "HTTP transport failed";
     }
-    curl_slist_free_all(hl);
     curl_easy_cleanup(c);
+    curl_slist_free_all(hl);
+    curl_slist_free_all(pinned);
 #ifdef NAVI5_DEV_TOOLS
     trace_live(5, 3, 0, 0, 0, 0);
 #endif
