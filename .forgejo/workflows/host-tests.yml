@@ -14,9 +14,6 @@ jobs:
     # Reuse the published CI image for this ci/ content, or build and push it.
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    permissions:
-      contents: read
-      packages: write
     outputs:
       image: ${{ steps.image.outputs.image }}
     steps:
@@ -25,15 +22,15 @@ jobs:
           persist-credentials: false
       - id: image
         env:
-          CI_TOKEN: ${{ github.token }}
+          CI_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         run: bash scripts/ci-image.sh
   host:
     needs: image
     container:
       image: ${{ needs.image.outputs.image }}
       credentials:
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.PACKAGES_TOKEN }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
