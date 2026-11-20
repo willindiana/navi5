@@ -993,9 +993,16 @@ void enqueue_worker()
     r = answer(enqueue(Kind::Album, "extra", "Extra"));
     assert(r.ok && r.count == 2 && r.title.empty());
     assert(shows({"B", "C", "Y", "Z", "E1", "E2", "D2", "D1"}) && replaced() == base + 3);
-    // Failed assembly adds nothing.
+    // An accepted album Play Next is recorded in Recently played, like Play.
+    uint64_t recents;
+    { std::lock_guard<std::mutex> l(box->mutex);
+      assert(!box->recent_contexts.empty() && box->recent_contexts.front().kind == Kind::Album &&
+             box->recent_contexts.front().id == "extra");
+      recents = box->history_revision; }
+    // Failed assembly adds nothing, to the queue or the history.
     r = answer(enqueue(Kind::Album, "bad", "Bad"));
     assert(!r.ok && r.count == 0 && !r.playback_error.empty());
+    { std::lock_guard<std::mutex> l(box->mutex); assert(box->history_revision == recents); }
     assert(window().total == 9 && shows({"B", "C", "Y", "Z", "E1", "E2", "D2", "D1"}));
 
     // Next while an edit waits: the edit applies first, then playback moves on.
