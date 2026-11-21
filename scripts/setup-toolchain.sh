@@ -58,6 +58,35 @@ print_env() {
 
 if [[ "${1:-}" == "--env" ]]; then print_env; exit 0; fi
 
+# The CI image bakes this toolchain from pinned inputs (ci/Dockerfile) and names
+# it in NAVI5_BAKED_TOOLCHAIN. Use it only when it was built from exactly this
+# checkout's inputs (scripts/ci-inputs.sh); anything else fails, never falls back
+# to a mismatched toolchain. Without the variable, set up from scratch as usual.
+if [[ -n "${NAVI5_BAKED_TOOLCHAIN:-}" ]]; then
+    baked="${NAVI5_BAKED_TOOLCHAIN}"
+    bad() { echo "baked toolchain: $*" >&2; exit 1; }
+    [[ "${baked}" == /* && -f "${baked}/.navi5-inputs" ]] || bad "no input stamp in ${baked}"
+    want="$(bash "${ROOT}/scripts/ci-inputs.sh" --hash)"
+    have="$(cat "${baked}/.navi5-inputs")"
+    [[ "${have}" == "${want}" ]] ||
+        bad "built from inputs ${have:0:16}, this checkout needs ${want:0:16}: use the CI image tagged ${want:0:16} (scripts/ci-image.sh), or unset NAVI5_BAKED_TOOLCHAIN to set up from scratch"
+    for f in ps5-payload-sdk/bin/prospero-clang ps5-payload-sdk/target/user/homebrew/.pacbrew-v0.39 \
+             host-zlib/lib/libz.a av1-prefix/lib/libdav1d.a av1-prefix/lib/libavcodec.a; do
+        [[ -e "${baked}/${f}" ]] || bad "incomplete, missing ${f}"
+    done
+    [[ -d "${baked}/source-cache" ]] || bad "incomplete, missing source-cache"
+    if [[ -L "${TC}" ]]; then
+        [[ "$(readlink "${TC}")" == "${baked}" ]] || bad "toolchain/ links elsewhere: $(readlink "${TC}")"
+    elif [[ -e "${TC}" ]]; then
+        bad "toolchain/ already exists in the checkout; remove it or unset NAVI5_BAKED_TOOLCHAIN"
+    else
+        ln -s "${baked}" "${TC}"
+    fi
+    echo "==> using baked toolchain ${baked} (inputs ${want:0:16})"
+    echo "    eval \"\$(scripts/setup-toolchain.sh --env)\""
+    exit 0
+fi
+
 source "$ROOT/scripts/download.sh"
 
 if [[ "${OS}" == "Darwin" ]]; then

@@ -17,6 +17,8 @@ python3 -B scripts/test-verify-tag-source.py
 python3 -B scripts/test-ci-release.py
 python3 -B scripts/test-source-privacy.py
 python3 -B scripts/test-prepare-ci-inputs.py
+# In the CI image this links its baked toolchain after checking the input stamp;
+# elsewhere it sets up from scratch. Source pins are verified again below either way.
 bash scripts/setup-toolchain.sh
 eval "$(bash scripts/setup-toolchain.sh --env)"
 command -v llvm-readelf >/dev/null

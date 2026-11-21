@@ -16,12 +16,24 @@ code from outside contributors. Manual dispatch targets master; artifact upload
 defaults to false and true needs separate owner approval.
 
 Both workflows run their heavy job in a CI image (`ci/Dockerfile`: the runner's
-default job image plus the build and test packages). Its tag is a hash of `ci/`.
+default job image plus the build and test packages). Its tag is a hash of `ci/`
+plus the toolchain inputs named in `ci/toolchain-inputs` (`scripts/ci-inputs.sh`).
 A short `image` job (`scripts/ci-image.sh`) reuses the published tag from the
-Forgejo container registry, or builds and pushes it when `ci/` changed, logging in
+Forgejo container registry, or builds and pushes it when an input changed, from a
+staging context holding only those files, logging in
 with `PACKAGES_TOKEN`; the heavy jobs pull it with the same token. The
 registry is the running Forgejo instance, taken from the job's server URL. Add a dependency in
 `ci/Dockerfile`, never as an install step in a workflow.
+
+The image also bakes the PS5 toolchain at `/opt/navi5/toolchain` (payload SDK with
+the merged pacbrew sysroot, host zlib, the AV1 prefix and the checksum-verified
+third-party source archives), stamped with the input hash and named by
+`NAVI5_BAKED_TOOLCHAIN`. `scripts/setup-toolchain.sh` links it as `toolchain/` only
+when the stamp matches the checkout and fails otherwise; without the variable
+(local development) it sets up from scratch as before. The RELEASE build still
+verifies every source pin and rebuilds its release FFmpeg and modified FriBidi.
+A new script the bake runs goes into `ci/toolchain-inputs`;
+`scripts/test-ci-image.py` fails when one is missing.
 
 Native master protections must require PRs, passing observed exact CI contexts,
 up-to-date branches, no direct/force pushes or deletion, no configured admin

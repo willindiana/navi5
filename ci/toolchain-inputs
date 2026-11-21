@@ -1,0 +1,13 @@
+# Navi5 — repository files the CI image's baked PS5 toolchain is built from.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# One path per line. The CI image tag and the baked toolchain's stamp are a hash
+# of every file in ci/ plus these files (scripts/ci-inputs.sh); the image build
+# context holds exactly that set. scripts/test-ci-image.py fails when a script
+# the bake runs is missing here.
+scripts/ci-inputs.sh
+scripts/setup-toolchain.sh
+scripts/download.sh
+scripts/build-av1.sh
+scripts/prepare-ci-inputs.py
+scripts/source-inputs.json
