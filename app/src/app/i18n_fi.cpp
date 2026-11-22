@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &finnish_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Toisto pysähtyy ja tallennettu kirjautuminen poistetaan konsolista. API-avain on edelleen voimassa palvelimella, kunnes poistat soittimen ”Navi5 (PS5)” Navidromesta. Navi5:llä ei ole enää salasanaa, eikä se voi mitätöidä avainta."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Toisto pysähtyy ja tallennettu kirjautuminen poistetaan konsolista."},
         {"QR-paring er stoppet.", "QR-paritus on pysäytetty."},
+        {"Start paring", "Aloita paritus"},
+        {"Avbryt paring", "Peruuta paritus"},
         {"Skriv inn server manuelt", "Anna palvelin käsin"},
         {"Logg inn på nytt", "Kirjaudu uudelleen"},
         {"Koble til", "Yhdistä"},

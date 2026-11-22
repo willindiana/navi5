@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &vietnamese_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Việc phát sẽ dừng và thông tin đăng nhập đã lưu sẽ bị xóa khỏi máy. Khóa API vẫn có hiệu lực trên máy chủ cho đến khi bạn xóa trình phát “Navi5 (PS5)” trong Navidrome. Navi5 không còn giữ mật khẩu nên không thể thu hồi khóa."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Việc phát sẽ dừng và thông tin đăng nhập đã lưu sẽ bị xóa khỏi máy."},
         {"QR-paring er stoppet.", "Ghép nối QR đã dừng."},
+        {"Start paring", "Bắt đầu ghép nối"},
+        {"Avbryt paring", "Hủy ghép nối"},
         {"Skriv inn server manuelt", "Nhập máy chủ thủ công"},
         {"Logg inn på nytt", "Đăng nhập lại"},
         {"Koble til", "Kết nối"},

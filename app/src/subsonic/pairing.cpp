@@ -70,6 +70,8 @@ std::string page(int status, const std::string &content)
         "button{display:block;width:100%;min-height:52px;margin-top:22px;font-size:18px;font-weight:700;color:#07070a;"
         "background:#b6c8be;border:0;border-radius:12px}"
         ".hint,.note{color:rgba(235,235,245,.6);font-size:13px}.note{margin:0 0 6px}"
+        ".or{display:flex;align-items:center;gap:10px;margin:16px 0 0;color:rgba(235,235,245,.6);font-size:13px;text-transform:uppercase}"
+        ".or::before,.or::after{content:'';flex:1;border-top:1px solid rgba(235,235,245,.2)}"
         ".err{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#3a1d1d;color:#ffc9c2;border:1px solid #7a3b35}"
         ".ok{color:#b6c8be}</style><main><h1>Navi5</h1>" + content + "</main></html>");
 }
@@ -243,7 +245,8 @@ std::string form_page(int status, const std::string &path, const std::string &no
         "<label for=username>Username</label><input id=username name=username type=text autocomplete=username "
         "autocapitalize=off spellcheck=false maxlength=256 value='" + escape(username) + "'>"
         "<label for=password>Password</label><input id=password name=password type=password autocomplete=current-password maxlength=1024>"
-        "<label for=api_key>API key (preferred)</label><input id=api_key name=api_key type=password autocomplete=off maxlength=1024>"
+        "<p class=or>or</p>"
+        "<label for=api_key>API key</label><input id=api_key name=api_key type=password autocomplete=off maxlength=1024>"
         "<p class=hint>An API key replaces username and password.</p>"
         "<label class=check><input name=consent type=checkbox value=yes required> I accept unencrypted HTTP pairing on this trusted LAN</label>"
         "<button>Sign in</button></form>");

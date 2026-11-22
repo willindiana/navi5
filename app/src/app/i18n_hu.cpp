@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &hungarian_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "A lejátszás leáll, és a mentett bejelentkezés törlődik a konzolról. Az API-kulcs érvényes marad a szerveren, amíg nem törlöd a „Navi5 (PS5)” lejátszót a Navidrome-ban. A Navi5 már nem ismeri a jelszót, így nem tudja visszavonni."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "A lejátszás leáll, és a mentett bejelentkezés törlődik a konzolról."},
         {"QR-paring er stoppet.", "A QR-párosítás leállt."},
+        {"Start paring", "Párosítás indítása"},
+        {"Avbryt paring", "Párosítás megszakítása"},
         {"Skriv inn server manuelt", "Szerver megadása kézzel"},
         {"Logg inn på nytt", "Bejelentkezés újra"},
         {"Koble til", "Csatlakozás"},

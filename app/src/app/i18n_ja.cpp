@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &japanese_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "再生を停止し、保存されたログイン情報を本体から削除します。APIキーは、Navidromeでプレーヤー「Navi5 (PS5)」を削除するまでサーバー上で有効です。Navi5はパスワードを保持していないため、キーを無効にできません。"},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "再生を停止し、保存されたログイン情報を本体から削除します。"},
         {"QR-paring er stoppet.", "QRペアリングは停止しています。"},
+        {"Start paring", "ペアリングを開始"},
+        {"Avbryt paring", "ペアリングをキャンセル"},
         {"Skriv inn server manuelt", "サーバーを手動で入力"},
         {"Logg inn på nytt", "もう一度サインイン"},
         {"Koble til", "接続"},

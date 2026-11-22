@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &greek_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Η αναπαραγωγή σταματά και η αποθηκευμένη σύνδεση διαγράφεται από την κονσόλα. Το κλειδί API παραμένει έγκυρο στον διακομιστή μέχρι να διαγράψετε το πρόγραμμα αναπαραγωγής «Navi5 (PS5)» στο Navidrome. Το Navi5 δεν έχει πλέον τον κωδικό και δεν μπορεί να το ανακαλέσει."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Η αναπαραγωγή σταματά και η αποθηκευμένη σύνδεση διαγράφεται από την κονσόλα."},
         {"QR-paring er stoppet.", "Η σύζευξη QR έχει σταματήσει."},
+        {"Start paring", "Έναρξη σύζευξης"},
+        {"Avbryt paring", "Ακύρωση σύζευξης"},
         {"Skriv inn server manuelt", "Χειροκίνητη εισαγωγή διακομιστή"},
         {"Logg inn på nytt", "Σύνδεση ξανά"},
         {"Koble til", "Σύνδεση"},

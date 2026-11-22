@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &spanish_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "La reproducción se detiene y el inicio de sesión guardado se borra de la consola. La clave de API sigue siendo válida en el servidor hasta que elimines el reproductor «Navi5 (PS5)» en Navidrome. Navi5 ya no tiene la contraseña y no puede revocarla."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "La reproducción se detiene y el inicio de sesión guardado se borra de la consola."},
         {"QR-paring er stoppet.", "El emparejamiento por QR está detenido."},
+        {"Start paring", "Iniciar emparejamiento"},
+        {"Avbryt paring", "Cancelar emparejamiento"},
         {"Skriv inn server manuelt", "Introducir servidor manualmente"},
         {"Logg inn på nytt", "Iniciar sesión de nuevo"},
         {"Koble til", "Conectar"},

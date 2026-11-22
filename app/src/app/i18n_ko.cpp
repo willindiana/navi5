@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &korean_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "재생이 중지되고 저장된 로그인이 콘솔에서 삭제됩니다. API 키는 Navidrome에서 ‘Navi5 (PS5)’ 플레이어를 삭제할 때까지 서버에서 유효합니다. Navi5에는 더 이상 비밀번호가 없어 키를 취소할 수 없습니다."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "재생이 중지되고 저장된 로그인이 콘솔에서 삭제됩니다."},
         {"QR-paring er stoppet.", "QR 페어링이 중지되었습니다."},
+        {"Start paring", "페어링 시작"},
+        {"Avbryt paring", "페어링 취소"},
         {"Skriv inn server manuelt", "서버 직접 입력"},
         {"Logg inn på nytt", "다시 로그인"},
         {"Koble til", "연결"},
