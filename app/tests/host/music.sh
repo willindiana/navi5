@@ -24,4 +24,5 @@ grep -Fq 'ui::draw_pad_hints(1750, 1018, {{ui::PadButton::Touchpad, T("Fullskjer
 ! grep -Fq 'Triangle: åpne spiller' "$root/app/src/main.cpp"
 # Retained metadata after Stop must not paint a bar over the idle grid's third row.
 grep -Fq '} else if (music.active_session()) {' "$root/app/src/main.cpp"
-grep -Fq 'music.session(audio_generation == generation && !song_id.empty() && (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused),' "$root/app/src/main.cpp"
+grep -Fq 'music.session(session_bar, audio.state == app::AudioState::paused, track, artist, artwork);' "$root/app/src/main.cpp"
+grep -Fq 'const bool session_bar = ui::show_session_bar(audio_generation == generation, !song_id.empty(), audio.state);' "$root/app/src/main.cpp"

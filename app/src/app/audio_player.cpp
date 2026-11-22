@@ -17,6 +17,7 @@
 #include <vector>
 #include <curl/curl.h>
 #include "../curl_sockopt.h"
+#include "../curl_resolve.h"
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -73,6 +74,7 @@ void require(bool ok, const char *message) {
 struct Stream {
     CURL *easy = nullptr;
     CURLM *multi = nullptr;
+    curl_slist *pinned = nullptr; // CURLOPT_RESOLVE entry; outlives easy.
     std::atomic<bool> &cancel;
     std::array<unsigned char, 256 * 1024> bytes{};
     size_t used = 0;
@@ -81,6 +83,12 @@ struct Stream {
     int curl_result = 0, http_status = 0, multi_result = 0;
     AudioMultiOp multi_op = AudioMultiOp::none;
     const char *message = "HTTP transfer failed";
+    // Set on a stream that resumes a broken one: its failure, reported instead
+    // when the resume itself fails before delivering a byte.
+    bool resumed = false;
+    int prior_curl = 0, prior_http = 0;
+    const char *prior_message = nullptr;
+    int resumes = 0; // On the root: resumes made for this track.
     std::string url;
     int64_t offset = 0, requested_offset = 0, length = -1, range_start = -1;
     int64_t range_end = -1, content_length = -1, received = 0, known_length = -1;
@@ -155,6 +163,7 @@ struct Stream {
         if (multi && easy) curl_multi_remove_handle(multi, easy);
         if (easy) curl_easy_cleanup(easy);
         if (multi) curl_multi_cleanup(multi);
+        curl_slist_free_all(pinned);
     }
     static size_t body(char *p, size_t size, size_t count, void *opaque) {
         auto &s = *static_cast<Stream *>(opaque);
@@ -196,6 +205,7 @@ struct Stream {
             check_easy(curl_easy_setopt(easy, key, value), "HTTP configuration failed");
         };
         opt(CURLOPT_URL, url.c_str());
+        check_easy(jf::pin_resolve(easy, url, &pinned), "Server name not resolved");
         opt(CURLOPT_PROTOCOLS_STR, "http,https");
         opt(CURLOPT_REDIR_PROTOCOLS_STR, "https");
         opt(CURLOPT_FOLLOWLOCATION, 0L);
@@ -261,6 +271,32 @@ struct Stream {
             return pos;
         } catch (...) { return AVERROR(EIO); }
     }
+    // Hardware, 2026-11-18, through an HTTPS reverse proxy: the next track's
+    // stream, opened early for gapless playback and paused once its buffer was
+    // full, sat idle for minutes; the connection was dropped meanwhile, and the
+    // track failed (curl 56) a few seconds in, once the buffer ran dry. A body
+    // that breaks after a validated 200/206 continues from the next byte with a
+    // ranged request, which body() accepts only with the matching Content-Range.
+    // Each resume must have made progress; at most 8 per track.
+    bool resume(const Stream &s) {
+        if (cancel || resumes >= 8 || s.error != AudioError::transport || !s.received ||
+            !s.valid_extent() || (s.http_status != 200 && s.http_status != 206) ||
+            s.length <= 0 || s.offset >= s.length)
+            return false;
+        ++resumes;
+        const int64_t at = s.offset, length = s.length;
+        const int curl = s.curl_result, http = s.http_status;
+        const char *why = s.message;
+        try {
+            auto candidate = std::make_unique<Stream>(cancel);
+            candidate->known_length = length;
+            candidate->resumed = true;
+            candidate->prior_curl = curl; candidate->prior_http = http; candidate->prior_message = why;
+            candidate->open(url, at);
+            replacement = std::move(candidate); // May destroy s.
+            return true;
+        } catch (...) { return false; }
+    }
     static int read(void *opaque, uint8_t *out, int capacity) {
         auto &root = *static_cast<Stream *>(opaque);
         auto &s = root.replacement ? *root.replacement : root;
@@ -274,7 +310,13 @@ struct Stream {
                 s.offset += n;
                 return n;
             }
-            if (s.done) return s.failed ? AVERROR(EIO) : AVERROR_EOF;
+            if (s.done) {
+                if (s.failed && root.resume(s)) return read(opaque, out, capacity);
+                if (s.failed && s.resumed && !s.received) {
+                    s.curl_result = s.prior_curl; s.http_status = s.prior_http; s.message = s.prior_message;
+                }
+                return s.failed ? AVERROR(EIO) : AVERROR_EOF;
+            }
             if (s.paused) {
                 s.paused = false;
                 CURLcode result = curl_easy_pause(s.easy, CURLPAUSE_CONT);

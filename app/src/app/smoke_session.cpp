@@ -507,6 +507,9 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                   std::shared_ptr<AudioPlayer> injected, subsonic::HttpSend send)
 {
     if (!jelly5::spawn_media([box] {
+#ifdef NAVI5_DEV_TOOLS
+        jf::request_tag = 'B';
+#endif
         Library library;
         uint64_t active = 0;
         std::shared_ptr<const subsonic::Client> account;
@@ -594,6 +597,9 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
         }
     })) return false;
     bool started = jelly5::spawn_media([box, http = std::move(http), injected = std::move(injected), send = std::move(send)] {
+#ifdef NAVI5_DEV_TOOLS
+        jf::request_tag = 'P';
+#endif
         auto owned = injected ? injected : std::make_shared<AudioPlayer>();
         AudioPlayer &player = *owned;
         std::shared_ptr<subsonic::Client> client;
@@ -828,7 +834,8 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                         }
                         if (enqueue_job) { result.playback_error = "Vent til forrige kø-oppdatering er ferdig"; break; }
                         // Same bounded, atomic assembly as Play all (Library::queue), on a
-                        // scratch Library: recent-context and detail caches stay untouched.
+                        // scratch Library: detail caches stay untouched. Its context is
+                        // recorded in Recently played once the tracks are accepted.
                         PlayIntent intent;
                         intent.context_id = c.item.id;
                         intent.context = c.item.kind == Kind::Album ? View::AlbumTracks :
@@ -848,7 +855,7 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                                 }, &error);
                                 Command done; done.kind = Command::EnqueueReady; done.generation = generation;
                                 done.request.token = token; done.job = job;
-                                if (ok) done.songs = assembled.tracks();
+                                if (ok) { done.songs = assembled.tracks(); done.item = scratch.context; }
                                 if (done.songs.empty()) done.error = error;
                                 // Bypasses send(): must not be refused by the UI's 16-command cap.
                                 std::lock_guard<std::mutex> lock(box->mutex);
@@ -865,6 +872,15 @@ bool start_worker(const std::shared_ptr<Mailbox> &box, subsonic::HttpGet http,
                         post = true; result.kind = Command::Enqueue;
                         if (c.songs.empty()) result.playback_error = c.error;
                         else accept_enqueue(std::move(c.songs), result);
+                        if (result.ok && !c.item.id.empty()) {
+                            {
+                                std::lock_guard<std::mutex> lock(box->mutex);
+                                history.promote(std::move(c.item));
+                                box->recent_contexts = history.items(); ++box->history_revision;
+                                box->first_pages.erase(View::Home);
+                            }
+                            history.save(); // Worker I/O, outside the mailbox lock.
+                        }
                         break;
                     case Command::QueueMove:
                         if (edits.size() < 64) edits.push_back({QueueEdit::Move, {}, c.uid, c.anchor});

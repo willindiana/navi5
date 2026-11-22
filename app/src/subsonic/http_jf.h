@@ -9,13 +9,18 @@
 
 namespace subsonic {
 
+/* Navi5 must work with many server setups, slow ones included (spun-down
+ * disks, small boards, remote proxies), so each request may take up to 30 s.
+ * Hardware, 2026-11-19: a cold library took over 30 s for its first album list. */
+constexpr int request_timeout_s = 30;
+
 /* Console: jf_http_avio.cpp; host: tests/host/jf_http_curl.cpp.
  * No logging: URL contains credentials. Client receives generic transport
  * errors rather than forwarding diagnostics that might contain the URL. */
 inline HttpResponse http_send_jf(const std::string &method, const std::string &url,
                                 const std::vector<std::string> &headers, const std::string &body)
 {
-    const auto r = jf::http_request(method, url, headers, body, 15);
+    const auto r = jf::http_request(method, url, headers, body, request_timeout_s);
     LoginFailure failure = LoginFailure::None;
     switch (r.failure) {
     case jf::TransportFailure::None: break;
@@ -32,9 +37,23 @@ inline HttpResponse http_send_jf(const std::string &method, const std::string &u
     return {r.status, r.body, r.error.empty() ? "" : "HTTP transport failed", failure};
 }
 
+/* A server waking from idle can take longer than one request's timeout:
+ * hardware, 2026-11-18, the first request after a quiet spell took 8-15 s
+ * behind an HTTPS proxy (a Mac saw 8.3 s, later ones 0.03 s), so the first
+ * library page or saved login after launch failed. Read-only requests are tried
+ * once more after a timeout (up to a minute in all); the first attempt wakes
+ * the server. */
+template <class Get>
+HttpResponse retry_after_timeout(const Get &once)
+{
+    HttpResponse r = once();
+    if (r.failure == LoginFailure::Timeout) r = once();
+    return r;
+}
+
 inline HttpResponse http_get_jf(const std::string &url)
 {
-    return http_send_jf("GET", url, {}, "");
+    return retry_after_timeout([&] { return http_send_jf("GET", url, {}, ""); });
 }
 
 } // namespace subsonic

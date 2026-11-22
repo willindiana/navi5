@@ -18,6 +18,7 @@
 #include "ui/pad_route.h"
 #include "ui/queue_view.h"
 #include "ui/player_state.h"
+#include "ui/toast.h"
 #include <cmath>
 #include <limits>
 #include "app/settings.h"
@@ -245,6 +246,7 @@ int main()
     uint64_t enqueue_serial = 0;
     std::string toast; // Short confirmation, e.g. Play Next. Fixed local text plus titles only.
     double toast_until = 0;
+    ui::Anim toast_alpha;
     ui::MusicScreen music;
     ui::PairingView pairing_view;
     std::shared_ptr<PairingWork> pairing_work;
@@ -462,6 +464,7 @@ int main()
         const bool seek_active = audio_generation == generation &&
             (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused);
         player_view.sync(playback_revision, audio.track, seek_active);
+        const bool session_bar = ui::show_session_bar(audio_generation == generation, !song_id.empty(), audio.state);
         const bool can_seek = ui::PlayerState::seekable(audio.duration, audio.position, seek_active,
             audio.seeking || audio.track != audio.next_track);
         uint32_t pressed = keyboard || ime::active() || (!connected && saved_work) ? 0 : in.pressed;
@@ -593,8 +596,7 @@ int main()
                 qr_needed_was = needs_pad;
             } else qr_needed_was = false;
         } else {
-            music.session(audio_generation == generation && !song_id.empty() && (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused),
-                          audio.state == app::AudioState::paused, track, artist, artwork);
+            music.session(session_bar, audio.state == app::AudioState::paused, track, artist, artwork);
             if (queue_view.visible() && (!player_view.visible || !seek_active)) queue_view.close();
             // One table for the global buttons (ui/pad_route.h); the rest goes to the focused view.
             const ui_pad_context pad{player_view.visible, queue_view.visible(), menu.open(), music.searching(), !song_id.empty()};
@@ -670,8 +672,7 @@ int main()
                     if (pressed & (NUVIO_BTN_DOWN | NUVIO_BTN_CROSS | NUVIO_BTN_CIRCLE)) { nav = false; music.enter_from_top(); }
                 } else if (music.input(pressed).kind == ui::Action::ToNav) nav = true;
                 if (music.take_menu_open()) menu.show(); // Header gear; Options is the shortcut.
-                if (music.take_player_open() && audio_generation == generation && !song_id.empty() &&
-                        (audio.state == app::AudioState::playing || audio.state == app::AudioState::paused)) {
+                if (music.take_player_open() && session_bar) {
                     if (audio.state == app::AudioState::paused) {
                         Command c; c.kind = Command::Resume;
                         if (!send(std::move(c))) note = T("Kunne ikke starte arbeidet");
@@ -752,8 +753,17 @@ int main()
                 ui::draw_pad_hints(1750, 1018, {{ui::PadButton::Touchpad, T("Fullskjermspiller")}}, 2, 26);
                 ui::draw_mini_player_progress(audio.position, audio.duration);
             }
-            if (!toast.empty() && now < toast_until)
-                gfx::text(1820, 100, toast, {gfx::Medium, 24, 760}, ui::kText, 2);
+            // Glass pill under the header row (never over tabs, Search or the gear);
+            // the menu drops into the same corner, so it hides the pill while open.
+            toast_alpha.to(!toast.empty() && now < toast_until && !menu.open() ? 1.f : 0.f);
+            toast_alpha.step(dt);
+            if (!toast.empty() && toast_alpha.value > 0.01f) {
+                const gfx::TextStyle style{gfx::Medium, 24, ui::kToastMaxText};
+                const auto box = ui::toast_box(gfx::text_width(toast, style), player_view.visible);
+                const float a = toast_alpha.value, lift = 12.f * (1.f - a);
+                ui::glass_panel({box.x, box.y - lift, box.w, box.h}, box.h / 2, a);
+                gfx::text(box.x + box.w - ui::kToastPad, box.y - lift + 36, toast, style, ui::alpha(ui::kText, a), 2);
+            }
             if (menu.state == ui::OptionsMenu::State::Menu) {
                 // Drops down under the header gear (x 1744..1820).
                 ui::glass_panel({1400, 146, 420, 104}, 28);
@@ -831,6 +841,20 @@ int main()
         if (!connected) gfx::text(960, 1020, import_line, {gfx::Medium, 20, 1800}, ui::kText2, 1);
         if (!connected) gfx::text(960, 1050, jf::live_progress.line(), {gfx::Medium, 20, 1800}, ui::kText2, 1);
         if (!connected) gfx::text(960, 1076, jf::live_progress.ring_line(), {gfx::Medium, 18, 1880}, ui::kText2, 1);
+        // Recent requests (all threads) while a library page loads or failed to.
+        bool library_trouble = music.state().status() != ui::music::Status::Ready;
+        for (const auto &section : music.state().page().sections) library_trouble = library_trouble || !section.ok;
+        if (connected && !player_view.visible && library_trouble) {
+            const std::string rows = jf::request_log.lines();
+            float y = 700;
+            for (size_t at = 0; at < rows.size();) {
+                const size_t end = rows.find('\n', at);
+                gfx::text(140, y, rows.substr(at, end - at), {gfx::Medium, 20, 1700}, ui::kText2);
+                y += 28;
+                if (end == std::string::npos) break;
+                at = end + 1;
+            }
+        }
 #endif
         gfx::collect(); gfx::end_frame();
     }

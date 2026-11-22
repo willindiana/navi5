@@ -2,8 +2,8 @@
 
 Development and pull requests happen on the maintainer's self-hosted Forgejo.
 It push-mirrors every branch and tag to GitHub, which publishes releases. All
-workflows use SHA-pinned actions, `persist-credentials: false` and no stored
-secrets. The Forgejo repository is private and only the maintainer's own
+workflows use SHA-pinned actions and `persist-credentials: false`; the only
+stored secret is `PACKAGES_TOKEN` for the CI image (below). The Forgejo repository is private and only the maintainer's own
 branches open PRs there; its runner never executes code from outside contributors.
 
 ## Every pull request (Forgejo)
@@ -19,6 +19,28 @@ branches open PRs there; its runner never executes code from outside contributor
     `app/sce_sys/param.json` must be the last released version bumped that way
     and `docs/releases/vX.Y.Z.md` must exist. `release:skip` keeps the version
     unchanged, and is refused while `master` carries an unreleased version.
+
+## CI image
+
+Both Forgejo workflows run their heavy job in a CI image (`ci/Dockerfile`: the
+runner's default job image plus the build and test packages). Its tag is a hash
+of `ci/` plus the toolchain inputs named in `ci/toolchain-inputs`
+(`scripts/ci-inputs.sh`). A short `image` job (`scripts/ci-image.sh`) reuses the
+published tag from the Forgejo container registry, or builds and pushes it when an
+input changed, from a staging context holding only those files. It logs in with
+`PACKAGES_TOKEN`, the owner's shared package read/write secret and the only stored
+secret any workflow uses; the heavy jobs pull the image with the same token. Add a
+dependency in `ci/Dockerfile`, never as an install step in a workflow.
+
+The image also bakes the PS5 toolchain at `/opt/navi5/toolchain` (payload SDK with
+the merged pacbrew sysroot, host zlib, the AV1 prefix and the checksum-verified
+third-party source archives), stamped with the input hash and named by
+`NAVI5_BAKED_TOOLCHAIN`. `scripts/setup-toolchain.sh` links it as `toolchain/` only
+when the stamp matches the checkout and fails otherwise; without the variable
+(local development) it sets up from scratch as before. The RELEASE build still
+verifies every source pin and rebuilds its release FFmpeg and modified FriBidi.
+A new script the bake runs goes into `ci/toolchain-inputs`;
+`scripts/test-ci-image.py` fails when one is missing.
 
 ## Merge to master
 

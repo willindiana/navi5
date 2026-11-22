@@ -10,6 +10,7 @@
 #include "ui/pad_route.h"
 #include "ui/player_state.h"
 #include "ui/queue_view.h"
+#include "ui/toast.h"
 #include <cassert>
 #include <iostream>
 
@@ -291,5 +292,16 @@ int main()
     for (int i = 0; i < 2600; ++i) { long_view.input(NUVIO_BTN_L1, 2); long_view.sync(big.window(long_view.wanted_first()), 2); }
     assert(long_view.cursor() == 0 && long_view.row(0)->title == "T0");
 
-    std::cout << "PASS: v1 button routing, logout menu, login focus, control row, queue view carry/remove and 20000-entry window\n";
+    // Toast pill: browse keeps it below the header controls (tabs, Search and the
+    // gear span y 58..134; gear x 1744..1820); the fullscreen player keeps it above
+    // the queue panel (y 110). Width is clamped and the pill stays on the canvas.
+    for (float width : {0.f, 120.f, 400.f, 760.f, 5000.f, NAN, INFINITY}) {
+        const auto browse = ui::toast_box(width, false);
+        assert(browse.y >= 134 + 8 && browse.y + browse.h < 238); // Under the header, above Home rows.
+        assert(browse.x >= 0 && browse.x + browse.w <= 1820 && browse.w <= 760 + 2 * ui::kToastPad);
+        const auto full = ui::toast_box(width, true);
+        assert(full.y >= 0 && full.y + full.h <= 110 && full.x >= 0 && full.x + full.w <= 1820);
+    }
+    assert(ui::toast_box(120, false).x + ui::toast_box(120, false).w == 1820); // Right-aligned with the gear.
+    std::cout << "PASS: v1 button routing, logout menu, login focus, control row, queue view carry/remove and 20000-entry window, toast placement\n";
 }

@@ -2,7 +2,8 @@
 # Navi5 — CI workflow policy, offline. SPDX-License-Identifier: GPL-3.0-or-later
 """Every workflow: no pull_request_target or tag triggers, read-only contents for
 pull-request workflows, actions pinned to a commit, checkout without persisted
-credentials, no secrets, a job timeout. Pull requests live on Forgejo, so the PR
+credentials, a job timeout, and no secrets except the shared package token
+(Forgejo only, for the CI image registry login). Pull requests live on Forgejo, so the PR
 checks are Forgejo workflows; GitHub is a push mirror and runs no PR workflows."""
 from pathlib import Path
 import re
@@ -28,8 +29,13 @@ for host in HOSTS:
             require(re.search(r"^permissions:\n\s+contents: read\s*$", code, re.M), f"{name}: pull-request workflow without read-only contents")
         if name != f"{HOSTS[1]}/release.yml":
             require(not re.search(r"^\s+tags:", code, re.M), f"{name}: tag trigger")
-        require("secrets." not in code, f"{name}: uses secrets")
+        for line in code.splitlines():
+            if "secrets." in line:
+                allowed = host == HOSTS[0] and re.fullmatch(
+                    r"\s+(CI_TOKEN|password): \$\{\{ secrets\.PACKAGES_TOKEN \}\}", line)
+                require(allowed, f"{name}: secret outside the CI image registry login: {line.strip()}")
         require("timeout-minutes:" in code, f"{name}: no job timeout")
+        require("docker.sock" not in code, f"{name}: host Docker socket")
         for action in re.findall(r"uses:\s*(\S+)", code):
             require(re.search(r"@[0-9a-f]{40}$", action), f"{name}: action not pinned to a commit: {action}")
         if "checkout@" in code:
