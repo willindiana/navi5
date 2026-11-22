@@ -20,7 +20,7 @@ jobs:
         env:
           ND_LOGLEVEL: warn
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0, Node 24
         with:
           persist-credentials: false
       - name: Host dependencies
