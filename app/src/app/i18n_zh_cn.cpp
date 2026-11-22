@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &chinese_simplified_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "播放将停止，保存的登录信息将从主机删除。在你于 Navidrome 中删除播放器“Navi5 (PS5)”之前，API 密钥在服务器上仍然有效。Navi5 已不再保存密码，无法撤销该密钥。"},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "播放将停止，保存的登录信息将从主机删除。"},
         {"QR-paring er stoppet.", "二维码配对已停止。"},
+        {"Start paring", "开始配对"},
+        {"Avbryt paring", "取消配对"},
         {"Skriv inn server manuelt", "手动输入服务器"},
         {"Logg inn på nytt", "重新登录"},
         {"Koble til", "连接"},

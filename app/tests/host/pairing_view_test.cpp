@@ -35,6 +35,9 @@ namespace ui {
 void glass_panel(const gfx::Rect &, float, float, bool, float) {}
 void Drop::to(const gfx::Rect &, int, float, float) {}
 void Drop::draw(float, float, bool *, float) {}
+std::vector<PadHint> hints;
+float draw_pad_hints(float, float, const std::vector<PadHint> &row, int, float, float)
+{ hints.insert(hints.end(), row.begin(), row.end()); return 0; }
 }
 int main()
 {
@@ -57,8 +60,13 @@ int main()
     assert(std::find(texts.begin(), texts.end(), "HTTP-paring er ukryptert. Bruk kun et betrodd lokalnett.") != texts.end());
     white = black = 0;
     texts.clear(); text_lines.clear();
+    ui::hints.clear();
     v.draw(120, 0.016f);
     assert(v.state() == V::State::Expired && white == 0 && black == 0);
+    // Button glyphs, never the words "Cross"/"Circle" (owner, v1.0 hardware pass).
+    assert(ui::hints.size() == 2 && ui::hints[0].button == ui::PadButton::Cross && ui::hints[0].label == "Prøv igjen");
+    assert(ui::hints[1].button == ui::PadButton::Circle && ui::hints[1].label == "Avbryt paring");
+    for (const auto &s : texts) assert(s.find("Cross") == std::string::npos && s.find("Circle") == std::string::npos);
     // Wrapped rasters left-align their lines: a status that fits one line must be
     // drawn as one line or it sits left of the QR area's centre (seen on hardware).
     {

@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &ukrainian_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Відтворення зупиниться, а збережений вхід буде видалено з консолі. Ключ API залишається дійсним на сервері, доки ви не видалите програвач «Navi5 (PS5)» у Navidrome. Navi5 більше не має пароля і не може відкликати ключ."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Відтворення зупиниться, а збережений вхід буде видалено з консолі."},
         {"QR-paring er stoppet.", "QR-сполучення зупинено."},
+        {"Start paring", "Почати сполучення"},
+        {"Avbryt paring", "Скасувати сполучення"},
         {"Skriv inn server manuelt", "Ввести сервер вручну"},
         {"Logg inn på nytt", "Увійти знову"},
         {"Koble til", "Підключитися"},

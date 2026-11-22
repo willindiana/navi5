@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &romanian_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Redarea se oprește, iar autentificarea salvată este ștearsă de pe consolă. Cheia API rămâne validă pe server până când ștergi playerul „Navi5 (PS5)” din Navidrome. Navi5 nu mai are parola și nu o poate revoca."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Redarea se oprește, iar autentificarea salvată este ștearsă de pe consolă."},
         {"QR-paring er stoppet.", "Asocierea prin QR este oprită."},
+        {"Start paring", "Pornește asocierea"},
+        {"Avbryt paring", "Anulează asocierea"},
         {"Skriv inn server manuelt", "Introdu serverul manual"},
         {"Logg inn på nytt", "Autentifică-te din nou"},
         {"Koble til", "Conectare"},

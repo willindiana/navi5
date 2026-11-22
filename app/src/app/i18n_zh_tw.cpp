@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &chinese_traditional_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "播放將停止，儲存的登入資訊將從主機刪除。在你於 Navidrome 中刪除播放器「Navi5 (PS5)」之前，API 金鑰在伺服器上仍然有效。Navi5 已不再保存密碼，無法撤銷該金鑰。"},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "播放將停止，儲存的登入資訊將從主機刪除。"},
         {"QR-paring er stoppet.", "QR 配對已停止。"},
+        {"Start paring", "開始配對"},
+        {"Avbryt paring", "取消配對"},
         {"Skriv inn server manuelt", "手動輸入伺服器"},
         {"Logg inn på nytt", "重新登入"},
         {"Koble til", "連線"},

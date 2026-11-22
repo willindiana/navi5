@@ -154,8 +154,9 @@ void PairingView::draw(double now, float dt, float cx, bool focused)
     if (button && focused) drop_.to({cx - 300, 752, 600, 60}, static_cast<int>(state_));
     else drop_.hide();
     drop_.draw(dt, 1, &animating_, 24);
-    if (button) gfx::text(cx, 792, state_ == State::Failed || state_ == State::Expired ? T("Cross: prøv igjen") : T("Cross: start paring"),
-        {gfx::Bold, 24, 580}, focused ? kText : kText2, 1);
-    if (focused && state_ != State::Closed) gfx::text(cx, 832, T("Circle: avbryt paring"), {gfx::Medium, 22, 700}, kText2, 1);
+    // Button glyphs like every other hint row, never the words "Cross"/"Circle".
+    if (button) draw_pad_hints(cx, 782, {{PadButton::Cross, state_ == State::Failed || state_ == State::Expired ?
+        T("Prøv igjen") : T("Start paring")}}, 1, 28, focused ? 1.f : .7f);
+    if (focused && state_ != State::Closed) draw_pad_hints(cx, 830, {{PadButton::Circle, T("Avbryt paring")}}, 1, 24, .8f);
 }
 } // namespace ui
