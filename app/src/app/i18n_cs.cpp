@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &czech_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Přehrávání se zastaví a uložené přihlášení se z konzole smaže. Klíč API zůstává na serveru platný, dokud v Navidrome nesmažete přehrávač „Navi5 (PS5)“. Navi5 už heslo nemá a nemůže klíč zneplatnit."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Přehrávání se zastaví a uložené přihlášení se z konzole smaže."},
         {"QR-paring er stoppet.", "Párování QR je zastaveno."},
+        {"Start paring", "Spustit párování"},
+        {"Avbryt paring", "Zrušit párování"},
         {"Skriv inn server manuelt", "Zadat server ručně"},
         {"Logg inn på nytt", "Přihlásit se znovu"},
         {"Koble til", "Připojit"},

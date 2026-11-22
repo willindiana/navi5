@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &indonesian_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Pemutaran berhenti dan login tersimpan dihapus dari konsol. Kunci API tetap berlaku di server sampai Anda menghapus pemutar “Navi5 (PS5)” di Navidrome. Navi5 tidak lagi menyimpan kata sandi dan tidak dapat mencabut kunci itu."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Pemutaran berhenti dan login tersimpan dihapus dari konsol."},
         {"QR-paring er stoppet.", "Penyandingan QR dihentikan."},
+        {"Start paring", "Mulai penyandingan"},
+        {"Avbryt paring", "Batalkan penyandingan"},
         {"Skriv inn server manuelt", "Masukkan server secara manual"},
         {"Logg inn på nytt", "Masuk lagi"},
         {"Koble til", "Hubungkan"},

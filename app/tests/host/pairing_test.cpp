@@ -36,6 +36,9 @@ int main()
     assert(page.find("HTTP music servers send login and music unencrypted.") < page.find("<form"));
     assert(page.find("HTTP or HTTPS server") != std::string::npos);
     assert(page.find("Sign-in is saved unencrypted on the console: an API key when you enter one or Navidrome can issue one, otherwise your password.") < page.find("<form"));
+    // API key is an alternative to the password, not "preferred" (owner, v1.0 hardware pass).
+    assert(page.find("(preferred)") == std::string::npos);
+    assert(page.find("id=password") < page.find("<p class=or>or</p>") && page.find("<p class=or>or</p>") < page.find("id=api_key"));
     assert(page.find("Credentials stay in memory only.") == std::string::npos);
     assert(page.find("Referrer-Policy: same-origin\r\n") != std::string::npos);
     assert(page.find("style-src 'unsafe-inline'") != std::string::npos);

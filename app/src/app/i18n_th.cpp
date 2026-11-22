@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &thai_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "การเล่นจะหยุดและข้อมูลเข้าสู่ระบบที่บันทึกไว้จะถูกลบออกจากคอนโซล คีย์ API ยังใช้งานได้บนเซิร์ฟเวอร์จนกว่าคุณจะลบเครื่องเล่น “Navi5 (PS5)” ใน Navidrome Navi5 ไม่มีรหัสผ่านแล้วจึงเพิกถอนคีย์ไม่ได้"},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "การเล่นจะหยุดและข้อมูลเข้าสู่ระบบที่บันทึกไว้จะถูกลบออกจากคอนโซล"},
         {"QR-paring er stoppet.", "การจับคู่ด้วย QR หยุดแล้ว"},
+        {"Start paring", "เริ่มจับคู่"},
+        {"Avbryt paring", "ยกเลิกการจับคู่"},
         {"Skriv inn server manuelt", "ป้อนเซิร์ฟเวอร์ด้วยตนเอง"},
         {"Logg inn på nytt", "เข้าสู่ระบบอีกครั้ง"},
         {"Koble til", "เชื่อมต่อ"},

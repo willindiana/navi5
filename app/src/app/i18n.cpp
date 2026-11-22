@@ -105,9 +105,8 @@ const std::unordered_map<std::string, const char *> &english_table()
         {"Paring fullført.", "Pairing complete."},
         {"Paring utløpt.", "Pairing expired."},
         {"Paring mislyktes.", "Pairing failed."},
-        {"Cross: start paring", "Cross: start pairing"},
-        {"Cross: prøv igjen", "Cross: retry"},
-        {"Circle: avbryt paring", "Circle: cancel pairing"},
+        {"Start paring", "Start pairing"},
+        {"Avbryt paring", "Cancel pairing"},
         /* music home/library */
         {"Velg protokoll for serveradressen", "Choose server URL protocol"},
         {"Opp/ned: velg   Cross: bekreft   Circle: avbryt", "Up/down: choose   Cross: confirm   Circle: cancel"},

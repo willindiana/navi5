@@ -27,6 +27,8 @@ const std::unordered_map<std::string, const char *> &turkish_table()
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen. API-nøkkelen er fortsatt gyldig på serveren til du sletter spilleren «Navi5 (PS5)» i Navidrome. Navi5 har ikke lenger passordet og kan ikke tilbakekalle den.", "Çalma durur ve kayıtlı oturum konsoldan silinir. API anahtarı, Navidrome'da “Navi5 (PS5)” oynatıcısını silene kadar sunucuda geçerli kalır. Navi5 artık parolaya sahip değildir ve anahtarı iptal edemez."},
         {"Avspillingen stopper og lagret innlogging slettes fra konsollen.", "Çalma durur ve kayıtlı oturum konsoldan silinir."},
         {"QR-paring er stoppet.", "QR eşleştirme durduruldu."},
+        {"Start paring", "Eşleştirmeyi başlat"},
+        {"Avbryt paring", "Eşleştirmeyi iptal et"},
         {"Skriv inn server manuelt", "Sunucuyu elle gir"},
         {"Logg inn på nytt", "Yeniden oturum aç"},
         {"Koble til", "Bağlan"},
