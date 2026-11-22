@@ -17,7 +17,7 @@ jobs:
     # Reuse the published CI image for this ci/ content, or build and push it.
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     outputs:
       image: ${{ steps.image.outputs.image }}
     steps:
