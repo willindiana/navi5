@@ -26,6 +26,11 @@ assert '"${CXX_RUNTIME[@]}"' in app and '"${LIBC_ARCHIVE}"' in app
 # The RELEASE build runs in the CI image (ci/Dockerfile), which provides its tools.
 image = (ROOT / 'ci/Dockerfile').read_text()
 assert 'ca-certificates' in image and 'xz-utils' in image
+# It also bakes the toolchain; the RELEASE build still re-verifies every source pin
+# before packing (prepare-ci-inputs --fetch-only, then assemble-source's own check).
+assert image.rstrip().endswith('ENV NAVI5_BAKED_TOOLCHAIN=/opt/navi5/toolchain')
+assert ci.index('bash scripts/setup-toolchain.sh\n') < ci.index('python3 -B scripts/prepare-ci-inputs.py --fetch-only\n')
+assert 'assemble-source.py --cache toolchain/source-cache' in ci
 build = (ROOT / '.forgejo/workflows/release-build.yml').read_text()
 assert 'needs: image' in build and 'image: ${{ needs.image.outputs.image }}' in build
 
