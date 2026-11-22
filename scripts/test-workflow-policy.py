@@ -34,6 +34,7 @@ for host in HOSTS:
                     r"\s+(CI_TOKEN|password): \$\{\{ secrets\.PACKAGES_TOKEN \}\}", line)
                 require(allowed, f"{name}: secret outside the CI image registry login: {line.strip()}")
         require("timeout-minutes:" in code, f"{name}: no job timeout")
+        require("docker.sock" not in code, f"{name}: host Docker socket")
         for action in re.findall(r"uses:\s*(\S+)", code):
             require(re.search(r"@[0-9a-f]{40}$", action), f"{name}: action not pinned to a commit: {action}")
         if "checkout@" in code:
