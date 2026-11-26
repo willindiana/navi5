@@ -7,8 +7,6 @@ name: Tag release
 on:
   push:
     branches: [master]
-permissions:
-  contents: read
 jobs:
   tag:
     runs-on: ubuntu-24.04

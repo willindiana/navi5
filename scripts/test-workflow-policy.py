@@ -25,7 +25,10 @@ for host in HOSTS:
         text, name = path.read_text(), f"{host}/{path.name}"
         code = "\n".join(line.split(" #")[0] for line in text.splitlines() if not line.lstrip().startswith("#"))
         require(not re.search(r"\bpull_request_target\b", code), f"{name}: pull_request_target trigger")
-        if re.search(r"\bpull_request\b", code):
+        if host == HOSTS[0]:
+            # Forgejo ignores permissions (and warns); token scope is set in Forgejo itself.
+            require(not re.search(r"^\s*permissions:", code, re.M), f"{name}: permissions has no effect on Forgejo")
+        elif re.search(r"\bpull_request\b", code):
             require(re.search(r"^permissions:\n\s+contents: read\s*$", code, re.M), f"{name}: pull-request workflow without read-only contents")
         if name != f"{HOSTS[1]}/release.yml":
             require(not re.search(r"^\s+tags:", code, re.M), f"{name}: tag trigger")

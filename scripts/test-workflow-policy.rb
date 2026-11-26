@@ -24,7 +24,6 @@ store = load_workflow.call('.github/workflows/store-verify.yml')
 end
 raise 'Forgejo PR check missing' unless build.fetch('on', build[true]).key?('pull_request')
 raise 'store not manual-only' unless store.fetch('on', store[true]).keys == ['workflow_dispatch']
-[build, store].each do |workflow|
-  raise 'write permission' unless workflow.fetch('permissions') == {'contents' => 'read'}
-end
+raise 'write permission' unless store.fetch('permissions') == {'contents' => 'read'}
+raise 'Forgejo ignores permissions' if build.key?('permissions')
 puts 'Master triggers, Forgejo PR build, manual store gate and read-only checkout passed'

@@ -7,8 +7,6 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
-permissions:
-  contents: read
 jobs:
   image:
     # Reuse the published CI image for this ci/ content, or build and push it.

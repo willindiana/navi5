@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [master]
     types: [opened, edited, synchronize, reopened, labeled, unlabeled]
-permissions:
-  contents: read
 jobs:
   ps5-test-note:
     if: ${{ !startsWith(github.event.pull_request.title, 'WIP') }}

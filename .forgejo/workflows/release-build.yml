@@ -10,8 +10,6 @@ on:
         description: Store complete artifacts on this CI host (separate approval required)
         required: true
         default: 'false'
-permissions:
-  contents: read
 jobs:
   image:
     # Reuse the published CI image for this ci/ content, or build and push it.
