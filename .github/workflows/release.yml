@@ -1,0 +1,142 @@
+name: Release
+# Forgejo tags vX.Y.Z on master when a merge raises contentVersion
+# (.forgejo/workflows/tag-release.yml) and the push mirror brings the tag here.
+# The two ZIPs are built once, kept as a run artifact for the PS5 test, and
+# published only after the owner approves the protected "release" environment.
+# Releases are created once and never replaced; tags are never created here.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: plan
+        name: Is this tag a valid new release on master?
+        run: |
+          git fetch -q origin master
+          python3 -B scripts/release-version.py check-tag "$GITHUB_REF_NAME" "$GITHUB_SHA" origin/master
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang-18 lld-18 llvm-18 ca-certificates curl xz-utils unzip zip python3 python3-venv nasm meson ninja-build pkg-config cmake git
+      - name: Build and enforce source delivery gate
+        env:
+          LLVM_CONFIG: llvm-config-18
+        run: bash scripts/ci-release.sh
+      - name: Expect exactly the two release ZIPs
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          expected="Navi5-${VERSION}-third-party-source.zip
+          Navi5-${VERSION}.zip"
+          test "$(ls build/ci-release | sort)" = "$(printf '%s\n' "$expected" | sed 's/^ *//' | sort)"
+          (cd build/ci-release && sha256sum Navi5-*.zip | tee "$GITHUB_STEP_SUMMARY")
+      # These exact bytes are what the owner installs on the PS5 and what gets published.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Navi5-${{ needs.plan.outputs.tag }}
+          path: build/ci-release/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: [plan, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Approval here is the hardware gate: install the run artifact as NAVI00001
+    # (scripts/deploy.py --prod), run the release checks, then approve.
+    environment: release
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.plan.outputs.tag }}
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Refuse an unprotected release environment
+        run: |
+          set -euo pipefail
+          rules="$(gh api "repos/${GITHUB_REPOSITORY}/environments/release" --jq '[.protection_rules[]?.type] | join(",")')"
+          case ",$rules," in *,required_reviewers,*) ;; *) echo "::error::environment 'release' has no required reviewers"; exit 1;; esac
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: Navi5-${{ needs.plan.outputs.tag }}
+          path: dist
+      - name: Release must be new and the tag must be the built commit
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::release ${TAG} already exists; releases are never replaced"; exit 1
+          fi
+          test "$(git rev-parse "${TAG}^{commit}")" = "$GITHUB_SHA"
+          python3 -B scripts/verify-tag-source.py "dist/Navi5-${VERSION}-third-party-source.zip" "$TAG"
+      - name: Publish
+        run: |
+          set -euo pipefail
+          python3 -B scripts/release-version.py notes "$TAG" "$GITHUB_REPOSITORY" "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "Navi5 ${TAG}" --notes-file "$RUNNER_TEMP/notes.md" \
+            "dist/Navi5-${VERSION}.zip" "dist/Navi5-${VERSION}-third-party-source.zip"
+
+  verify:
+    needs: [plan, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.plan.outputs.tag }}
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, Node 20
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: Navi5-${{ needs.plan.outputs.tag }}
+          path: built
+      - name: Release assets are the tested bytes
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir published
+          diff <(cd built && sha256sum Navi5-*.zip | sort) <(cd published && sha256sum Navi5-*.zip | sort)
+          echo "install SHA-256: $(sha256sum "published/Navi5-${VERSION}.zip" | cut -d' ' -f1)" | tee -a "$GITHUB_STEP_SUMMARY"
+      # Store catalogs update through separately approved catalog PRs, so "pending" here is expected
+      # right after a release; the job reports it without failing the release.
+      - name: Store catalog (informational)
+        continue-on-error: true
+        run: |
+          python3 -B scripts/check-store-release.py --tag "$TAG" --content-version "$VERSION" \
+            --sha256 "$(sha256sum "published/Navi5-${VERSION}.zip" | cut -d' ' -f1)" --attempts 1
