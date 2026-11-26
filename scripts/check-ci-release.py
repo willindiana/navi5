@@ -13,7 +13,12 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'app/build'
-VERSION = 'v1.0.0'
+
+
+def release_version():
+    """vX.Y.Z of the checked-out contentVersion (NN.NNN.NNN)."""
+    parts = json.loads((ROOT / 'app/sce_sys/param.json').read_text())['contentVersion'].split('.')
+    return 'v' + '.'.join(str(int(part)) for part in parts)
 
 
 def require(condition, message):
@@ -65,7 +70,7 @@ def check_build():
     expected[pfs.name] = pfs
     archive = BUILD / f'app/Navi5-{param["contentVersion"]}.zip'
     check_zip(archive, expected)
-    receipt = {'version': VERSION, 'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+    receipt = {'version': release_version(), 'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                'mode': 'RELEASE; Media 65536; no DEV', 'imports': needed,
                'self': inspection.splitlines()[1:], 'source_status': 'INCOMPLETE; NOT FOR DISTRIBUTION',
                'compiler': subprocess.check_output(['clang', '--version'], text=True).splitlines()[0],
@@ -166,7 +171,7 @@ def delivery():
     output.mkdir()
     shutil.copytree(source, output / 'source')
     for archive in (BUILD / 'app').glob('Navi5-*.zip'):
-        shutil.copyfile(archive, output / f'Navi5-{VERSION}.zip')
+        shutil.copyfile(archive, output / f'Navi5-{release_version()}.zip')
     shutil.copyfile(ROOT / 'build/ci-validation.json', output / 'validation.json')
     files = sorted(p for p in output.rglob('*') if p.is_file())
     (output / 'SHA256SUMS').write_text(''.join(f'{sha(p)}  {p.relative_to(output)}\n' for p in files))

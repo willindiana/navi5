@@ -137,7 +137,7 @@ HZ="${TC}/host-zlib"
 if [[ ! -f "${HZ}/lib/libz.a" ]]; then
     echo "==> building host zlib"
     ZV=1.3.2 ZS=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
-    fetch "https://zlib.net/fossils/zlib-${ZV}.tar.gz" "${ZS}" "zlib-${ZV}.tar.gz"
+    fetch "https://github.com/madler/zlib/releases/download/v${ZV}/zlib-${ZV}.tar.gz" "${ZS}" "zlib-${ZV}.tar.gz"
     tmp="$(mktemp -d)"
     tar -xzf "${DL}/zlib-${ZV}.tar.gz" -C "${tmp}"
     mkdir -p "${HZ}/lib" "${HZ}/include"

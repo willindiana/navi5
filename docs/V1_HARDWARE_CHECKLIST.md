@@ -183,12 +183,12 @@ For each: the confirmation appears top right ("Playing next: <title>" or
   unreviewed; report any that read wrong.
 - [ ] Very long track titles in the queue view and in the Play Next confirmation
   truncate with an ellipsis.
-- [ ] The version line on the login screen reads `v1.0.0-<commit>` (DEV adds
+- [ ] The version line on the login screen reads `v1.0.1-<commit>` (DEV adds
   ` / dev`).
 
 ## 11. Release build only
 
-- [ ] `--release`: title `NAVI00001`, Media, version 01.000.000; installs beside
+- [ ] `--release`: title `NAVI00001`, Media, version 01.000.001; installs beside
   DEV; update over the beta keeps the saved login and it still connects.
 - [ ] Background audio and the system media controls behave as before.
 - [ ] Icon and title in the Media gallery.
