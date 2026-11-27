@@ -20,7 +20,7 @@ set -euo pipefail
 
 ZLIB_VERSION="1.3.2"
 ZLIB_SHA256="bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16"
-ZLIB_URL="https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz"
+ZLIB_URL="https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zlib-${ZLIB_VERSION}.tar.gz"
 
 log() { echo "==> [native-app-deps] $*" >&2; }
 
