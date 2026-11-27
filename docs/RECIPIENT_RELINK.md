@@ -35,7 +35,7 @@ Target supported setup: ShadowMount 1.7beta11. No claim for other loader or firm
 
 ## Normal release download and CI packaging
 
-Download `Navi5-01.000.000.zip` for installation, not the
+Download `Navi5-01.000.001.zip` for installation, not the
 `-third-party-source.zip`. Extract into a fresh directory; its only root is
 `NAVI00001/`. Follow installation and update precautions below; never replace a
 mounted title directory.
@@ -45,7 +45,7 @@ it is Navi5's complete corresponding source for that release (GPL-3.0-or-later),
 including build, conversion and packaging scripts. The release no longer
 attaches a second copy of the repository.
 
-`Navi5-01.000.000-third-party-source.zip` contains what the tag archive does
+`Navi5-01.000.001-third-party-source.zip` contains what the tag archive does
 not: the 77 pinned third-party source tarballs (FFmpeg, FriBidi, libiconv, SDK
 and the rest of `scripts/source-inputs.json`), `relink.tar` (application objects
 and link inputs for LGPL relinking), the modified FriBidi library and its
@@ -60,7 +60,7 @@ The tag archive and the export validated during the build have the same files:
 Before publishing, the owner checks the tag against the asset:
 
 ```sh
-python3 -B scripts/verify-tag-source.py Navi5-01.000.000-third-party-source.zip v1.0.0
+python3 -B scripts/verify-tag-source.py Navi5-01.000.001-third-party-source.zip v1.0.1
 ```
 
 It fails unless the tag is the recorded commit and `git archive` of it has the
